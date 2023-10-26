@@ -8,8 +8,9 @@ from adict import adict
 
 from geom1d import LinearSegment
 
-def sign(a):
-    return (a > 0) - (a < 0)
+
+# def sign(a):
+#     return (a > 0) - (a < 0)
 
 
 # точка на координатной плоскости
@@ -45,7 +46,9 @@ class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
 
     def overlaps(self, other):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
-            return any(p in self for p in other.iterate_corners())
+            return any(p in self for p in other.iterate_corners()) or \
+                   other in self or \
+                   self in other
 
         if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
             return other in self
@@ -75,7 +78,9 @@ class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
                 yield Point(*point)
 
     def project(self, direction='horizontal') -> LinearSegment:
-        if direction == 'horizontal':
+        if direction.startswith('h'):
+            # horizontal
             return LinearSegment(self.x, length=self.w)
         else:
+            # vertical
             return LinearSegment(self.y, length=self.h)
