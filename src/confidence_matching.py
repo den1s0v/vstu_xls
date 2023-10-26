@@ -34,17 +34,17 @@ def decode_re_spaces(re_spaces: str) -> str:
             .replace(" ", r'\s*'))
 
 
-@dataclass(init=False)
-class ConfidentPattern(adict):
+class ConfidentPattern():
     """ Паттерн для сопоставления строк со степенью уверенности.
         Синтаксисы паттерна:
          - 're' (regexp)
          - 're-spaces' (regexp in simplified notation @see)
          - 'plain' (plain text)
     """
-    pattern: str
+    pattern: str = None
     confidence: float = 0.5
     pattern_syntax: str = 're'  # plain / re (regexp) / re-spaces
+    pattern_flags: int = 0
     pattern_fields: tuple = ()
     content_class: 'ContentClass' = None
 
@@ -64,13 +64,18 @@ class ConfidentPattern(adict):
             kwargs = args[0]
             args = ()
         elif len(args) > 0:
-            for key, val in zip(self.__dataclass_fields__.keys(), args):
+            # integrate positional arguments
+            for key, val in zip(ConfidentPattern.__annotations__.keys(), args):
                 if key not in kwargs:
                     kwargs[key] = val
 
-        kw = {k: f.default for k, f in self.__dataclass_fields__.items()}
+        # read defaults from annotations
+        kw = {k: getattr(ConfidentPattern, k) for k in ConfidentPattern.__annotations__}
         kw.update(kwargs)
-        super().__init__(**kw)
+        assert kw['pattern'], 'Please specify pattern for ConfidentPattern!'
+        # set all attributes
+        for k, v in kw.items():
+            setattr(self, k, v)
 
         if self.pattern_syntax != 'plain':
             self._compiled_re = None
@@ -82,7 +87,7 @@ class ConfidentPattern(adict):
             return string == self.pattern
 
         if not self._compiled_re:
-            self._compiled_re = re.compile(self.pattern)
+            self._compiled_re = re.compile(self.pattern, self.pattern_flags)
 
         m = self._compiled_re.match(string)
         if m:
