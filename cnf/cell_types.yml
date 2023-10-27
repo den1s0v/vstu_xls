@@ -1,0 +1,42 @@
+cell_types:
+
+  - teacher:
+      name: преподаватель
+      patterns:
+        - confidence: 1.00
+            # имя преподавателя может содержать префикс должности или звания, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
+          pattern: '(?:(?:(?:доц|проф|асс|ст\.|преп|[кд]\.\w{1,6}\.н|)\.)? \w+ (-? \w+)* (?: \w \.){0,3}[,]?)+'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+        - confidence: 0.70
+            # Содержится слово (Фамилия) с Большой буквы
+          pattern: '.*[А-ЯЁ][а-яё]+.*'
+          pattern_syntax: re
+          pattern_flags: 0
+
+        - confidence: 0.40
+            # Слово с любой буквы
+          pattern: '\w+'
+          pattern_syntax: re
+          pattern_flags: I
+
+        - confidence: 0.10
+            # Любые символы (Например, "???")
+          pattern: '.+'
+          pattern_syntax: re
+
+  - room:
+      name: аудитория
+      patterns:
+        - confidence: 1.00
+            # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
+          pattern: '(?:(?:(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.)? -? \d+(-\d+|\w)?|\".+\"|.* зал .*)?[,]?)+'
+          pattern_syntax: re
+          pattern_flags: I
+
+        - confidence: 0.10
+            # Любые символы (Например, "???")
+          pattern: '.+'
+          pattern_syntax: re
+
