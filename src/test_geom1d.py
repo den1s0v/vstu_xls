@@ -35,6 +35,7 @@ class RelationTestCase(unittest.TestCase):
             'a-----b',
         )
         self.assertEqual('совпадает с', r.description)
+        self.assertEqual(6, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             'ab',
@@ -48,6 +49,7 @@ class RelationTestCase(unittest.TestCase):
             '  a-----b   ',
         )
         self.assertEqual('включает', r.description)  # охватывает (?)
+        self.assertEqual(6, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             '  a-----b   ',
@@ -61,24 +63,28 @@ class RelationTestCase(unittest.TestCase):
             'a----------b',
         )
         self.assertEqual('включается, примыкая справа, в', r.description)
+        self.assertEqual(6, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             'a----------b',
             '     a-----b',
         )
         self.assertEqual('включает примыкающее справа', r.description)
+        self.assertEqual(6, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             'a-----b     ',
             'a----------b',
         )
         self.assertEqual('включается, примыкая слева, в', r.description)
+        self.assertEqual(6, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             'a----------b',
             'a-----b     ',
         )
         self.assertEqual('включает примыкающее слева', r.description)
+        self.assertEqual(6, r.s1.intersect(r.s2).size)
 
         ### конфигурации перекрытия ###
 
@@ -88,12 +94,14 @@ class RelationTestCase(unittest.TestCase):
             '         a-----b',
         )
         self.assertEqual('пересекается с', r.description)
+        self.assertEqual(2, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             '         a-----b',
             'a----------b    ',
         )
         self.assertEqual('пересекается с', r.description)
+        self.assertEqual(2, r.s1.intersect(r.s2).size)
 
         ### Наружные конфигурации ###
 
@@ -117,12 +125,14 @@ class RelationTestCase(unittest.TestCase):
             'a-----b      ',
         )
         self.assertEqual('примыкает справа к', r.description)
+        self.assertEqual(0, r.s1.intersect(r.s2).size)
 
         r = relation_from_two_strings(
             'a-----b      ',
             '      a-----b',
         )
         self.assertEqual('примыкает слева к', r.description)
+        self.assertEqual(0, r.s1.intersect(r.s2).size)
 
 
 if __name__ == '__main__':

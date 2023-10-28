@@ -1,16 +1,18 @@
 # geom1d.py
 
-""" Одномерный примитив (отрезок) для работы на координатной прямой """
+
+from typing import Optional
 
 
 # Имитирует интерфейс tuple
 class LinearSegment:
-    """Отрезок AB на прямой (1D) - две целых координаты (a <= b)"""
+    """Отрезок AB на прямой (1D) - две целых координаты (a <= b).
+     Одномерный примитив для работы на координатной прямой """
 
     def __init__(self, a, b=None, length=None):
         if b is None:
             assert length is not None, 'LinearSegment(a, [b] [,length]) ' \
-                                       'cannot be created without b and length specified.'
+                                       'cannot be created without b or length specified.'
             b = a + length
         assert a <= b, 'Segment [{},{}] has negative length!'.format(a, b)
         self.a = a
@@ -29,6 +31,13 @@ class LinearSegment:
 
     def __len__(self):
         return 2
+
+    @property
+    def size(self):
+        return self.b - self.a
+
+    def intersect(self, other: 'LinearSegment') -> Optional['LinearSegment']:
+        return LinearRelation(self, other).intersection()
 
 
 class GenericRelation:
@@ -227,7 +236,7 @@ class LinearRelation:
         elif gl > 0:
             self.kind = FarFromAtRight
         elif gl == 0:
-            self.kind = TouchesAtRight  # AB касается левого края CD, будучи при этом справа от него
+            self.kind = TouchesAtRight  # AB касается CD левым краем, будучи при этом справа от него
 
         elif gr > 0:
             self.kind = FarFromAtLeft
@@ -239,3 +248,9 @@ class LinearRelation:
 
         self.description = self.kind.description
 
+    def intersection(self) -> Optional[LinearSegment]:
+        if issubclass(self.kind, (Overlaps, Touches)):
+            # get two middle points
+            a, b = sorted((self.s1.a, self.s1.b, self.s2.a, self.s2.b))[1:3]
+            return LinearSegment(a, b)
+        return None

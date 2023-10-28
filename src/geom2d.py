@@ -3,42 +3,50 @@
 """ Двумерные примитивы для работы на прямоугольной сетке из ячеек """
 
 from collections import namedtuple
+from typing import Optional
 
 from adict import adict
 
 from geom1d import LinearSegment
 
-
 # def sign(a):
 #     return (a > 0) - (a < 0)
 
 
-# точка на координатной плоскости
-Point = namedtuple('Point', ['x', 'y'])
-Point.__doc__ = 'точка на координатной плоскости'
+class Point(namedtuple('Point', ['x', 'y'])):
+    """Точка (x, y) на координатной плоскости (2d)"""
 
-Size = namedtuple('Size', ['w', 'h'])
+
+class Size(namedtuple('Size', ['w', 'h'])):
+    """ Размер прямоугольника (w, h) на координатной плоскости (2d) """
+
+    def __le__(self, other):
+        return self.w <= other.w and self.h <= other.h
 
 
 class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
     """ Прямоугольник на координатной плоскости (2d) """
 
-    def __getattr__(self, key):
-        if key in ('point', 'p', 'xy'):
-            return Point(self.x, self.y)
-        if key in ('size', 'wh'):
-            return Size(self.w, self.h)
-        return super().__getattr__(key)
+    @property
+    def position(self):
+        return Point(self.x, self.y)
+
+    @property
+    def size(self):
+        return Size(self.w, self.h)
+
+    # def __getattr__(self, key):
+    #     return super().__getattr__(key)
 
     def __contains__(self, other):
-        if isinstance(other, Box) or len(other) == 4 and (other := Box(other)):
+        if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return (
                     self.x <= other.x and
                     self.y <= other.y and
                     self.x + self.w >= other.x + other.w and
                     self.y + self.h >= other.y + other.h
             )
-        if isinstance(other, Point) or len(other) == 2 and (other := Point(other)):
+        if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
             return (
                     self.x <= other.x < self.x + self.w and
                     self.y <= other.y < self.y + self.h
@@ -77,10 +85,18 @@ class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
 
                 yield Point(*point)
 
-    def project(self, direction='horizontal') -> LinearSegment:
+    def project(self, direction='h') -> LinearSegment:
+        """ direction: 'h' - horizontal or 'v' - vertical """
         if direction.startswith('h'):
             # horizontal
             return LinearSegment(self.x, length=self.w)
         else:
             # vertical
             return LinearSegment(self.y, length=self.h)
+
+    def intersect(self, other: 'Box') -> Optional['Box']:
+        if (h := self.project('h').intersect(other.project('h'))) and \
+                (v := self.project('v').intersect(other.project('v'))):
+            return Box(h.a, h.b, v.a, v.b)
+        return None
+
