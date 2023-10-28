@@ -1,4 +1,5 @@
 # xlrd
 pyopenxl
+lxml
 adict
 PyYAML
