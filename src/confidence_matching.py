@@ -17,7 +17,7 @@
 """
 import re
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import yaml
 
@@ -128,6 +128,7 @@ class Match:
 class CellType:
     """ Класс (разновидность) контента ячейки,
         характеризующийся собственным набором паттернов """
+    pattern: List[ConfidentPattern]
 
     def __init__(self, name='a', patterns=None):
         self.name = name
@@ -147,6 +148,15 @@ class CellType:
         ]
         ps.sort(key=lambda p: p.confidence, reverse=True)
         return ps
+
+    def match(self, cell_text: str) -> Optional[Match]:
+        # matches = []
+        for p in self.patterns:
+            if m := p.match(cell_text):
+                return m
+                # matches.append(m)
+        # return matches
+
 
 
 def read_cell_types(config_file: str = '../cnf/cell_types.yml') -> Dict[str, CellType]:

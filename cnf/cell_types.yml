@@ -1,27 +1,39 @@
 cell_types:
+          # "re-spaces:"  означает, что далее идёт регулярное выражение, которое нужно предварительно обработать, заменив все фактические пробелы на возможные пробелы (' '  ->  \s* или [ ]*)
 
   - teacher:
       name: преподаватель
       patterns:
+            # имя преподавателя может содержать префикс должности, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
         - confidence: 1.00
-            # имя преподавателя может содержать префикс должности или звания, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
-          pattern: '(?:(?:(?:доц|проф|асс|ст\.|преп|[кд]\.\w{1,6}\.н|)\.)? \w+ (-? \w+)* (?: \w \.){0,3}[,]?)+'
+          pattern: '(?:доц|проф|асс[истент]*|ст\. пр\w* |пр[еподаватель]*|[кд]\.\w{1,6}\.н)\. [а-яё]+'
           pattern_syntax: re-spaces
           pattern_flags: I
 
-        - confidence: 0.70
+        - confidence: 0.95
+            # Фамилия И.О.
+          pattern: '[А-ЯЁа-яё-]{2,}  [А-ЯЁ]\. [А-ЯЁ]\. (?:$|,)'
+          pattern_syntax: re-spaces
+
+        - confidence: 0.80
+            # Фамилия
+          pattern: '[А-ЯЁ][а-яё]+(\-[А-ЯЁ]?[а-яё]+)*\s*(?:,|$)'
+          pattern_syntax: re
+#          pattern_syntax: re-spaces
+
+        - confidence: 0.40
             # Содержится слово (Фамилия) с Большой буквы
           pattern: '.*[А-ЯЁ][а-яё]+.*'
           pattern_syntax: re
           pattern_flags: 0
 
-        - confidence: 0.40
+        - confidence: 0.20
             # Слово с любой буквы
           pattern: '\w+'
           pattern_syntax: re
           pattern_flags: I
 
-        - confidence: 0.10
+        - confidence: 0.05
             # Любые символы (Например, "???")
           pattern: '.+'
           pattern_syntax: re
@@ -29,9 +41,24 @@ cell_types:
   - room:
       name: аудитория
       patterns:
-        - confidence: 1.00
             # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
-          pattern: '(?:(?:(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.)? -? \d+(-\d+|\w)?|\".+\"|.* зал .*)?[,]?)+'
+        - confidence: 1.00
+          pattern: '(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.) -? \d+(?:-\d+|[а-я])?'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+        - confidence: 0.98
+          pattern: '.*  зал  .*'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+        - confidence: 0.80
+            # 3+ цифры
+          pattern: '(?:\d{3,}(-\d+|[а-я])? [,]? )+'
+          pattern_syntax: re-spaces
+        - confidence: 0.20
+            # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
+          pattern: '(?:(?:(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.)? -? \d+(-\d+|[а-я])?|\".+\"|.* зал .*)?[,]?)+'
           pattern_syntax: re
           pattern_flags: I
 
@@ -40,3 +67,15 @@ cell_types:
           pattern: '.+'
           pattern_syntax: re
 
+  - discipine:
+      name: дисциплина (TODO.)
+      patterns:
+        - confidence: 0.80
+            # Название предмета должно содержать хотя бы две заглавные буквы подряд
+          pattern: '.*[А-ЯЁA-Z]{2,}.*'
+          pattern_syntax: re
+
+        - confidence: 0.05
+            # Любые символы (Например, "???")
+          pattern: '.+'
+          pattern_syntax: re

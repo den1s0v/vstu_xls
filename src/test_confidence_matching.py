@@ -22,6 +22,9 @@ class CellTypeTestCase(unittest.TestCase):
     def test_init1(self):
         cell_types = read_cell_types()
         self.assertIn('teacher', cell_types)
+        self.assertIn('room', cell_types)
+        self.assertIn('discipine', cell_types)
+        self.assertIsNotNone(cell_types['teacher'].match('доц. Грачёва Н.В.'))
 
     def test_init2(self):
         ...
