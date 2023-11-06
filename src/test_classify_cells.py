@@ -3,7 +3,7 @@
 from src.confidence_matching import read_cell_types
 
 
-def run_classification(tokens, only=('room', '!! teacher')):
+def run_classification(tokens, only=('discipline', '!! room', '!! teacher')):
     cell_types = read_cell_types()
     for name, ct in cell_types.items():
         ###
@@ -16,7 +16,9 @@ def run_classification(tokens, only=('room', '!! teacher')):
         print()
         matched = []
         for t in tokens:
-            t = t.strip()
+            # Очищаем токен от пробелов и лишних кавычек по краям
+            t = t.strip().strip('"\'')
+
             m = ct.match(t)
             if m:
                 confidence = round(m.pattern.confidence * 100)

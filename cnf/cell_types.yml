@@ -52,6 +52,11 @@ cell_types:
           pattern_syntax: re-spaces
           pattern_flags: I
 
+        - confidence: 0.95
+          pattern: ' дист[анционно.]*'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
         - confidence: 0.80
             # 3+ цифры
           pattern: '(?:\d{3,}(-\d+|[а-я])? [,]? )+'
@@ -67,11 +72,21 @@ cell_types:
           pattern: '.+'
           pattern_syntax: re
 
-  - discipine:
-      name: дисциплина (TODO.)
+  - discipline:  # Название предмета
+      name: дисциплина
       patterns:
-        - confidence: 0.80
-            # Название предмета должно содержать хотя бы две заглавные буквы подряд
+        - confidence: 1.00
+            # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
+          pattern: '[А-ЯЁA-Z]{2,}[\s.-]+[А-ЯЁA-Z. -]{1,}$'
+          pattern_syntax: re
+
+        - confidence: 0.90
+            # заглавные буквы, дефисы, скобки и точки.
+          pattern: '[А-ЯЁA-Z.() -]{2,}$'
+          pattern_syntax: re
+
+        - confidence: 0.30
+            # хотя бы две заглавные буквы подряд
           pattern: '.*[А-ЯЁA-Z]{2,}.*'
           pattern_syntax: re
 
