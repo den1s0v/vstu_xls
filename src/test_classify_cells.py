@@ -3,7 +3,7 @@
 from src.confidence_matching import read_cell_types
 
 
-def run_classification(tokens, only=('discipline', '!! room', '!! teacher')):
+def run_classification(tokens, only=('month_name', '!! week_day', '!! fake_month_day', '!! month_day', '!! discipline', '!! room', '!! teacher')):
     cell_types = read_cell_types()
     for name, ct in cell_types.items():
         ###

@@ -94,3 +94,55 @@ cell_types:
             # Любые символы (Например, "???")
           pattern: '.+'
           pattern_syntax: re
+
+  - month_day:
+      name: день месяца
+      patterns:
+        - confidence: 1.00
+            # 1 или 2 цифры от 1 до 31
+          pattern: '(?:[1-9]|[12]\d|3[01])$'
+          pattern_syntax: re
+
+  - fake_month_day:
+      name: ложный день месяца (скрытый, ненужный нам)
+      patterns:
+        - confidence: 1.00
+            # 0 или отрицательные
+          pattern: '(?:0|-1?\d)$'
+          pattern_syntax: re
+
+  - week_day:  # имя одного из 6 дней недели (ВС не ожидаем)
+      name: день недели (ПН, ВТ, ...)
+      patterns:
+        - confidence: 1.00
+          # полные названия
+          pattern: '(?:Понедельник|вторник|среда|четверг|пятница|суббота)$'
+          pattern_syntax: re
+          pattern_flags: I
+
+        - confidence: 1.00
+            # ПН, ВТ, СР, ЧТ, ПТ, СБ  (ВС не ожидаем)
+          pattern: '(?:ПН|ВТ|СР|ЧТ|ПТ|СБ)$'
+          pattern_syntax: re
+
+        - confidence: 0.97
+            # сокращённые названия
+          pattern: '(?:Пон[едельник]*|втор[ник]*|сре[да]*|четв[ерг]*|пятн[ица]*|суб[бота]*)\.?$'
+          pattern_syntax: re
+          pattern_flags: I
+
+  - month_name:  # имя одного из 10 месяцев года (июль, август не ожидаем)
+      name: название месяца
+      patterns:
+        - confidence: 1.00
+          # полные названия
+          pattern: '(?:январь|февраль|март|апрель|май|июнь|сентябрь|октябрь|ноябрь|декабрь)$'
+          pattern_syntax: re
+          pattern_flags: I
+
+        - confidence: 0.97
+            # сокращённые названия
+          pattern: '(?:янв[арь]*|фев[раль]*|март?|апр[ель]*|май|июнь?|сен[тябрь]*|окт[ябрь]*|ноя[брь]*|дек[абрь]*)\.?$'
+          pattern_syntax: re
+          pattern_flags: I
+
