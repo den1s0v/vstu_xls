@@ -46,6 +46,8 @@ class SparseTestCase(unittest.TestCase):
             'И       Н      Ф     О      Р        М       А      Т       И       К      А'))
         self.assertEqual('ФИЗИКА', fix_sparse_words(
             'Ф          И          З          И          К          А    '))
+        self.assertEqual('ИСТОРИЯ РОССИИ', fix_sparse_words(
+            'И   С   Т   О   Р   И   Я            Р   О   С   С   И   И'))
 
     def test_custom(self):
         self.assertEqual('word1 word2', fix_sparse_words('w o r d 1  w o r d 2'))

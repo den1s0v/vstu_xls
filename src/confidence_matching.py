@@ -57,6 +57,7 @@ def re_flags_to_int(re_flags: str = '') -> int:
 _RE_SEVERAL_SPACES = re.compile(r'\s{2,}')
 _RE_SPACES = re.compile(r'\s+')
 _RE_GAPS = re.compile(r'\b\s+\b')
+_RE_HYPEN_SPACED = re.compile(r'\s*-\s*')
 
 
 def shrink_extra_inner_spaces(string: str):
@@ -71,27 +72,30 @@ def fix_sparse_words(string: str, _mul_of_longest_as_sep=2, _min_spaces=5):
      """
     # if string.count(' ') < _min_spaces:
     # if len(gap_ms := _RE_GAPS.findall(string)) < _min_spaces:
-    if string.count(" ") * 2 < len(string) - 1:
+    spaces_count = string.count(" ")
+    if spaces_count == 0 or spaces_count * 2 < len(string) - 1:
+        # not enough spaces to apply this transformation
         return string
     gaps = {len(s) for s in _RE_GAPS.findall(string)}
     gaps = sorted(gaps)
-    min_gap, max_gap = min(gaps), max(gaps)
+    # min_gap, max_gap = min(gaps), max(gaps)
+    min_gap = min(gaps)
 
     # TODO: min_gap = 0, если слова без разрывов (???)
 
     # separator_min_len = max(min_gap + 1, math.ceil(max_gap - (_frac_of_longest_as_sep or 0.5) * (max_gap - min_gap)))
     separator_min_len = math.ceil(_mul_of_longest_as_sep * min_gap)
 
-    words = string.split(" " * (separator_min_len))
+    words = string.split(" " * separator_min_len)
     # remove spaces from each word
     words = [_RE_SPACES.sub('', w) for w in words]
-    # filter empty words (if any), before joining back
+    # filter empty words (if any), before joining words back
     return " ".join(w for w in words if w)
 
 
 class ConfidentPattern():
     """ Паттерн для сопоставления строк со степенью уверенности.
-        Синтаксисы паттерна (pattern_syntax):
+        Синтаксисы паттерна (`pattern_syntax`):
          - 're' (regexp)
          - 're-spaces' (regexp in simplified notation @see)
          - 'plain' (plain text)
@@ -99,6 +103,8 @@ class ConfidentPattern():
         `pattern_fields` используется,
         если паттерн содержит группы захвата (запоминающие скобки),
         чтобы указать имена групп захвата (в порядке их появления).
+
+        `transformations`: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' or nothing
     """
     pattern: str = None
     confidence: float = 0.5
@@ -106,6 +112,7 @@ class ConfidentPattern():
     pattern_flags: int | str = 0
     pattern_fields: tuple = ()
     content_class: 'CellType' = None
+    transformations: list[str] = None
 
     def __init__(self, *args, **kwargs):
         """Valid calls:
@@ -145,15 +152,37 @@ class ConfidentPattern():
         if self.pattern_syntax != 'plain':
             self._compiled_re = re.compile(self.pattern, self.pattern_flags)
 
+        if self.transformations is not None and isinstance(self.transformations, str):
+            self.transformations = re.split(r'\s*[,\s]\s*', self.transformations)
+
     def match(self, string: str):
         if self.pattern_syntax == 'plain':
             return string == self.pattern
 
+        string = self.preprocess_token(string)
         m = self._compiled_re.match(string)
         if m:
             return Match(m, self)
         return None
 
+    def preprocess_token(self, string: str) -> str:
+        # use custom transformations if set
+        if self.transformations:
+            for tr in self.transformations:
+                if tr == 'fix_sparse_words':
+                    string = fix_sparse_words(string)
+                elif tr == 'remove_all_spaces':
+                    string = string.replace(" ", '')
+                elif tr == 'remove_spaces_around_hypen':
+                    string = _RE_HYPEN_SPACED.sub("-", string)
+
+        # Default transformations:
+        # cut whitespaces outside
+        string = string.strip()
+        # cut extra whitespaces inside
+        string = shrink_extra_inner_spaces(string)
+
+        return string
 
 @dataclass
 class Match:
@@ -166,12 +195,12 @@ class CellType:
         характеризующийся собственным набором паттернов """
     pattern: List[ConfidentPattern]
 
-    def __init__(self, name='a', patterns=None):
+    def __init__(self, name='a', patterns=None, transformations=None):
         self.name = name
         self.patterns = self.prepare_patterns(patterns, self)
 
     @classmethod
-    def prepare_patterns(cls, patterns, content_class):
+    def prepare_patterns(cls, patterns, content_class, transformations=None):
         assert patterns, 'at least one pattern is required'
         if isinstance(patterns, ConfidentPattern):
             return [patterns]

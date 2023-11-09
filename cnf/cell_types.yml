@@ -43,14 +43,16 @@ cell_types:
       patterns:
             # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
         - confidence: 1.00
-          pattern: '(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.) -? \d+(?:-\d+|[а-я])?'
+          pattern: '(?:ГУК|А|Б|В|ЛК|Т|общ\.?|(?:высотка)? каб\.) -? \d{3,}(?:-\d+| [а-я])? [,]? .*'
           pattern_syntax: re-spaces
           pattern_flags: I
+          transformations: remove_spaces_around_hypen
 
         - confidence: 0.98
           pattern: '.*  зал  .*'
           pattern_syntax: re-spaces
           pattern_flags: I
+          transformations: remove_spaces_around_hypen
 
         - confidence: 0.95
           pattern: ' дист[анционно.]*'
@@ -61,11 +63,17 @@ cell_types:
             # 3+ цифры
           pattern: '(?:\d{3,}(-\d+|[а-я])? [,]? )+'
           pattern_syntax: re-spaces
-        - confidence: 0.20
-            # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
-          pattern: '(?:(?:(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.)? -? \d+(-\d+|[а-я])?|\".+\"|.* зал .*)?[,]?)+'
-          pattern_syntax: re
-          pattern_flags: I
+
+        - confidence: 0.30
+            # слово и 3+ цифры
+          pattern: '(?:\S{1,10} \d{3,}(-\d+|[а-я])? [,]? )+'
+          pattern_syntax: re-spaces
+
+#        - confidence: 0.20
+#            # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
+#          pattern: '(?:(?:(?:ГУК|А|Б|В|ЛК|Т|(?:высотка)? каб\.)? -? \d+(-\d+|[а-я])?|\".+\"|.* зал .*)?[,]?)+'
+#          pattern_syntax: re-spaces
+#          pattern_flags: I
 
         - confidence: 0.10
             # Любые символы (Например, "???")
@@ -79,11 +87,20 @@ cell_types:
             # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
           pattern: '[А-ЯЁA-Z]{2,}[\s.-]+[А-ЯЁA-Z. -]{1,}$'
           pattern_syntax: re
+          transformations: fix_sparse_words
 
         - confidence: 0.90
             # заглавные буквы, дефисы, скобки и точки.
           pattern: '[А-ЯЁA-Z.() -]{2,}$'
           pattern_syntax: re
+          transformations: fix_sparse_words
+
+#        - confidence: 0.93
+#            # Разреженные пробелами слова: 'М А Т Е М А Т И К А', 'И   С   Т   О   Р   И   Я            Р   О   С   С   И   И'
+#          # pattern: '(?:\b[А-ЯЁA-Z-][.]?(?:\s+|$)){5,}$'
+#          pattern: '[А-ЯЁA-Z.() -]{2,}$'  # такой же, как для 0.90
+#          pattern_syntax: re
+#          transformations: fix_sparse_words
 
         - confidence: 0.30
             # хотя бы две заглавные буквы подряд
