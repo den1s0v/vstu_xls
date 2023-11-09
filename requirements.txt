@@ -1,5 +1,8 @@
-# xlrd
+# xlrd  (not used directly)
 pyopenxl
 lxml
+xls2xlsx
 adict
 PyYAML
+
+# pywin32 (optional, Windows only)
