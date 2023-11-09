@@ -34,6 +34,7 @@ def test_content_from_real_sheets():
         r'../materials/ОН_ФАТ_1_курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_1 курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_3 курс - unique-values.txt',
+        r'../materials/ОН_Магистратура_2 курс ХТФ - unique-values.txt',
         r'../materials/groupnames.txt',
     ]
 
@@ -52,8 +53,10 @@ def test_content_from_real_sheets():
         # 'discipline',
         # 'room',
         # 'teacher'
-        'group',
+        # 'group',
         # 'hour_range'
+        'explicit_dates'
+        # 'explicit_hours'
     ))
 
 

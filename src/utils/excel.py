@@ -22,3 +22,9 @@ def extract_unique_values_to_txt(filename_xlsx_in, filename_txt_out=None):
         f.write('\n'.join(values) + '\n')
 
 
+if __name__ == '__main__':
+    paths = (
+        r'c:\User\Downloads\ОН_Магистратура_2 курс ХТФ.xlsx',
+    )
+    for filename in paths:
+        extract_unique_values_to_txt(filename)
