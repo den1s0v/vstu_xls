@@ -14,7 +14,7 @@ class LinearSegment:
             assert length is not None, 'LinearSegment(a, [b] [,length]) ' \
                                        'cannot be created without b or length specified.'
             b = a + length
-        assert a <= b, 'Segment [{},{}] has negative length!'.format(a, b)
+        assert a <= b, 'Segment [{},{}] has negative length, but this is not allowed!'.format(a, b)
         self.a = a
         self.b = b
         # super().__init__()
@@ -31,6 +31,10 @@ class LinearSegment:
 
     def __len__(self):
         return 2
+
+    def __contains__(self, item):
+        assert isinstance(item, int), item
+        return self.a <= item <= self.b
 
     @property
     def size(self):

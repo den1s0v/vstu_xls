@@ -1,3 +1,4 @@
+import math
 import unittest
 from geom1d import LinearSegment, LinearRelation
 
@@ -133,6 +134,43 @@ class RelationTestCase(unittest.TestCase):
         )
         self.assertEqual('примыкает слева к', r.description)
         self.assertEqual(0, r.s1.intersect(r.s2).size)
+
+
+class LinearSegmentTestCase(unittest.TestCase):
+    def test_ints(self):
+        LS = LinearSegment
+        s = LS(1, 1)
+        self.assertIn(1, s)
+        self.assertNotIn(0, s)
+        self.assertNotIn(2, s)
+
+        s = LS(-1, 10)
+        self.assertIn(1, s)
+        self.assertIn(-1, s)
+        self.assertNotIn(-2, s)
+        self.assertIn(9, s)
+        self.assertIn(10, s)
+        self.assertNotIn(11, s)
+
+    def test_inf(self):
+        LS = LinearSegment
+        s = LS(1, math.inf)
+        self.assertNotIn(-10, s)
+        self.assertNotIn(0, s)
+        self.assertIn(1, s)
+        self.assertIn(2, s)
+        self.assertIn(999999, s)
+
+        s = LS(-math.inf, 10)
+        self.assertIn(-999999, s)
+        self.assertIn(-1, s)
+        self.assertIn(0, s)
+        self.assertIn(1, s)
+        self.assertIn(9, s)
+        self.assertIn(10, s)
+        self.assertNotIn(11, s)
+        self.assertNotIn(15, s)
+
 
 
 if __name__ == '__main__':
