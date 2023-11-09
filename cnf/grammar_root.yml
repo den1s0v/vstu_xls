@@ -1,0 +1,205 @@
+
+grammar:
+
+  # На этом уровне перечисляются все элементы грамматики.
+
+  # Элемент грамматики имеет тип (kind):
+  #   - area - прямоугольная область, которая может покрывать множество ячеек и агрегировать другие данные ("нетерминал" грамматики)
+  #   - cell - "физическая" ячейка Excel-таблицы с известным типом  содержимого ("терминал" грамматики)
+  #   - array - разновидность area, массив или ряд однотипных элементов, выровненных друг относительно друга
+
+
+  # Элементы грамматики могут ссылаться друг на друга.
+
+
+
+  schedule:
+    description:  заголовок с указанием факультета и вся таблица с расписанием
+    kind: area
+    root: true
+    unique: true
+
+    inner:  # содержимое
+      title: schedule_title
+      table: schedule_table
+
+
+
+  schedule_title:
+    description: заголовок с указанием факультета, курса и года
+    kind: cell
+    size: 8+ x 1  # размер в ячейках Excel
+    unique: true
+    borders: none  # границ быть не должно
+    type: schedule_title  # тип контента ячейки из файла cell_types.yml
+
+
+
+  schedule_table:
+    description: вся таблица с расписанием
+    kind: area  # area: область, которая может покрывать несколько ячеек
+    unique: true
+
+    inner:  # содержимое
+      # на этом уровне перечисляются все внутренние данные области schedule_table.
+      # ключом (groups, datetime) является имя поля, по которому можно будет обращаться к внутреннему объекту
+
+      groups:  # << имя поля
+        type: groups_header  # ссылка на другой элемент грамматики
+        location: top, right  # строго прилегает к верхнему правому углу, другие углы не определены
+
+      datetime:
+        type: weeks_calendar
+        location: left, top, bottom
+
+      grid:
+        type: timetable_grid  # TODO ...
+        location: right, bottom
+
+
+
+  groups_header:
+    description: заголовок с группами
+    kind: area
+
+    size: 4+ x 1..2  # размер в ячейках Excel
+    borders: all  #  должны быть все границы с линиями
+
+    outer: ~   # контекст
+      # (нет.) within: schedule  # целиком включается в область schedule.
+      #        ^^ Здесь контекст указывать не требуется, так как он не является обязательным для существования этого элемента.
+      # Наоборот, этот элемент является основой для порождения  включающего schedule.
+      # Здесь выплывает наружу последовательность формирования дерева в процессе парсинга (некоторые элементы могут быть созданы только после других).
+
+
+    inner:  # содержимое
+      groups:
+        kind: array  # массив или ряд элементов, выровненных друг относительно друга
+        direction: row  #  по горизонтали (если не указать, то в любом направлении)
+        element: group_in_header
+        count: 1+
+        location: left, right, top, bottom   # можно ввести синоним  для полного равенства - coinside
+
+
+
+  group_in_header:
+    description: группа в заголовке
+    kind: cell  # cell: одна (возможно объединённая) ячейка
+    size: 4+ x 1..2
+    type: group  # тип контента ячейки из файла cell_types.yml
+
+
+
+  # datetime_header:
+  weeks_calendar:
+    description: левый заголовок таблицы с днями и часами
+    kind: array  # массив (или ряд) элементов одинакового типа, выровненных друг относительно друга
+
+    size: 5+ x 59+  # размер в ячейках Excel
+    borders: left, top, bottom  # должны быть указанные границы с линиями
+
+    inner:  # содержимое
+      month_names:
+        kind: array  # массив (ряд)
+        direction: row
+        element: month_name  # определено ниже
+        count: 3..5
+        location:
+          - top          # примыкает кверху,
+          - left: 0..1   # слева и справа может
+          - right: 0..2  # отстоять на 0..2 ячеек (внутрь)
+
+      weeks:
+        kind: array  # массив (ряд) элементов,
+        direction: column  #  выровненных по вертикали
+        element: week_datetime  # ... TODO
+        count: 2
+        gap: 1  # 1 ячейка между неделями
+        location: left, right,  bottom
+
+
+
+  month_name:
+    description: название месяца
+    kind: cell
+    size: 1 x 1
+    type: month_name  # тип контента ячейки из файла cell_types.yml
+
+
+
+  week_datetime:
+    description: информация по дням и часам за одну неделю
+    kind: array
+
+    size: 5+ x 28+  # размер в ячейках Excel
+    borders: all
+
+    inner:  # содержимое
+      days:
+        kind: array  # массив (ряд)
+        direction: column
+        element: day_datetime
+        count
+        location:
+          - top          # примыкает кверху,
+          - left: 0..1   # слева и справа может
+          - right: 0..2  # отстоять на 0..2 ячеек (внутрь)
+
+
+
+  day_datetime:
+    description: информация по часам и датам за один день
+    kind: area
+
+    size: 5+ x 4+  # размер в ячейках Excel
+    borders: all
+
+    inner:  # содержимое
+      week_day:
+        type: week_day  # ПН, ВТ, ...
+        location: top, bottom
+
+      month_days: month_days
+
+      hours:
+        kind: array
+        direction: column
+        element: hour_range  # ... TODO
+        count: 2..6
+        location: top, bottom
+
+
+  hour_range:
+    description: академические часы дня (пара)
+    kind: cell
+    size: 1 x 2+
+    type: hour_range
+
+    outer:  # ограничения на контекст (!!)
+      week_day: left  # слева находится день недели
+
+
+  month_days:
+    description: все даты доступных месяцев за один день недели
+    kind: array
+    direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое)  <-- спорный момент: может быть, стоит отдельный вид агрегации выделить
+    element: month_day
+
+    outer:  # ограничения на контекст (!!)
+      week_day: right  # справа находится день недели
+
+
+  month_day:
+    description: число месяца в один из дней недели
+    kind: cell
+    size: 1 x 2+
+    type: month_day
+
+    outer:  # ограничения на контекст (!!)
+      week_day: right  # справа находится день недели
+      month_name: top  # сверху написано название месяца
+
+
+
+
+
