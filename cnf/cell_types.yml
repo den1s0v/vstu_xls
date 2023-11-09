@@ -112,6 +112,28 @@ cell_types:
           pattern: '.+'
           pattern_syntax: re
 
+  - group:
+      name: учебная группа
+      patterns:
+        - confidence: 1.00
+            # одно-буквенные группы в ВолгГТУ имеют только буквы: И М Ф Э (на 2023), дефис и цифры.
+            # для остальных: заглавная буква, буквы, дефис и цифры
+          pattern: '(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-[\d.-]+.*'
+          pattern_syntax: re
+          transformations: remove_all_spaces
+
+        - confidence: 0.80
+            # заглавная буква, буквы, дефис и цифры
+            # (<100%, Потому что большое пересечение с названиями аудиторий)
+          pattern: '[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]*-[\d.-]+.*'
+          pattern_syntax: re
+          transformations: remove_all_spaces
+
+        - confidence: 0.05
+            # Любые символы (Например, "???")
+          pattern: '.+'
+          pattern_syntax: re
+
   - month_day:
       name: день месяца
       patterns:
@@ -162,4 +184,13 @@ cell_types:
           pattern: '(?:янв[арь]*|фев[раль]*|март?|апр[ель]*|май|июнь?|сен[тябрь]*|окт[ябрь]*|ноя[брь]*|дек[абрь]*)\.?$'
           pattern_syntax: re
           pattern_flags: I
+
+  - hour_range:  # '1-2', '15-16'
+      name: академ.часы
+      patterns:
+        - confidence: 1.00
+          # `1- 2`
+          pattern: '1?\d - 1?\d$'
+          pattern_syntax: re-spaces
+          transformations: remove_all_spaces
 

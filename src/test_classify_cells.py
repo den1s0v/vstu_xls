@@ -3,7 +3,7 @@
 from src.confidence_matching import read_cell_types
 
 
-def run_classification(tokens, only=('month_name', '!! week_day', '!! fake_month_day', '!! month_day', '!! discipline', '!! room', '!! teacher')):
+def run_classification(tokens, only=()):
     cell_types = read_cell_types()
     for name, ct in cell_types.items():
         ###
@@ -29,11 +29,12 @@ def run_classification(tokens, only=('month_name', '!! week_day', '!! fake_month
             print(f'{ct.name}: {confidence}\t{t}')
 
 
-if __name__ == '__main__':
+def test_content_from_real_sheets():
     filepaths = [
+        r'../materials/ОН_ФАТ_1_курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_1 курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_3 курс - unique-values.txt',
-        r'../materials/ОН_ФАТ_1_курс - unique-values.txt',
+        r'../materials/groupnames.txt',
     ]
 
     values = set()
@@ -43,4 +44,18 @@ if __name__ == '__main__':
         values |= set(filter(None, text.split('\n')))
         del text
 
-    run_classification(sorted(values))
+    run_classification(sorted(values), only=(
+        # 'month_name',
+        # 'week_day',
+        # 'fake_month_day',
+        # 'month_day',
+        # 'discipline',
+        # 'room',
+        # 'teacher'
+        'group',
+        # 'hour_range'
+    ))
+
+
+if __name__ == '__main__':
+    test_content_from_real_sheets()
