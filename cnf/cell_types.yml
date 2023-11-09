@@ -186,12 +186,37 @@ cell_types:
           pattern_syntax: re
           pattern_flags: I
 
-  - hour_range:  # '1-2', '15-16'
+  - hour_range:
       name: академ.часы
       patterns:
         - confidence: 1.00
-          # `1- 2`
+          # `1- 2`, '1-2', '15-16'
           pattern: '1?\d - 1?\d$'
           pattern_syntax: re-spaces
           transformations: remove_all_spaces
+
+
+  - explicit_dates:
+      name: переопределённые даты
+      patterns:
+        - confidence: 1.00
+          # `30.09.`
+          # `10.11, 08.12`
+          # `11.11,09.11`
+          # `14.10.,28.10.,11.11.`
+          pattern: '(?:[0-3]?\d\.[01]\d\.? [,]? )+$'
+          pattern_syntax: re-spaces
+          transformations: remove_all_spaces
+
+
+  - explicit_hours:
+      name: переопределённые часы
+      patterns:
+        - confidence: 1.00
+          # `30.09.`
+          # `10.11, 08.12`
+          # `11.11,09.11`
+          # `14.10.,28.10.,11.11.`
+          pattern: '1?\d - 1?\d час.?$'
+          pattern_syntax: re-spaces
 
