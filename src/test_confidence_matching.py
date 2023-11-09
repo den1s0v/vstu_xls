@@ -1,6 +1,6 @@
 import unittest
 
-from confidence_matching import ConfidentPattern, read_cell_types
+from confidence_matching import ConfidentPattern, read_cell_types, shrink_extra_inner_spaces, fix_sparse_words
 
 
 class ConfidentPatternTestCase(unittest.TestCase):
@@ -28,6 +28,36 @@ class CellTypeTestCase(unittest.TestCase):
 
     def test_init2(self):
         ...
+
+
+class ShrinkTestCase(unittest.TestCase):
+    def test_1(self):
+        self.assertEqual('a b', shrink_extra_inner_spaces('a    b'))
+        self.assertEqual('a b', shrink_extra_inner_spaces('a  b'))
+        self.assertEqual('a b', shrink_extra_inner_spaces('a b'))
+        self.assertEqual('ab', shrink_extra_inner_spaces('ab'))
+
+
+class SparseTestCase(unittest.TestCase):
+    def test_real(self):
+        self.assertEqual('МАТЕМАТИКА', fix_sparse_words('М А Т Е М А Т И К А'))
+        self.assertEqual('ИН. ЯЗЫК', fix_sparse_words('И Н.   Я З Ы К'))
+        self.assertEqual('ИНФОРМАТИКА', fix_sparse_words(
+            'И       Н      Ф     О      Р        М       А      Т       И       К      А'))
+        self.assertEqual('ФИЗИКА', fix_sparse_words(
+            'Ф          И          З          И          К          А    '))
+
+    def test_custom(self):
+        self.assertEqual('word1 word2', fix_sparse_words('w o r d 1  w o r d 2'))
+
+    def test_regression(self):
+        self.assertEqual('ab', fix_sparse_words('a       b'))
+        self.assertEqual('aa  cc  dd  bb', fix_sparse_words('aa  cc  dd  bb'))
+        self.assertEqual('ab', fix_sparse_words('a  b'))
+        self.assertEqual('ab', fix_sparse_words('a b'))
+        self.assertEqual('ab', fix_sparse_words('ab'))
+        self.assertEqual('ОСНОВЫ     РОССИЙСКОЙ     ГОСУДАРСТВЕННОСТИ', fix_sparse_words(
+            'ОСНОВЫ     РОССИЙСКОЙ     ГОСУДАРСТВЕННОСТИ'))
 
 
 if __name__ == '__main__':

@@ -15,6 +15,7 @@
      обычно от большего к меньшему -- от 1 до 0.1
      (уровень уверенности, равный нулю, не имеет смысла).
 """
+import math
 import re
 from dataclasses import dataclass
 from typing import List, Dict, Optional
@@ -51,6 +52,41 @@ def re_flags_to_int(re_flags: str = '') -> int:
     if 'X' in re_flags:
         int_flags |= re.X
     return int_flags
+
+
+_RE_SEVERAL_SPACES = re.compile(r'\s{2,}')
+_RE_SPACES = re.compile(r'\s+')
+_RE_GAPS = re.compile(r'\b\s+\b')
+
+
+def shrink_extra_inner_spaces(string: str):
+    """ Replace each sequence of several whitespaces with one space. """
+    return _RE_SEVERAL_SPACES.sub(" ", string)
+
+
+def fix_sparse_words(string: str, _mul_of_longest_as_sep=2, _min_spaces=5):
+    """ Try fix:
+     'М А Т Е М А Т И К А' -> 'МАТЕМАТИКА'
+     'И Н.   Я З Ы К' -> 'ИН. ЯЗЫК' (note: keep space between words)
+     """
+    # if string.count(' ') < _min_spaces:
+    # if len(gap_ms := _RE_GAPS.findall(string)) < _min_spaces:
+    if string.count(" ") * 2 < len(string) - 1:
+        return string
+    gaps = {len(s) for s in _RE_GAPS.findall(string)}
+    gaps = sorted(gaps)
+    min_gap, max_gap = min(gaps), max(gaps)
+
+    # TODO: min_gap = 0, если слова без разрывов (???)
+
+    # separator_min_len = max(min_gap + 1, math.ceil(max_gap - (_frac_of_longest_as_sep or 0.5) * (max_gap - min_gap)))
+    separator_min_len = math.ceil(_mul_of_longest_as_sep * min_gap)
+
+    words = string.split(" " * (separator_min_len))
+    # remove spaces from each word
+    words = [_RE_SPACES.sub('', w) for w in words]
+    # filter empty words (if any), before joining back
+    return " ".join(w for w in words if w)
 
 
 class ConfidentPattern():
