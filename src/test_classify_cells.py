@@ -33,6 +33,7 @@ if __name__ == '__main__':
     filepaths = [
         r'../materials/ОН_ФЭВТ_1 курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_3 курс - unique-values.txt',
+        r'../materials/ОН_ФАТ_1_курс - unique-values.txt',
     ]
 
     values = set()
