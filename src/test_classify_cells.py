@@ -40,7 +40,7 @@ def test_content_from_real_sheets():
 
     values = set()
     for filepath in filepaths:
-        with open(filepath) as f:
+        with open(filepath, encoding='utf8') as f:
             text = f.read()
         values |= set(filter(None, text.split('\n')))
         del text

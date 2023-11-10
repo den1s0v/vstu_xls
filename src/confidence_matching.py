@@ -18,7 +18,7 @@
 import math
 import re
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 import yaml
 
@@ -155,14 +155,16 @@ class ConfidentPattern():
         if self.transformations is not None and isinstance(self.transformations, str):
             self.transformations = re.split(r'\s*[,\s]\s*', self.transformations)
 
-    def match(self, string: str):
+    def match(self, string: str) -> Union['Match', None]:
         if self.pattern_syntax == 'plain':
-            return string == self.pattern
+            if string == self.pattern:
+                return Match(re.Match(string), self)
 
-        string = self.preprocess_token(string)
-        m = self._compiled_re.match(string)
-        if m:
-            return Match(m, self)
+        else:
+            string = self.preprocess_token(string)
+            m = self._compiled_re.match(string)
+            if m:
+                return Match(m, self)
         return None
 
     def preprocess_token(self, string: str) -> str:
@@ -184,16 +186,22 @@ class ConfidentPattern():
 
         return string
 
+
 @dataclass
 class Match:
     re_match: re.Match
     pattern: ConfidentPattern
 
+    @property
+    def confidence(self):
+        return self.pattern.confidence
+
 
 class CellType:
     """ Класс (разновидность) контента ячейки,
         характеризующийся собственным набором паттернов """
-    pattern: List[ConfidentPattern]
+    name: str
+    patterns: List[ConfidentPattern]
 
     def __init__(self, name='a', patterns=None, transformations=None):
         self.name = name
@@ -215,17 +223,15 @@ class CellType:
         return ps
 
     def match(self, cell_text: str) -> Optional[Match]:
-        # matches = []
         for p in self.patterns:
             if m := p.match(cell_text):
                 return m
-                # matches.append(m)
-        # return matches
+        return None
 
 
 
 def read_cell_types(config_file: str = '../cnf/cell_types.yml') -> Dict[str, CellType]:
-    with open(config_file) as f:
+    with open(config_file, encoding='utf-8') as f:
         data = yaml.safe_load(f)
 
     cell_types = {}
@@ -234,3 +240,23 @@ def read_cell_types(config_file: str = '../cnf/cell_types.yml') -> Dict[str, Cel
             cell_types[k] = CellType(**t)
 
     return cell_types
+
+
+class CellClassifier:
+    """ Классификатор для контента ячейки,
+        находит для данной строки наиболее подходящие типы
+        из известных CellType """
+    cell_types: List[CellType]
+
+    def __init__(self, cell_types=None):
+        self.cell_types = cell_types
+
+    def match(self, cell_text: str) -> List[Match]:
+        matches = []
+        for ct in self.cell_types:
+            if m := ct.match(cell_text):
+                matches.append(m)
+
+        matches.sort(key=lambda m: m.confidence, reverse=True)
+        return matches
+

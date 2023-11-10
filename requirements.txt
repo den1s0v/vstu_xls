@@ -1,5 +1,5 @@
 # xlrd  (not used directly)
-pyopenxl
+openpyxl
 lxml
 xls2xlsx
 adict
