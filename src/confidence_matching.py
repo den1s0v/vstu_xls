@@ -158,13 +158,13 @@ class ConfidentPattern():
     def match(self, string: str) -> Union['Match', None]:
         if self.pattern_syntax == 'plain':
             if string == self.pattern:
-                return Match(re.Match(string), self)
+                return Match(re.Match(string), self, string)
 
         else:
             string = self.preprocess_token(string)
             m = self._compiled_re.match(string)
             if m:
-                return Match(m, self)
+                return Match(m, self, string)
         return None
 
     def preprocess_token(self, string: str) -> str:
@@ -191,6 +191,7 @@ class ConfidentPattern():
 class Match:
     re_match: re.Match
     pattern: ConfidentPattern
+    cell_text: str
 
     @property
     def confidence(self):
