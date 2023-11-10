@@ -70,6 +70,7 @@ def test_content_from_real_sheets():
         r'../materials/ОН_ФЭВТ_1 курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_3 курс - unique-values.txt',
         r'../materials/ОН_Магистратура_2 курс ХТФ - unique-values.txt',
+        r'../materials/ОН_Магистратура_ 1 курс ФТКМ - unique-values.txt',
         r'../materials/groupnames.txt',
     ]
 

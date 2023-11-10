@@ -139,7 +139,7 @@ grammar:
         kind: array  # массив (ряд)
         direction: column
         element: day_datetime
-        count
+        count: 5..6
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может

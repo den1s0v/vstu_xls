@@ -63,7 +63,7 @@ def run_excel(filename_in, filename_out=None) -> Optional[str]:
     return filename_out
 
 
-def run_xls2xlsx(filename_in, filename_out=None) -> str | None:
+def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
     print('Running xls2xlsx ...')
     try:
         ch = Checkpointer()
@@ -79,3 +79,11 @@ def run_xls2xlsx(filename_in, filename_out=None) -> str | None:
         print(f'{type(e)}: {str(e)}')
         return None
     return filename_out
+
+
+if __name__ == '__main__':
+    paths = (
+        r'c:\Data\ОН_Магистратура_ 1 курс ФТКМ.xls',
+    )
+    for filename in paths:
+        convert_xls_to_xlsx(filename)
