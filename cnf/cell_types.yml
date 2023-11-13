@@ -32,7 +32,6 @@ cell_types:
             # Слово с любой буквы
           pattern: '\w+'
           pattern_syntax: re
-          pattern_flags: I
 
         - confidence: 0.05
             # Любые символы (Например, "???")
@@ -64,11 +63,19 @@ cell_types:
             # 3+ цифры
           pattern: '(?:\d{3,}(-\d+|[а-я])? [,]? )+'
           pattern_syntax: re-spaces
+          pattern_flags: I
+
+        - confidence: 0.75
+            # 2+ цифры + буква
+          pattern: '(?:\d{2,}-?[а-я\d]+ [,]? )+'
+          pattern_syntax: re-spaces
+          pattern_flags: I
 
         - confidence: 0.30
             # слово и 3+ цифры
           pattern: '(?:\S{1,10} \d{3,}(-\d+|[а-я])? [,]? )+'
           pattern_syntax: re-spaces
+          pattern_flags: I
 
 #        - confidence: 0.20
 #            # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках

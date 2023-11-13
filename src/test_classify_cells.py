@@ -49,14 +49,15 @@ def run_classification(tokens, show_bad_only=False):
 
         matched.sort(key=lambda c_t: (-c_t[0], t))
         confident = matched[0][0] >= 50
-        if not confident:
-            print("Recognized with confidence of < 50% !")
-        elif show_bad_only:
+        if confident and show_bad_only:
             continue
 
         print()
         print(f' ::::::: `{t}` ::::::: ')
         print(' ' * 9, '-' * len(t), ' ' * 9)
+
+        if not confident:
+            print("Recognized with confidence of < 50% !")
 
         for confidence, ct in matched:
             if confident and confidence < 50:
