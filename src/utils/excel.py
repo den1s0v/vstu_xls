@@ -41,13 +41,13 @@ def classify_cell_content(content: str) -> ('best class: str', 'best confidence:
 def colorize_values_on_sheet(sheet) -> None:
     for row in sheet.iter_rows():
         for cell in row:
-            content = str(cell.value)
-            if content:
+            content = str(cell.value).strip()
+            if content and content != 'None':
                 class_name, confidence, _ = classify_cell_content(content)
-                comment = class_name or 'Не определено'
-                if confidence <= 0:
+                comment = f'{class_name}: {round(confidence * 100)}' or 'Не определено'
+                if confidence <= 0.5:
                     color = 'FF0000'
-                elif confidence >= 0.9:
+                elif confidence >= 0.85:
                     color = '00FF00'
                 else:
                     color = 'FFCC00'  # thick yellow
@@ -58,7 +58,8 @@ def colorize_values_on_sheet(sheet) -> None:
                 try:
                     cell.comment = comment
                 except AttributeError:
-                    print('failed to add a comment to cell', cell.coordinate)
+                    # print('failed to add a comment to cell', cell.coordinate)
+                    pass
 
 
 def mark_recognized_values_in_sheet(filename_xlsx_in, filename_txt_out=None):
@@ -69,6 +70,7 @@ def mark_recognized_values_in_sheet(filename_xlsx_in, filename_txt_out=None):
     # save back
     filename_out = filename_txt_out or filename_xlsx_in.replace('.xlsx', ' - cells-annotated.xlsx')
     wb.save(filename_out)
+    print('Saved file with cells annotated as', filename_out)
 
 
 def main():

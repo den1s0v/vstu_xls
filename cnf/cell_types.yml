@@ -93,13 +93,13 @@ cell_types:
       patterns:
         - confidence: 1.00
             # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
-          pattern: '[А-ЯЁA-Z]{2,}[\s.-]+[А-ЯЁA-Z. -]{1,}$'
+          pattern: '[А-ЯЁA-Z]{2,}[\s.,()-]+[А-ЯЁA-Z.\s-]{1,}$'
           pattern_syntax: re
           transformations: fix_sparse_words
 
         - confidence: 0.90
             # заглавные буквы, дефисы, скобки и точки.
-          pattern: '[А-ЯЁA-Z.() -]{2,}$'
+          pattern: '[А-ЯЁA-Z.,()\s-]{2,}$'
           pattern_syntax: re
           transformations: fix_sparse_words
 
