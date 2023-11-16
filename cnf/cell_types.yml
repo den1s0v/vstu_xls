@@ -4,7 +4,7 @@ cell_types:
           # Перечень "transformations: ..." при паттерне  позволяет указать преобразования, которые будут произведены над текстовым значением ячейки перед проверкой (регулярным выражением). На момент написания доступны преобразования: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' (подробнее см. класс ConfidentPattern).
 
   - teacher:
-      name: преподаватель
+      description: преподаватель
       patterns:
             # имя преподавателя может содержать префикс должности, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
         - confidence: 1.00
@@ -39,7 +39,7 @@ cell_types:
           pattern_syntax: re
 
   - room:
-      name: аудитория
+      description: аудитория
       patterns:
             # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
         - confidence: 1.00
@@ -89,7 +89,7 @@ cell_types:
           pattern_syntax: re
 
   - discipline:  # Название предмета
-      name: дисциплина
+      description: дисциплина
       patterns:
         - confidence: 1.00
             # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
@@ -121,7 +121,7 @@ cell_types:
           pattern_syntax: re
 
   - group:
-      name: учебная группа
+      description: учебная группа
       patterns:
         - confidence: 1.00
             # одно-буквенные группы в ВолгГТУ имеют только буквы: И М Ф Э (на 2023), дефис и цифры.
@@ -144,7 +144,7 @@ cell_types:
 
 
   - schedule_title:
-      name: факультет, курс и год
+      description: факультет, курс и год
       patterns:
         - confidence: 1.00
           # Учебные  занятия  магистров  2 курса   ХТФ на I семестр 2023-2024 учебного года
@@ -159,7 +159,7 @@ cell_types:
 
 
   - month_day:
-      name: день месяца
+      description: день месяца
       patterns:
         - confidence: 1.00
             # 1 или 2 цифры от 1 до 31
@@ -167,7 +167,7 @@ cell_types:
           pattern_syntax: re
 
   - fake_month_day:  # TODO: mark as ignored
-      name: ложный день месяца (скрытый, ненужный нам)
+      description: ложный день месяца (скрытый, ненужный нам)
       patterns:
         - confidence: 1.00
             # 0 или отрицательные
@@ -175,7 +175,7 @@ cell_types:
           pattern_syntax: re
 
   - week_day:  # имя одного из 6 дней недели (ВС не ожидаем)
-      name: день недели (ПН, ВТ, ...)
+      description: день недели (ПН, ВТ, ...)
       patterns:
         - confidence: 1.00
           # полные названия
@@ -195,7 +195,7 @@ cell_types:
           pattern_flags: I
 
   - month_name:  # имя одного из 10 месяцев года (июль, август не ожидаем)
-      name: название месяца
+      description: название месяца
       patterns:
         - confidence: 1.00
           # полные названия
@@ -210,7 +210,7 @@ cell_types:
           pattern_flags: I
 
   - hour_range:
-      name: академ.часы
+      description: академ.часы
       patterns:
         - confidence: 1.00
           # `1- 2`, '1-2', '15-16'
@@ -220,7 +220,7 @@ cell_types:
 
 
   - explicit_dates:
-      name: переопределённые даты
+      description: переопределённые даты
       patterns:
         - confidence: 1.00
           # `30.09.`
@@ -233,7 +233,7 @@ cell_types:
 
 
   - explicit_hours:
-      name: переопределённые часы
+      description: переопределённые часы
       patterns:
         - confidence: 1.00
           # `30.09.`

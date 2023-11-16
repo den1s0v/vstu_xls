@@ -20,7 +20,7 @@ MS_EXCEL_AVAILABLE = None  # True: yes, False: no, None: not checked yet.
 try:
     import win32com.client as win32
 except ImportError:
-    print(':WARN: pywin32')
+    print(':WARN: pywin32 is not installed, using xls2xlsx')
     MS_EXCEL_AVAILABLE = False
 
 
@@ -81,9 +81,14 @@ def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
     return filename_out
 
 
-if __name__ == '__main__':
+def main():
     paths = (
-        r'c:\Data\ОН_Магистратура_ 1 курс ФТКМ.xls',
+        r'c:\Users\Student\Downloads\ОН_ФТПП_3 курс.xls',
+        r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
     )
     for filename in paths:
         convert_xls_to_xlsx(filename)
+
+
+if __name__ == '__main__':
+    main()

@@ -77,6 +77,10 @@ def fix_sparse_words(string: str, _mul_of_longest_as_sep=2, _min_spaces=5):
         # not enough spaces to apply this transformation
         return string
     gaps = {len(s) for s in _RE_GAPS.findall(string)}
+
+    if not gaps:
+        return string
+
     gaps = sorted(gaps)
     # min_gap, max_gap = min(gaps), max(gaps)
     min_gap = min(gaps)
@@ -139,6 +143,7 @@ class ConfidentPattern():
         kw = {k: getattr(ConfidentPattern, k) for k in ConfidentPattern.__annotations__}
         kw.update(kwargs)
         assert kw['pattern'], 'Please specify pattern for ConfidentPattern!'
+        assert kw['content_class'], 'Please specify content_class for ConfidentPattern!'
         # set all attributes
         for k, v in kw.items():
             setattr(self, k, v)
@@ -204,8 +209,9 @@ class CellType:
     name: str
     patterns: List[ConfidentPattern]
 
-    def __init__(self, name='a', patterns=None, transformations=None):
+    def __init__(self, name='a', description='no info', patterns=None, transformations=None):
         self.name = name
+        self.description = description
         self.patterns = self.prepare_patterns(patterns, self)
 
     @classmethod
@@ -217,7 +223,7 @@ class CellType:
             return [ConfidentPattern(patterns)]
 
         ps = [
-            p if isinstance(patterns, ConfidentPattern) else ConfidentPattern(p, content_class=content_class)
+            p if isinstance(patterns, ConfidentPattern) else ConfidentPattern(**p, content_class=content_class)
             for p in patterns
         ]
         ps.sort(key=lambda p: p.confidence, reverse=True)
@@ -238,7 +244,7 @@ def read_cell_types(config_file: str = '../cnf/cell_types.yml') -> Dict[str, Cel
     cell_types = {}
     for kt in data['cell_types']:
         for k, t in kt.items():
-            cell_types[k] = CellType(**t)
+            cell_types[k] = CellType(name=k, **t)
 
     return cell_types
 
@@ -250,6 +256,8 @@ class CellClassifier:
     cell_types: List[CellType]
 
     def __init__(self, cell_types=None):
+        if not cell_types:
+            cell_types = list(read_cell_types().values())
         self.cell_types = cell_types
 
     def match(self, cell_text: str) -> List[Match]:
