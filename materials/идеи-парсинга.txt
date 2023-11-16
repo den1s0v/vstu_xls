@@ -361,9 +361,43 @@ this.right >= other.right
 
 
 
+14.11.2023
+===============
 
-============
+*
+Внедрение скалярных данных для различения вариаций / фиксация статической информации по известной структуре
+
+моё предложение.
+
+	data:
+		key: value
+
+
+*
+Введение альтернатив / форм / вариантов / вариаций нетерминала
+ с возможностью делать внешние до-определения/расширения известных элементов (нетерминалов), например, из других файлов.
+
+набросок, внутри определения нетерминала:
+
+	constraints:
+		subj.top == top
+		teachers_rooms.bottom == bottom
+
+	variations:
+		- constraints:
+			# vertical stacking
+			subj.bottom <= teachers_rooms.top
+
+		- constraints:
+			# horizontal stacking
+			subj.right <= teachers_rooms.left
+			subj.left == left
+			teachers_rooms.right == right
+
+
+
 15.11.2023
+============
 
 constraints -- массив ограничений на взаимное расположение элементов.
 
