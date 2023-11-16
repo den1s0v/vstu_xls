@@ -15,7 +15,7 @@ from xls2xlsx import XLS2XLSX
 from . import Checkpointer
 
 
-MS_EXCEL_AVAILABLE = None  # True: yes, False: no, None: not checked yet.
+MS_EXCEL_AVAILABLE = False  # True: yes, False: no, None: not checked yet.
 
 try:
     import win32com.client as win32
