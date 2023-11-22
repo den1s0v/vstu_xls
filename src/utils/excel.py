@@ -3,13 +3,14 @@
 """
 Пред-обработка Excel-таблиц и вспомогательные операции над ними.
 """
-
+from typing import Optional
 
 from openpyxl import load_workbook
 from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill
 
-from confidence_matching import CellClassifier
+from confidence_matching import CellClassifier, Match
+from utils import Checkpointer
 
 
 def unique_values_of_whole_sheet(sheet) -> list[str]:
@@ -28,14 +29,12 @@ def extract_unique_values_to_txt(filename_xlsx_in, filename_txt_out=None):
 
 classifier = None
 
-def classify_cell_content(content: str) -> ('best class: str', 'best confidence: float', 'matches: list[Match]'):
+
+def classify_cell_content(content: str) -> list[Match]:
     global classifier
     classifier = classifier or CellClassifier()
     matches = classifier.match(content)
-    if not matches:
-        return ['Unknown', 0.0, []]
-    best = matches[0]
-    return [best.pattern.content_class.name, best.confidence, matches]
+    return matches
 
 
 def colorize_values_on_sheet(sheet) -> None:
@@ -43,8 +42,24 @@ def colorize_values_on_sheet(sheet) -> None:
         for cell in row:
             content = str(cell.value).strip()
             if content and content != 'None':
-                class_name, confidence, _ = classify_cell_content(content)
-                comment = f'{class_name}: {round(confidence * 100)}' or 'Не определено'
+                matches = classify_cell_content(content)
+                if matches:
+                    best = matches[0]
+                    class_name, confidence = best.pattern.content_class.description, best.confidence
+                    if confidence == 1.0 and 'clear' in best.pattern.content_class.update_content:
+                        cell.value = '-'
+                    if confidence >= 0.8 and 'replace_with_preprocessed' in best.pattern.content_class.update_content:
+                        cell.value = best.cell_text
+
+                    comment = '\n'.join(
+                        f'{m.pattern.content_class.description}: {round(m.confidence * 100)}'
+                        for m in matches
+                        if m.confidence >= confidence * 0.4  # filter too low confidence
+                    )
+                else:
+                    confidence = 0.0
+                    comment = 'Не определено'
+                # comment = f'{class_name}: {round(confidence * 100)}'
                 if confidence <= 0.5:
                     color = 'FF0000'
                 elif confidence >= 0.85:
@@ -77,10 +92,15 @@ def main():
     paths = (
         r'c:\Users\Student\Downloads\ОН_ФТПП_3 курс.xlsx',
     )
+
+    ch = Checkpointer()
     for filename in paths:
         # extract_unique_values_to_txt(filename)
         mark_recognized_values_in_sheet(filename)
 
+        ch.hit('one file processed')
+
+    ch.since_start('all files processed in')
 
 if __name__ == '__main__':
     main()

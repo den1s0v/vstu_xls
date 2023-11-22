@@ -2,19 +2,25 @@ cell_types:
           # "re-spaces" для `pattern_syntax` означает, что в `pattern` содержится модифицированное регулярное выражение, которое будет предварительно обработано, заменяя все  одиночные пробелы на возможные пробелы (' '  ->  \s* или [ ]*), а двойные - на обязательные пробелы ('  '  ->  \s+).
 
           # Перечень "preprocess: ..." при паттерне  позволяет указать преобразования, которые будут произведены над текстовым значением ячейки перед проверкой (регулярным выражением). На момент написания доступны преобразования: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' (подробнее см. класс ConfidentPattern).
+          # "update_content: ..."
 
   - teacher:
       description: преподаватель
       patterns:
             # имя преподавателя может содержать префикс должности, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
         - confidence: 1.00
-          pattern: '(?:доц|проф|асс[истент]*|ст\. пр\w* |пр[еподаватель]*|[кд]\.\w{1,6}\.н)\. [а-яё]+'
+          pattern: '(?:доц|проф|асс[истент]*|ст\. пр\w* |пр[еподаватель]*|[кд]\.\w{1,6}\.н)[.\s] [а-яё]+'
           pattern_syntax: re-spaces
           pattern_flags: I
 
         - confidence: 0.95
             # Фамилия И.О.
           pattern: '[А-ЯЁа-яё-]{2,}  [А-ЯЁ]\. [А-ЯЁ]\. (?:$|,)'
+          pattern_syntax: re-spaces
+
+        - confidence: 0.90
+            # Фамилия. И.
+          pattern: '[А-ЯЁа-яё-]{2,} [А-ЯЁ]?\.? [А-ЯЁ]\. (?:$|,)'
           pattern_syntax: re-spaces
 
         - confidence: 0.80
@@ -43,7 +49,7 @@ cell_types:
       patterns:
             # аудитория может иметь префикс корпуса, либо быть тренажёрным залом, либо быть названием фирмы в кавычках
         - confidence: 1.00
-          pattern: '(?:ГУК|А|Б|В|ЛК|Т|общ\.?|(?:высотка)? каб\.) -? \d{3,}(?:-\d+| [а-я])? [,]? .*'
+          pattern: '(?:ГУК|А|Б|В|ЛК|Т|общ\.?|(?:высотка)? каб\.) -?-? \d{3,}(?:-\d+| [а-я])? [,]? .*'
           pattern_syntax: re-spaces
           pattern_flags: I
           preprocess: remove_spaces_around_hypen
@@ -61,19 +67,19 @@ cell_types:
 
         - confidence: 0.80
             # 3+ цифры
-          pattern: '(?:\d{3,}(-\d+|[а-я])? [,]? )+'
+          pattern: '(?:\d{3,}(-\d+|[а-я])* [,]? )+'
           pattern_syntax: re-spaces
           pattern_flags: I
 
         - confidence: 0.75
             # 2+ цифры + буква
-          pattern: '(?:\d{2,}-?[а-я\d]+ [,]? )+'
+          pattern: '(?:\d{2,}-*[а-я\d]+ [,]? )+'
           pattern_syntax: re-spaces
           pattern_flags: I
 
         - confidence: 0.30
             # слово и 3+ цифры
-          pattern: '(?:\S{1,10} \d{3,}(-\d+|[а-я])? [,]? )+'
+          pattern: '(?:\S{1,10} \d{3,}(-\d+|[а-я])* [,]? )+'
           pattern_syntax: re-spaces
           pattern_flags: I
 
@@ -94,13 +100,13 @@ cell_types:
       patterns:
         - confidence: 1.00
             # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
-          pattern: '[А-ЯЁA-Z]{2,}[\s.,()-]+[А-ЯЁA-Z.\s-]{1,}$'
+          pattern: '[А-ЯЁA-Z]{2,}[\s.,()/:-]+[А-ЯЁA-Z.,()/:\s-]{1,}$'
           pattern_syntax: re
           preprocess: fix_sparse_words
 
         - confidence: 0.90
-            # заглавные буквы, дефисы, скобки и точки.
-          pattern: '[А-ЯЁA-Z.,()\s-]{2,}$'
+            # заглавные буквы, дефисы, скобки и точки, ....
+          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}$'
           pattern_syntax: re
           preprocess: fix_sparse_words
 
@@ -127,14 +133,14 @@ cell_types:
         - confidence: 1.00
             # одно-буквенные группы в ВолгГТУ имеют только буквы: И М Ф Э (на 2023), дефис и цифры.
             # для остальных: заглавная буква, буквы, дефис и цифры
-          pattern: '(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-[\d.-]+.*'
+          pattern: '(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-[\d.-]+[^,]*$'
           pattern_syntax: re
           preprocess: remove_all_spaces
 
         - confidence: 0.80
             # заглавная буква, буквы, дефис и цифры
             # (<100%, Потому что большое пересечение с названиями аудиторий)
-          pattern: '[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]*-[\d.-]+.*'
+          pattern: '[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]*-[\d.-]+[^,]*$'
           pattern_syntax: re
           preprocess: remove_all_spaces
 
@@ -142,6 +148,23 @@ cell_types:
             # Любые символы (Например, "???")
           pattern: '.+'
           pattern_syntax: re
+
+
+  - subgroup:
+      description: подгруппа
+      patterns:
+        - confidence: 1.00
+            # 1/2 гр.
+            # 1 п/п.
+            # 3 п/п.
+          pattern: '$'  # TODO!
+          pattern_syntax: re
+          pattern_flags: I
+
+        - confidence: 0.70
+          pattern: '[123].*п'
+          pattern_syntax: re
+          pattern_flags: I
 
 
   - schedule_title:
@@ -167,16 +190,17 @@ cell_types:
           pattern: '(?:[1-9]|[12]\d|3[01])$'
           pattern_syntax: re
 
-  - fake_month_day:  # TODO: mark as ignored
-      description: ложный день месяца (скрытый, ненужный нам)
+  - fake_month_day:  # ложный день месяца (скрытый, ненужный нам) # TODO: mark as ignored
+      description: ЛОЖНЫЙ день месяца
+      update_content: clear
       patterns:
         - confidence: 1.00
             # 0 или отрицательные
           pattern: '(?:0|-1?\d)$'
           pattern_syntax: re
 
-  - week_day:  # имя одного из 6 дней недели (ВС не ожидаем)
-      description: день недели (ПН, ВТ, ...)
+  - week_day:  # имя одного из 6 дней недели ПН, ВТ, ..., СБ (ВС не ожидаем)
+      description: день недели
       patterns:
         - confidence: 1.00
           # полные названия
@@ -244,3 +268,45 @@ cell_types:
           pattern: '1?\d - 1?\d час.?$'
           pattern_syntax: re-spaces
 
+
+  - lesson_kind:
+      description: форма занятия
+      patterns:
+        - confidence: 1.00
+          # `практ. 4 час.`
+          # `лекц. 4 час.`
+          # `лекция 4 часа`
+          # `лаб. 4 час.`
+          # `пр.` , `лаб.`
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:\d час[.а]?)?$'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+        - confidence: 0.97
+          # `4 часа`
+          pattern: '\d час[.а]?$'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+
+
+  - mark_elective_discipline:
+      description: дисциплина по выбору
+      patterns:
+        - confidence: 1.00
+          # `дисциплина по выбору`
+          pattern: 'дисципл[ина.]* по выбору$'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+
+
+  - mark_foreign_language:
+      description: ин.яз
+      patterns:
+        - confidence: 1.00
+          # `нем.яз.`
+          # `нем.`
+          pattern: '(?:нем|англ|фр[анц]*)\.? (?:яз[.ык]*)?$'
+          pattern_syntax: re-spaces
+          pattern_flags: I

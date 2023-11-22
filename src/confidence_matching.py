@@ -98,7 +98,7 @@ def fix_sparse_words(string: str, _mul_of_longest_as_sep=2, _min_spaces=5):
     return " ".join(w for w in words if w)
 
 
-class ConfidentPattern():
+class ConfidentPattern:
     """ Паттерн для сопоставления строк со степенью уверенности.
         Синтаксисы паттерна (`pattern_syntax`):
          - 're' (regexp)

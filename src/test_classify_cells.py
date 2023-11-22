@@ -92,10 +92,14 @@ def test_content_from_real_sheets():
     #     # 'teacher'
     #     # 'group',
     #     # 'hour_range'
-    #     'explicit_dates'
-    #     # 'explicit_hours'
+    #     # 'explicit_dates'
+    #     # 'explicit_hours',
+    #     'lesson_kind',
+    #     'mark_elective_discipline',
+    #     'mark_foreign_language',
     # ))
-    run_classification(sorted(values), True)
+    
+    run_classification(sorted(values), show_bad_only=False)
 
 
 if __name__ == '__main__':
