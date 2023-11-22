@@ -58,6 +58,7 @@ _RE_SEVERAL_SPACES = re.compile(r'\s{2,}')
 _RE_SPACES = re.compile(r'\s+')
 _RE_GAPS = re.compile(r'\b\s+\b')
 _RE_HYPEN_SPACED = re.compile(r'\s*-\s*')
+_RE_LIST_OF_FREE_FORM_SEP = re.compile(r'\s*[,\s]\s*')
 
 
 def shrink_extra_inner_spaces(string: str):
@@ -108,7 +109,9 @@ class ConfidentPattern():
         если паттерн содержит группы захвата (запоминающие скобки),
         чтобы указать имена групп захвата (в порядке их появления).
 
-        `transformations`: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' or nothing
+        `preprocess`: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' or nothing
+
+        `update_content`: 'clear' or nothing
     """
     pattern: str = None
     confidence: float = 0.5
@@ -116,7 +119,7 @@ class ConfidentPattern():
     pattern_flags: int | str = 0
     pattern_fields: tuple = ()
     content_class: 'CellType' = None
-    transformations: list[str] = None
+    preprocess: list[str] = None
 
     def __init__(self, *args, **kwargs):
         """Valid calls:
@@ -157,8 +160,8 @@ class ConfidentPattern():
         if self.pattern_syntax != 'plain':
             self._compiled_re = re.compile(self.pattern, self.pattern_flags)
 
-        if self.transformations is not None and isinstance(self.transformations, str):
-            self.transformations = re.split(r'\s*[,\s]\s*', self.transformations)
+        if self.preprocess is not None and isinstance(self.preprocess, str):
+            self.preprocess = _RE_LIST_OF_FREE_FORM_SEP.split(self.preprocess)
 
     def match(self, string: str) -> Union['Match', None]:
         if self.pattern_syntax == 'plain':
@@ -174,8 +177,8 @@ class ConfidentPattern():
 
     def preprocess_token(self, string: str) -> str:
         # use custom transformations if set
-        if self.transformations:
-            for tr in self.transformations:
+        if self.preprocess:
+            for tr in self.preprocess:
                 if tr == 'fix_sparse_words':
                     string = fix_sparse_words(string)
                 elif tr == 'remove_all_spaces':
@@ -183,7 +186,7 @@ class ConfidentPattern():
                 elif tr == 'remove_spaces_around_hypen':
                     string = _RE_HYPEN_SPACED.sub("-", string)
 
-        # Default transformations:
+        # Default preprocess steps:
         # cut whitespaces outside
         string = string.strip()
         # cut extra whitespaces inside
@@ -207,12 +210,17 @@ class CellType:
     """ Класс (разновидность) контента ячейки,
         характеризующийся собственным набором паттернов """
     name: str
+    description: str
     patterns: List[ConfidentPattern]
+    update_content: list[str] = ()
 
-    def __init__(self, name='a', description='no info', patterns=None, transformations=None):
+    def __init__(self, name='a', description='no info', patterns=None, update_content=None):
         self.name = name
         self.description = description
         self.patterns = self.prepare_patterns(patterns, self)
+
+        if update_content is not None and isinstance(update_content, str):
+            self.update_content = _RE_LIST_OF_FREE_FORM_SEP.split(update_content)
 
     @classmethod
     def prepare_patterns(cls, patterns, content_class, transformations=None):

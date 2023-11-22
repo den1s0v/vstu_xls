@@ -1,7 +1,7 @@
 cell_types:
           # "re-spaces" для `pattern_syntax` означает, что в `pattern` содержится модифицированное регулярное выражение, которое будет предварительно обработано, заменяя все  одиночные пробелы на возможные пробелы (' '  ->  \s* или [ ]*), а двойные - на обязательные пробелы ('  '  ->  \s+).
 
-          # Перечень "transformations: ..." при паттерне  позволяет указать преобразования, которые будут произведены над текстовым значением ячейки перед проверкой (регулярным выражением). На момент написания доступны преобразования: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' (подробнее см. класс ConfidentPattern).
+          # Перечень "preprocess: ..." при паттерне  позволяет указать преобразования, которые будут произведены над текстовым значением ячейки перед проверкой (регулярным выражением). На момент написания доступны преобразования: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' (подробнее см. класс ConfidentPattern).
 
   - teacher:
       description: преподаватель
@@ -46,13 +46,13 @@ cell_types:
           pattern: '(?:ГУК|А|Б|В|ЛК|Т|общ\.?|(?:высотка)? каб\.) -? \d{3,}(?:-\d+| [а-я])? [,]? .*'
           pattern_syntax: re-spaces
           pattern_flags: I
-          transformations: remove_spaces_around_hypen
+          preprocess: remove_spaces_around_hypen
 
         - confidence: 0.98
           pattern: '.*  зал  .*'
           pattern_syntax: re-spaces
           pattern_flags: I
-          transformations: remove_spaces_around_hypen
+          preprocess: remove_spaces_around_hypen
 
         - confidence: 0.95
           pattern: ' дист[анционно.]*'
@@ -90,25 +90,26 @@ cell_types:
 
   - discipline:  # Название предмета
       description: дисциплина
+      update_content: replace_with_preprocessed
       patterns:
         - confidence: 1.00
             # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
           pattern: '[А-ЯЁA-Z]{2,}[\s.,()-]+[А-ЯЁA-Z.\s-]{1,}$'
           pattern_syntax: re
-          transformations: fix_sparse_words
+          preprocess: fix_sparse_words
 
         - confidence: 0.90
             # заглавные буквы, дефисы, скобки и точки.
           pattern: '[А-ЯЁA-Z.,()\s-]{2,}$'
           pattern_syntax: re
-          transformations: fix_sparse_words
+          preprocess: fix_sparse_words
 
 #        - confidence: 0.93
 #            # Разреженные пробелами слова: 'М А Т Е М А Т И К А', 'И   С   Т   О   Р   И   Я            Р   О   С   С   И   И'
 #          # pattern: '(?:\b[А-ЯЁA-Z-][.]?(?:\s+|$)){5,}$'
 #          pattern: '[А-ЯЁA-Z.() -]{2,}$'  # такой же, как для 0.90
 #          pattern_syntax: re
-#          transformations: fix_sparse_words
+#          preprocess: fix_sparse_words
 
         - confidence: 0.30
             # хотя бы две заглавные буквы подряд
@@ -128,14 +129,14 @@ cell_types:
             # для остальных: заглавная буква, буквы, дефис и цифры
           pattern: '(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-[\d.-]+.*'
           pattern_syntax: re
-          transformations: remove_all_spaces
+          preprocess: remove_all_spaces
 
         - confidence: 0.80
             # заглавная буква, буквы, дефис и цифры
             # (<100%, Потому что большое пересечение с названиями аудиторий)
           pattern: '[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]*-[\d.-]+.*'
           pattern_syntax: re
-          transformations: remove_all_spaces
+          preprocess: remove_all_spaces
 
         - confidence: 0.05
             # Любые символы (Например, "???")
@@ -216,7 +217,7 @@ cell_types:
           # `1- 2`, '1-2', '15-16'
           pattern: '1?\d - 1?\d$'
           pattern_syntax: re-spaces
-          transformations: remove_all_spaces
+          preprocess: remove_all_spaces
 
 
   - explicit_dates:
@@ -229,7 +230,7 @@ cell_types:
           # `14.10.,28.10.,11.11.`
           pattern: '(?:[0-3]?\d\.[01]\d\.? [,]? )+$'
           pattern_syntax: re-spaces
-          transformations: remove_all_spaces
+          preprocess: remove_all_spaces
 
 
   - explicit_hours:
