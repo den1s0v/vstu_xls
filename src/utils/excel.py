@@ -102,5 +102,6 @@ def main():
 
     ch.since_start('all files processed in')
 
+
 if __name__ == '__main__':
     main()
