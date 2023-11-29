@@ -15,17 +15,22 @@ cell_types:
 
         - confidence: 0.95
             # Фамилия И.О.
-          pattern: '[А-ЯЁа-яё-]{2,}  [А-ЯЁ]\. [А-ЯЁ]\. (?:$|,)'
+          pattern: '[А-ЯЁа-яё-]{2,}  [А-ЯЁ]\.? [А-ЯЁ]\.? (?:$|,)'
+          pattern_syntax: re-spaces
+
+        - confidence: 0.92
+            # Фамилия Имя
+          pattern: '[А-ЯЁа-яё-]{2,} [А-ЯЁа-яё-]+\.?  [А-ЯЁа-яё-]*\.? (?:$|,)'
           pattern_syntax: re-spaces
 
         - confidence: 0.90
-            # Фамилия. И.
+            # Фамилия И.
           pattern: '[А-ЯЁа-яё-]{2,} [А-ЯЁ]?\.? [А-ЯЁ]\. (?:$|,)'
           pattern_syntax: re-spaces
 
         - confidence: 0.80
             # Фамилия
-          pattern: '[А-ЯЁ][а-яё]+(\-[А-ЯЁ]?[а-яё]+)*\s*(?:,|$)'
+          pattern: '[А-ЯЁ][а-яё-]+(\-[А-ЯЁ]?[а-яё]+)*\s*(?:,|$)'
           pattern_syntax: re
 
         - confidence: 0.40
@@ -252,7 +257,7 @@ cell_types:
           # `10.11, 08.12`
           # `11.11,09.11`
           # `14.10.,28.10.,11.11.`
-          pattern: '(?:[0-3]?\d\.[01]\d\.? [,]? )+$'
+          pattern: '(?:[0-3]?\d\.[01]\d\.? [,\W]* )+$'
           pattern_syntax: re-spaces
           preprocess: remove_all_spaces
 
@@ -261,10 +266,7 @@ cell_types:
       description: переопределённые часы
       patterns:
         - confidence: 1.00
-          # `30.09.`
-          # `10.11, 08.12`
-          # `11.11,09.11`
-          # `14.10.,28.10.,11.11.`
+          # `5-6 часы`
           pattern: '1?\d - 1?\d час.?$'
           pattern_syntax: re-spaces
 
