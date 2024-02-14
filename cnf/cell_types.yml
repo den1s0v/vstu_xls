@@ -65,6 +65,12 @@ cell_types:
           pattern_flags: I
           preprocess: remove_spaces_around_hypen
 
+        - confidence: 0.98
+          pattern: 'кафедра'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+          preprocess: remove_spaces_around_hypen
+
         - confidence: 0.95
           pattern: ' дист[анционно.]*'
           pattern_syntax: re-spaces
@@ -112,6 +118,12 @@ cell_types:
         - confidence: 0.90
             # заглавные буквы, дефисы, скобки и точки, ....
           pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}$'
+          pattern_syntax: re
+          preprocess: fix_sparse_words
+
+        - confidence: 0.75
+            # заглавные буквы, дефисы, скобки и точки, ....
+          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}[А-ЯЁA-Zа-яёa-z.,()\s/:-]+$'
           pattern_syntax: re
           preprocess: fix_sparse_words
 
@@ -312,3 +324,46 @@ cell_types:
           pattern: '(?:нем|англ|фр[анц]*)\.? (?:яз[.ык]*)?$'
           pattern_syntax: re-spaces
           pattern_flags: I
+
+
+  - time_of_beginning:
+      description: время начала
+      patterns:
+        - confidence: 1.00
+          # `с 8.30`
+          # `с 9.00`
+          # `с 09.00`
+          # `с 11.00`
+          # `с 13.40`
+          # `с 15.00`
+          pattern: '[сc] [01]?\d[.:][0-5]0$'
+          pattern_syntax: re-spaces
+        - confidence: 0.80
+          # `8.30`   — не `08.30`
+          # `с 19.58`
+          # `с 11:00`
+          pattern: '[сc]? [01]?\d[.:][0-5]\d$'
+          pattern_syntax: re-spaces
+
+
+  - exams_begin_time:
+      description: время начала экзаменов
+      patterns:
+        - confidence: 1.00
+          # `Начало экзаменов в 8:30`
+          pattern: '.*?Начал[оа]  экзаменов  в [01]?\d[.:][0-5]0$'
+          pattern_syntax: re-spaces
+          pattern_flags: I
+
+
+  - single_date:
+      description: число месяца
+      patterns:
+        - confidence: 1.00
+          # `09.01`
+          # `09.11`
+          # `11.11`
+          # `30.09.`
+          pattern: '[0-3]?\d\.[01]\d$'
+          pattern_syntax: re-spaces
+          preprocess: remove_all_spaces

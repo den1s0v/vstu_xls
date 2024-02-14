@@ -26,8 +26,10 @@ class CellTypeTestCase(unittest.TestCase):
         self.assertIn('discipline', cell_types)
         self.assertIsNotNone(cell_types['teacher'].match('доц. Грачёва Н.В.'))
 
-    def test_init2(self):
-        ...
+    # def test_init2(self):
+    #     cell_types = read_cell_types()
+    #     group = cell_types['group']
+    #
 
 
 class ShrinkTestCase(unittest.TestCase):
