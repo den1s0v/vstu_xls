@@ -83,25 +83,38 @@ class Size(namedtuple('Size', ['w', 'h'])):
         return f'{self.w}x{self.h}'
 
 
-class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
-    """ Прямоугольник на координатной плоскости (2d). `Box(x, y, w, h)`. """
+class Box:
+    """ Прямоугольник на целочисленной координатной плоскости (2d). `Box(x, y, w, h)`. """
+    __slots__ = ('__tuple')
 
-    @staticmethod
-    def _box_from_args(args) -> Optional['Box']:
-        for a in args:
-            if type(a) is Box:
-                return a
-        for a in args:
-            if isinstance(a, Box):
-                return a
-        return None
+    def __init__(self, x: int, y: int, w: int, h: int):
+        self.__tuple = (x, y, w, h)
+        
+    def as_tuple(self):
+        return self.__tuple
+        
+    # staff that mimics behavior ot `tuple`:
+    def __len__(self): return 4
+    def __getitem__(self, key): return self.__tuple[key]
+    def __iter__(self): return iter(self.__tuple)
+    def __hash__(self): return hash(self.__tuple)
+    def __eq__(self, other): return self.__tuple.__eq__(other)
+    def __ne__(self, other): return self.__tuple.__ne__(other)
+    def __lt__(self, other): return self.__tuple.__lt__(other)
+    def __le__(self, other): return self.__tuple.__le__(other)
+    def __gt__(self, other): return self.__tuple.__gt__(other)
+    def __ge__(self, other): return self.__tuple.__ge__(other)
+        
+    @property
+    def x(self): return self.__tuple[0]
+    @property
+    def y(self): return self.__tuple[1]
+    @property
+    def w(self): return self.__tuple[2]
+    @property
+    def h(self): return self.__tuple[3]
 
-    def __new__(cls, *args, **kw):
-        # Why __new__, not __init__? → See stackoverflow.com/a/42386174/12824563
-        self = super(Box, cls).__new__(cls, *(kw.get('box')) or cls._box_from_args(args) or args)
-        self.__init__(*args, **kw)
-        return self
-
+    # other stuff.
     @staticmethod
     def from_2points(x1: int, y1: int, x2: int, y2: int) -> 'Box':
         """ Construct a new Box from two diagonal points (4 coordinates), no matter which diagonal.

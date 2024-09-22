@@ -102,9 +102,6 @@ class Region(Box):
         self.grid_view = grid_view
         self.data = adict()
 
-    # def __new__(cls, grid_view: 'GridView', box: Box):
-    #     return super(Region, cls).__new__(cls, grid_view, box=box)
-
     def getCell(self, point) -> Optional['CellView']:
         if point not in self:
             return None  # не показывать ничего за пределами области проекции.
