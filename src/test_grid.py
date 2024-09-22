@@ -30,20 +30,36 @@ class GridTestCase(unittest.TestCase):
         print('grid-view range:', gw)
         
         self.assertEqual(gw, (0,0, 9,9))
+        self.assertEqual((0,0, 9,9), gw)
         
         # for cell in gw.iterateCells():
         #     print(cell)
 
         col = gw.getRegion(Box(0,0, 1,9))  
-        print('col-view range:', gw)
+        print('col-view range:', col)
         content_list = []
         for cell in col.iterateCells():
             print(cell)
             content_list.append(cell.cell.content)
             
-        print(''.join(content_list))
+        col_chars = ''.join(content_list)
+        print(col_chars)
+        
+        self.assertEqual(col_chars, 'ABCDEFGH')
 
- 
+
+        row = gw.getRegion(Box(0,0, 9,1))  
+        print('row-view range:', row)
+        content_list = []
+        for cell in row.iterateCells():
+            print(cell)
+            content_list.append(cell.cell.content)
+            
+        row_chars = ''.join(content_list)
+        print(row_chars)
+        
+        self.assertEqual(row_chars, '87654321')
+
 
 
 

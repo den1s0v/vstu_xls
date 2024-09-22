@@ -85,7 +85,10 @@ class Size(namedtuple('Size', ['w', 'h'])):
 
 class Box:
     """ Прямоугольник на целочисленной координатной плоскости (2d). `Box(x, y, w, h)`. """
+    # Dev note: no more subclassing namedtuple to allow usual inheritance via __init__, not __new__.
+    
     __slots__ = ('__tuple')
+    # Dev note: using __slots__ seems to tell CPython to not to store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
         self.__tuple = (x, y, w, h)
