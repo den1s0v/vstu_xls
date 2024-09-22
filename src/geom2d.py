@@ -12,20 +12,115 @@ from geom1d import LinearSegment
 # def sign(a):
 #     return (a > 0) - (a < 0)
 
+class Direction:
+    """ Direction in degrees.
+    See constants below: 0 is Right, 90 is Up, 180 is Left, 270 is Down.
+    Non-right angles not supported.
+    """
+    _cache = dict()
+    rotation: int
+    dx: int
+    dy: int 
+    prop_name: str # name of property that a Box instance has in this direction.
+    
+    @classmethod
+    def get(cls, rotation) -> 'Direction':
+        obj = cls._cache.get(rotation)
+        if not obj:
+            cls._cache[rotation] = (obj := Direction(rotation))
+        return obj
+    
+    def __init__(self, rotation = 0) -> None:
+        self.rotation = rotation
+        self.dx, self.dy, self.prop_name = {
+              0: ( 1,  0, 'right'),
+             90: ( 0, -1, 'top'),
+            180: (-1,  0, 'left'),
+            270: ( 0,  1, 'bottom'),
+        }.get(rotation) or (None, None, None)
+        
+    @property
+    def is_horizontal(self) -> bool:
+        return self.dy == 0
+        
+    @property
+    def is_vertical(self) -> bool:
+        return self.dx == 0
+        
+    @property
+    def coordinate_sign(self) -> int:
+        """ Returns +1 or -1 depending on the increase or decrease of the main coordinate when moving in this direction.
+        """
+        return self.dx if self.dy == 0 else self.dy
+        
+    def __add__(self, angle) -> 'Direction':
+        return self.get((self.rotation + angle + 360) % 360)
+        
+    def opposite(self) -> 'Direction':
+        """ Get diametrically opposite Direction """
+        return self + 180
+        
+
+RIGHT= Direction.get(0)
+UP   = Direction.get(90)
+LEFT = Direction.get(180)
+DOWN = Direction.get(270)
+
+
 
 class Point(namedtuple('Point', ['x', 'y'])):
     """Точка (x, y) на координатной плоскости (2d)"""
+    def __str__(self) -> str:
+        return f'({self.x},{self.y})'
 
 
 class Size(namedtuple('Size', ['w', 'h'])):
     """ Размер прямоугольника (w, h) на координатной плоскости (2d) """
-
     def __le__(self, other):
         return self.w <= other.w and self.h <= other.h
 
+    def __str__(self) -> str:
+        return f'{self.w}x{self.h}'
+
 
 class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
-    """ Прямоугольник на координатной плоскости (2d) """
+    """ Прямоугольник на координатной плоскости (2d). `Box(x, y, w, h)`. """
+
+    @staticmethod
+    def _box_from_args(args) -> Optional['Box']:
+        for a in args:
+            if type(a) is Box:
+                return a
+        for a in args:
+            if isinstance(a, Box):
+                return a
+        return None
+
+    def __new__(cls, *args, **kw):
+        # Why __new__, not __init__? → See stackoverflow.com/a/42386174/12824563
+        self = super(Box, cls).__new__(cls, *(kw.get('box')) or cls._box_from_args(args) or args)
+        self.__init__(*args, **kw)
+        return self
+
+    @staticmethod
+    def from_2points(x1: int, y1: int, x2: int, y2: int) -> 'Box':
+        """ Construct a new Box from two diagonal points (4 coordinates), no matter which diagonal.
+
+        Args:
+            x1 (int): left or right
+            y1 (int): top or bottom
+            x2 (int): right or left
+            y2 (int): bottom or top
+
+        Returns:
+            Box: new instance
+        """
+        return Box(
+            min(x1, x2),
+            min(y1, y2),
+            abs(x1 - x2),
+            abs(y1 - y2),
+        )
 
     @property
     def position(self):
@@ -35,22 +130,39 @@ class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
     def size(self):
         return Size(self.w, self.h)
 
-    # def __getattr__(self, key):
-    #     return super().__getattr__(key)
+    @property
+    def left(self): return self.x
+
+    @property
+    def right(self): return self.x + self.w
+
+    @property
+    def top(self): return self.y
+
+    @property
+    def bottom(self): return self.y + self.h
+
+    def get_side_dy_direction(self, direction):
+        return getattr(self, direction.prop_name)
+    
+    def __str__(self) -> str:
+        return f'[({self.x},{self.y})→{self.w}x{self.h}]'
+
 
     def __contains__(self, other):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return (
                     self.x <= other.x and
                     self.y <= other.y and
-                    self.x + self.w >= other.x + other.w and
-                    self.y + self.h >= other.y + other.h
+                    self.right >= other.right and
+                    self.bottom >= other.bottom
             )
         if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
             return (
-                    self.x <= other.x < self.x + self.w and
-                    self.y <= other.y < self.y + self.h
+                    self.x <= other.x < self.right and
+                    self.y <= other.y < self.bottom
             )
+        return False
 
     def overlaps(self, other):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
@@ -60,25 +172,63 @@ class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
 
         if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
             return other in self
+        return False
 
     def relates_to(self, other):
         ...
 
     def iterate_corners(self):
         yield Point(self.x, self.y)
-        yield Point(self.x + self.w, self.y)
-        yield Point(self.x + self.w, self.y + self.h)
-        yield Point(self.x, self.y + self.h)
+        yield Point(self.right, self.top)
+        yield Point(self.right, self.bottom)
+        yield Point(self.left, self.bottom)
 
-    def iterate_points(self, per='rows', reverse=False, exclude_top_left=False):
-        along_row = adict(range=(self.x, self.x + self.w), index=0)
-        along_col = adict(range=(self.y, self.y + self.h), index=1)
+    def iterate_points0(self, per='rows', reverse=False, exclude_top_left=False):
+        along_row = adict(range=(self.x, self.right), index=0)
+        along_col = adict(range=(self.y, self.bottom), index=1)
 
         level1, level2 = (along_row, along_col) if per == 'rows' else (along_col, along_row)
         f = reversed if reverse else lambda x: x
 
         for i in f(range(*level1.range)):
             for j in f(range(*level2.range)):
+                point = (i, j) if level1.index == 0 else (j, i)
+                if exclude_top_left and point == (self.x, self.y):
+                    continue
+
+                yield Point(*point)
+
+    def iterate_points(self, directions = (RIGHT, DOWN), exclude_top_left=False):
+        """ Traverse all points within this rectangle.
+        
+        Args:
+            directions (tuple, optional): Directions of traversal for main & secondary loop over 2D area. Second element of the 2-tuple may be omitted. Defaults to (RIGHT, DOWN).
+            exclude_top_left (bool, optional): If True, top left corner won't be yielded. Defaults to False.
+
+        Yields: Point
+        """
+        # repair `directions` if needed
+        if not directions:
+            directions = (RIGHT, DOWN)
+        if isinstance(directions, Direction):
+            directions = (directions, )
+        if len(directions) == 1 or (directions[0].is_horizontal == directions[1].is_horizontal):
+            d0 = directions[0]
+            # add/set default second direction
+            directions = (d0, RIGHT if d0.is_vertical else DOWN)
+            
+        level1, level2 = [
+            adict(range=(
+                self.get_side_dy_direction(d.opposite()), 
+                self.get_side_dy_direction(d), ### + 1 * d.coordinate_sign,
+                d.coordinate_sign,
+            ), 
+            index=i)
+            for i, d in enumerate(directions)
+        ]
+        
+        for i in range(*level1.range):
+            for j in range(*level2.range):
                 point = (i, j) if level1.index == 0 else (j, i)
                 if exclude_top_left and point == (self.x, self.y):
                     continue
@@ -95,6 +245,8 @@ class Box(namedtuple('Box', ['x', 'y', 'w', 'h'], defaults=(0, 0, 1, 1))):
             return LinearSegment(self.y, length=self.h)
 
     def intersect(self, other: 'Box') -> Optional['Box']:
+        """ Returns intersection of this and other box, 
+            or None if no intersection exists. """
         if (h := self.project('h').intersect(other.project('h'))) and \
                 (v := self.project('v').intersect(other.project('v'))):
             return Box(h.a, h.b, v.a, v.b)

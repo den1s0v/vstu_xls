@@ -68,7 +68,7 @@ def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
     try:
         ch = Checkpointer()
         x2x = XLS2XLSX(filename_in)
-        ch.hit('xls2xlsx completed')
+        ch.hit('xls2xlsx task created')
         if not filename_out:
             filename_out = filename_in + "x"
         x2x.to_xlsx(filename_out)
