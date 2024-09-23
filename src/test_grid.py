@@ -12,11 +12,11 @@ class TxtGrid(Grid):
         
     def load_cells(self, text: str, sep='\t'):
         lines = text.splitlines()
-        for i, line in enumerate(lines):
-            for j, content in enumerate(line.split(sep)):
+        for y, line in enumerate(lines):
+            for x, content in enumerate(line.split(sep)):
                 if not content:
                     continue
-                cell = Cell(self, Point(i, j), content=content)
+                cell = Cell(self, Point(x, y), content=content)
                 self.registerCell(cell)
 
 

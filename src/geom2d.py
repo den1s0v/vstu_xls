@@ -236,7 +236,7 @@ class Box:
         level1, level2 = [
             adict(range=(
                 self.get_side_dy_direction(d.opposite()), 
-                self.get_side_dy_direction(d), ### + 1 * d.coordinate_sign,
+                self.get_side_dy_direction(d), ### + 1 * d.coordinate_sign,  !!!!!!!! Границы для обртных направлений !!!!!!!!
                 d.coordinate_sign,
             ), 
             index=i)
