@@ -2,7 +2,7 @@ import unittest
 
 from pathlib import Path
 
-from geom2d import Box, Point
+from geom2d import Box, Point, LEFT, RIGHT, UP, DOWN
 from grid import Grid, Cell
 
 class TxtGrid(Grid):
@@ -32,20 +32,21 @@ class GridTestCase(unittest.TestCase):
         self.assertEqual(gw, (0,0, 9,9))
         self.assertEqual((0,0, 9,9), gw)
         
-        # for cell in gw.iterateCells():
-        #     print(cell)
+        for cell in gw.iterateCells((LEFT, UP)):
+            print(cell)
 
         col = gw.getRegion(Box(0,0, 1,9))  
         print('col-view range:', col)
         content_list = []
-        for cell in col.iterateCells():
+        for cell in col.iterateCells( [UP, RIGHT] ):
             print(cell)
             content_list.append(cell.cell.content)
             
         col_chars = ''.join(content_list)
         print(col_chars)
         
-        self.assertEqual(col_chars, 'ABCDEFGH')
+        # self.assertEqual(col_chars, '87654321')
+        self.assertEqual(col_chars, '12345678')
 
 
         row = gw.getRegion(Box(0,0, 9,1))  
@@ -58,7 +59,7 @@ class GridTestCase(unittest.TestCase):
         row_chars = ''.join(content_list)
         print(row_chars)
         
-        self.assertEqual(row_chars, '87654321')
+        self.assertEqual(row_chars, 'ABCDEFGH')
 
 
 
