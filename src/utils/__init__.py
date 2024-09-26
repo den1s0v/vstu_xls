@@ -30,3 +30,12 @@ class Checkpointer:
         if hit:
             self.last = now
         return delta
+
+     
+def reverse_if(iterable, reverse=True):
+    """ Return `reversed(iterable)` if `reverse==True`, and untouched `iterable` otherwise.
+    """
+    if reverse:
+        return reversed(iterable)
+    return iterable
+

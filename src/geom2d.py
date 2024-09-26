@@ -8,6 +8,7 @@ from typing import Optional
 from adict import adict
 
 from geom1d import LinearSegment
+from utils import reverse_if
 
 # def sign(a):
 #     return (a > 0) - (a < 0)
@@ -56,9 +57,23 @@ class Direction:
     def __add__(self, angle) -> 'Direction':
         return self.get((self.rotation + angle + 360) % 360)
         
+    def __sub__(self, angle) -> 'Direction':
+        return self.get((self.rotation - angle + 360) % 360)
+        
     def opposite(self) -> 'Direction':
         """ Get diametrically opposite Direction """
         return self + 180
+        
+    def __neg__(self) -> 'Direction':
+        """ Get diametrically opposite Direction """
+        return self + 180
+        
+    def __abs__(self) -> 'Direction':
+        """ Get this or diametrically opposite Direction, whatever is positive. """
+        if self.coordinate_sign < 0:
+            return self.opposite()
+        return self
+            
         
 
 RIGHT= Direction.get(0)
@@ -235,20 +250,22 @@ class Box:
             
         level1, level2 = [
             adict(range=(
-                self.get_side_dy_direction(d.opposite()), 
-                self.get_side_dy_direction(d), ### + 1 * d.coordinate_sign,  !!!!!!!! Границы для обртных направлений !!!!!!!!
-                d.coordinate_sign,
-            ), 
-            index=i)
+                    # Границы для обратного и прямого направлений
+                    self.get_side_dy_direction(-abs(d)), 
+                    self.get_side_dy_direction( abs(d)),
+                    # 1 # d.coordinate_sign,
+                ), 
+                flip=(d.coordinate_sign < 0),
+                index=i,
+            )
             for i, d in enumerate(directions)
         ]
         
-        for i in range(*level1.range):
-            for j in range(*level2.range):
+        for i in reverse_if(range(*level1.range), level1.flip):
+            for j in reverse_if(range(*level2.range), level2.flip):
                 point = (i, j) if level1.index == 0 else (j, i)
                 if exclude_top_left and point == (self.x, self.y):
                     continue
-
                 yield Point(*point)
 
     def project(self, direction='h') -> LinearSegment:
