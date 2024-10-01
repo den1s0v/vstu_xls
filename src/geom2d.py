@@ -88,6 +88,14 @@ class Point(namedtuple('Point', ['x', 'y'])):
     def __str__(self) -> str:
         return f'({self.x},{self.y})'
 
+    def distance_to(self, other: 'Point') -> float:
+        """ "Диагональное" Евклидово расстояние между двумя точками на плоскости. Рассчитывается как длина гипотенузы. """
+        return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
+
+    def manhattan_distance_to(self, other: 'Point') -> int:
+        """ Расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. Рассчитывается как минимальное число ходов ладьёй для перемещения между двумя точками и равно сумме модулей разностей их координат. """
+        return abs(self.x - other.x) + abs(self.y - other.y)
+
 
 class Size(namedtuple('Size', ['w', 'h'])):
     """ Размер прямоугольника (w, h) на координатной плоскости (2d) """
@@ -207,6 +215,31 @@ class Box:
 
     def relates_to(self, other):
         ...
+        
+    def manhattan_distance_to(self, other: Union[Point, 'Box']) -> int:
+        """ Целочисленное расстояние:
+            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала внутрь прямоугольника.
+            Для прямоугольника: 0, если один из прямоугольников полностью вкладывается в другой, иначе минимальное количество единичных перемещений, чтобы совместить один из углов этих прямоугольников (таким образом, один оказывается внутри другого). В случае, если прямоугольники   не могут быть перекрыты полностью из-за  несовместимых размеров, эта метрика покажет расстояние до ближайшего максимально возможного перекрытия.
+        Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. """
+        if isinstance(other, Point):
+            if other in self:
+                return 0
+            return min(
+                corner.manhattan_distance_to(other)
+                for corner in self.iterate_corners()
+            )
+        
+        if isinstance(other, Box):
+            if other in self or self in other:
+                return 0
+            return min(
+                corner1.manhattan_distance_to(corner2)
+                for corner1, corner2 in zip(
+                    self.iterate_corners(),
+                    other.iterate_corners())
+            )
+        return None
+
 
     def iterate_corners(self):
         yield Point(self.x, self.y)
