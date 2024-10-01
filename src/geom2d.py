@@ -3,7 +3,7 @@
 """ Двумерные примитивы для работы на прямоугольной сетке из ячеек """
 
 from collections import namedtuple
-from typing import Optional
+from typing import Optional, Union
 
 from adict import adict
 
@@ -103,7 +103,7 @@ class Box:
     # Dev note: no more subclassing namedtuple to allow usual inheritance via __init__, not __new__.
     
     __slots__ = ('__tuple')
-    # Dev note: using __slots__ seems to tell CPython to not to store object's data within __dict__.
+    # Dev note: using __slots__ tells CPython to not to store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
         self.__tuple = (x, y, w, h)
@@ -118,10 +118,10 @@ class Box:
     def __hash__(self): return hash(self.__tuple)
     def __eq__(self, other): return self.__tuple.__eq__(other)
     def __ne__(self, other): return self.__tuple.__ne__(other)
-    def __lt__(self, other): return self.__tuple.__lt__(other)
-    def __le__(self, other): return self.__tuple.__le__(other)
-    def __gt__(self, other): return self.__tuple.__gt__(other)
-    def __ge__(self, other): return self.__tuple.__ge__(other)
+    # def __lt__(self, other): return self.__tuple.__lt__(other)
+    # def __le__(self, other): return self.__tuple.__le__(other)
+    # def __gt__(self, other): return self.__tuple.__gt__(other)
+    # def __ge__(self, other): return self.__tuple.__ge__(other)
         
     @property
     def x(self): return self.__tuple[0]
@@ -245,10 +245,12 @@ class Box:
             directions = (directions, )
         if len(directions) == 1 or (directions[0].is_horizontal == directions[1].is_horizontal):
             d0 = directions[0]
-            # add/set default second direction
+            # add/set default/valid second direction
             directions = (d0, RIGHT if d0.is_vertical else DOWN)
             
-        level1, level2 = [
+        # Note the reversed order:
+        # first direction to think about is inner loop indeed!
+        level2, level1 = [
             adict(range=(
                     # Границы для обратного и прямого направлений
                     self.get_side_dy_direction(-abs(d)), 
@@ -256,16 +258,23 @@ class Box:
                     # 1 # d.coordinate_sign,
                 ), 
                 flip=(d.coordinate_sign < 0),
-                index=i,
+                index=(0 if d.is_horizontal else 1),
             )
-            for i, d in enumerate(directions)
+            for d in directions
         ]
+        
+        ###
+        # print((level1, level2))
+        ###
         
         for i in reverse_if(range(*level1.range), level1.flip):
             for j in reverse_if(range(*level2.range), level2.flip):
                 point = (i, j) if level1.index == 0 else (j, i)
                 if exclude_top_left and point == (self.x, self.y):
                     continue
+                ###
+                # print(' → ', point)
+                ###
                 yield Point(*point)
 
     def project(self, direction='h') -> LinearSegment:

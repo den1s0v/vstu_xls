@@ -32,12 +32,17 @@ class GridTestCase(unittest.TestCase):
         self.assertEqual(gw, (0,0, 9,9))
         self.assertEqual((0,0, 9,9), gw)
         
+        # Справа НАЛЕВО, снизу ВВЕРХ:
         for cell in gw.iterateCells((LEFT, UP)):
             print(cell)
 
         col = gw.getRegion(Box(0,0, 1,9))  
         print('col-view range:', col)
         content_list = []
+        # for point in col.iterate_points( [UP, RIGHT] ):
+        #     # print(point)
+        #     ...
+        # Снизу ВВЕРХ, слева НАПРАВО:
         for cell in col.iterateCells( [UP, RIGHT] ):
             print(cell)
             content_list.append(cell.cell.content)
