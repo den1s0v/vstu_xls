@@ -1,5 +1,5 @@
 import unittest
-from geom2d import Box
+from geom2d import Box, Point
 
 
 class BoxTestCase(unittest.TestCase):
@@ -37,6 +37,35 @@ class BoxTestCase(unittest.TestCase):
 
         self.assertTrue(b.overlaps(r))
         self.assertTrue(r.overlaps(b))
+
+    def test_point_dist(self):
+        # triangle: 2 * (3, 4, 5)
+        a = Point(-4, -3)
+        b = Point(4, 3)
+
+        self.assertEqual(b.distance_to(a), 2 * 5)
+        self.assertEqual(b.manhattan_distance_to(a), 2 * 7)
+
+    def test_box_dist_1(self):
+        # triangle: 2 * (3, 4, 5)
+        a = Box(-4, -3, 1,1)
+        b = Box(4, 3, 1,1)
+
+        self.assertEqual(b.manhattan_distance_to(a), 2 * 7)
+
+    def test_box_dist_2(self):
+        # inside
+        a = Box(-4, -3, 10,10)
+        b = Box(4, 3, 1,1)
+
+        self.assertEqual(b.manhattan_distance_to(a), 0)
+
+    def test_box_dist_3(self):
+        # overlaps and (1, 1) is outside
+        a = Box(-4, -3, 10,10)
+        b = Box(4, 3, 3,5)
+
+        self.assertEqual(b.manhattan_distance_to(a), 1 + 1)
 
 
 
