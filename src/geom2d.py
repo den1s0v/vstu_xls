@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 from adict import adict
 
-from geom1d import LinearSegment
+from geom1d import LinearSegment, LinearRelation, Overlaps, Touches
 from utils import reverse_if
 
 # def sign(a):
@@ -92,9 +92,29 @@ class Point(namedtuple('Point', ['x', 'y'])):
         """ "Диагональное" Евклидово расстояние между двумя точками на плоскости. Рассчитывается как длина гипотенузы. """
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
-    def manhattan_distance_to(self, other: 'Point') -> int:
-        """ Расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. Рассчитывается как минимальное число ходов ладьёй для перемещения между двумя точками и равно сумме модулей разностей их координат. """
-        return abs(self.x - other.x) + abs(self.y - other.y)
+    def manhattan_distance_to(self, other: Union['Point', 'Box']) -> int:
+        """ Расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. 
+        Для точки: Рассчитывается как минимальное число ходов ладьёй для перемещения между двумя точками и равно сумме модулей разностей их координат. 
+        Для прямоугольника: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала на границу (внутрь) прямоугольника.
+        """
+        if isinstance(other, Point):
+            return abs(self.x - other.x) + abs(self.y - other.y)
+        if isinstance(other, Box):
+            if self in other:
+                return 0
+            
+            if (other.left <= self.x <= other.right):
+                # ближе до стороны
+                return min(abs(self.y - other.top), abs(self.y - other.bottom))
+            if (other.top <= self.y <= other.bottom):
+                # ближе до стороны
+                return min(abs(self.x - other.left), abs(self.x - other.right))
+            # ближе до угла
+            return min(
+                corner.manhattan_distance_to(self)
+                for corner in other.iterate_corners()
+            )
+
 
 
 class Size(namedtuple('Size', ['w', 'h'])):
@@ -216,18 +236,13 @@ class Box:
     def relates_to(self, other):
         ...
         
-    def manhattan_distance_to(self, other: Union[Point, 'Box']) -> int:
-        """ Целочисленное расстояние:
+    def manhattan_distance_to_overlap(self, other: Union[Point, 'Box']) -> int:
+        """ Целочисленное расстояние до максимального перекрытия:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала внутрь прямоугольника.
             Для прямоугольника: 0, если один из прямоугольников полностью вкладывается в другой, иначе минимальное количество единичных перемещений, чтобы совместить один из углов этих прямоугольников (таким образом, один оказывается внутри другого). В случае, если прямоугольники   не могут быть перекрыты полностью из-за  несовместимых размеров, эта метрика покажет расстояние до ближайшего максимально возможного перекрытия.
         Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. """
         if isinstance(other, Point):
-            if other in self:
-                return 0
-            return min(
-                corner.manhattan_distance_to(other)
-                for corner in self.iterate_corners()
-            )
+            return other.manhattan_distance_to(self)
         
         if isinstance(other, Box):
             if other in self or self in other:
@@ -238,6 +253,30 @@ class Box:
                     self.iterate_corners(),
                     other.iterate_corners())
             )
+        return None
+
+    def manhattan_distance_to_touch(self, other: Union[Point, 'Box']) -> int:
+        """ Целочисленное расстояние до ближайшего касания:
+            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала на границу прямоугольника.
+            Для прямоугольника: 0, если прямоугольники касаются или перекрываются, иначе минимальное количество единичных перемещений, чтобы они стали касаться сторонами или углами.
+        Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. """
+        if isinstance(other, Point):
+            return other.manhattan_distance_to(self)
+        
+        if isinstance(other, Box):
+            if other in self or self in other:
+                return 0
+            
+            rel_h = LinearRelation(
+                self.project('h'), 
+                other.project('h')
+            )
+            rel_v = LinearRelation(
+                self.project('v'), 
+                other.project('v')
+            )
+            return (max(0, rel_v.outer_gap)
+                  + max(0, rel_h.outer_gap))
         return None
 
 

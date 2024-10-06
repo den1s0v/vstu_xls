@@ -51,21 +51,32 @@ class BoxTestCase(unittest.TestCase):
         a = Box(-4, -3, 1,1)
         b = Box(4, 3, 1,1)
 
-        self.assertEqual(b.manhattan_distance_to(a), 2 * 7)
+        self.assertEqual(b.manhattan_distance_to_overlap(a), 2 * 7)
+        self.assertEqual(b.manhattan_distance_to_touch(a), 2 * 7 - 2)
 
     def test_box_dist_2(self):
+        a = Box(4, 1, 1,1)
+        b = Box(4, 3, 1,1)
+
+        self.assertEqual(b.manhattan_distance_to_overlap(a), 2)
+        self.assertEqual(b.manhattan_distance_to_touch(a), 1)
+
+    def test_box_dist_3(self):
         # inside
         a = Box(-4, -3, 10,10)
         b = Box(4, 3, 1,1)
 
-        self.assertEqual(b.manhattan_distance_to(a), 0)
+        self.assertEqual(b.manhattan_distance_to_overlap(a), 0)
+        self.assertEqual(b.manhattan_distance_to_touch(a), 0)
 
-    def test_box_dist_3(self):
+    def test_box_dist_4(self):
         # overlaps and (1, 1) is outside
         a = Box(-4, -3, 10,10)
         b = Box(4, 3, 3,5)
 
-        self.assertEqual(b.manhattan_distance_to(a), 1 + 1)
+        self.assertEqual(b.manhattan_distance_to_overlap(a), 1 + 1)
+
+        self.assertEqual(b.manhattan_distance_to_touch(a), 0)
 
 
 

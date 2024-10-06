@@ -9,6 +9,8 @@ class LinearSegment:
     """Отрезок AB на прямой (1D) - две целых координаты (a <= b).
      Одномерный примитив для работы на координатной прямой """
 
+    __slots__ = ('a', 'b')
+
     def __init__(self, a, b=None, length=None):
         if b is None:
             assert length is not None, 'LinearSegment(a, [b] [,length]) ' \
@@ -32,7 +34,7 @@ class LinearSegment:
     def __len__(self):
         return 2
 
-    def __contains__(self, item):
+    def __contains__(self, item: int):
         assert isinstance(item, int), item
         return self.a <= item <= self.b
 
@@ -47,8 +49,8 @@ class LinearSegment:
 class GenericRelation:
     description = 'соотносится с'
 
-    def implies(cls, other_cls: type):
-        return issubclass(cls, other_cls)
+    def implies(cls, __class_or_tuple: type):
+        return issubclass(cls, __class_or_tuple)
 
     def format_description(self, a=None, b=None, vertical=False):
         s = self.description
