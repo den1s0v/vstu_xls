@@ -146,24 +146,25 @@ class Region(Box):
         Get a region that is externally adjacent to this one from a given side and extended by a given distance (by default to the border of the grid_view).
 
         Args:
-            direction (_type_): direction that determines target side.
+            direction (Direction): direction that determines target side.
             distance (int, optional): length of region along `direction`. Values below zero mean maximum possible length. Defaults to -1.
 
         Returns:
             Region: new non-overlapping Region having the same adjacent side to this one.
         """
         side = self.get_side_dy_direction(direction)
+        end = self.grid_view.get_side_dy_direction(direction)
         if distance >= 0:
-            end = side + distance * direction.coordinate_sign
-        else:
-            end = self.grid_view.get_side_dy_direction(direction)
+            end_in_direction = side + distance * direction.coordinate_sign
+            # limit value to be within view borders
+            end = (min if direction.coordinate_sign > 0 else max)(end_in_direction, end)
             
         if direction.is_horizontal:
-            coords = side, end, self.top, self.bottom
+            coords = side, self.top, end, self.bottom
         else:
-            coords = self.left, self.right, side, end
+            coords = self.left, side, self.right, end
 
-        return Box.from_2points(*coords)
+        return Region(self.grid_view, Box.from_2points(*coords))
 
 
 

@@ -2,7 +2,7 @@ import unittest
 
 from pathlib import Path
 
-from geom2d import Box, Point, LEFT, RIGHT, UP, DOWN
+from geom2d import Box, Point, Direction, LEFT, RIGHT, UP, DOWN
 from grid import Grid, Cell
 
 class TxtGrid(Grid):
@@ -65,6 +65,59 @@ class GridTestCase(unittest.TestCase):
         print(row_chars)
         
         self.assertEqual(row_chars, 'ABCDEFGH')
+        
+        
+        
+        rect = gw.getRegion(Box(3,3, 3,3))  
+        print('rect-view range:', rect)
+        for d in Direction._cache.values():
+            outer = rect.lookOutside(d)
+            chars = (cell.cell.content for cell in outer.iterateCells())
+            print('rect-view range, %s:' % d.prop_name, outer)
+            print('                   ', ''.join(chars))
+
+
+        print()
+        rect = gw.getRegion(Box(2,2, 5,5))  
+        print('rect-view range:', rect)
+        for d in Direction._cache.values():
+            outer = rect.lookOutside(d, distance=2)
+            chars = (cell.cell.content for cell in outer.iterateCells())
+            print('rect-view range, %s:' % d.prop_name, outer)
+            print('                   ', ''.join(chars))
+
+
+        print()
+        print('# zero distance')
+        rect = gw.getRegion(Box(2,2, 4,4))  
+        print('rect-view range:', rect)
+        for d in Direction._cache.values():
+            outer = rect.lookOutside(d, distance=0)
+            # chars = (cell.cell.content for cell in outer.iterateCells())
+            print('rect-view range, %s:' % d.prop_name, outer)
+            # print('                   ', ''.join(chars))
+
+
+        print()
+        print('# ignored distance')
+        rect = gw.getRegion(Box(2,2, 4,4))  
+        print('rect-view range:', rect)
+        for d in Direction._cache.values():
+            outer = rect.lookOutside(d, distance=-10)  # ignored distance
+            chars = (cell.cell.content for cell in outer.iterateCells())
+            print('rect-view range, %s:' % d.prop_name, outer)
+            print('                   ', ''.join(chars))
+
+        print()
+        print('# too large distance, clamp.')
+        rect = gw.getRegion(Box(2,2, 4,4))  
+        print('rect-view range:', rect)
+        for d in Direction._cache.values():
+            outer = rect.lookOutside(d, distance=999)  # too large distance, clamp.
+            chars = (cell.cell.content for cell in outer.iterateCells())
+            print('rect-view range, %s:' % d.prop_name, outer)
+            print('                   ', ''.join(chars))
+
 
 
 
