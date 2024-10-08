@@ -128,41 +128,41 @@ class Size(namedtuple('Size', ['w', 'h'])):
 
 class Box:
     """ Прямоугольник на целочисленной координатной плоскости (2d). `Box(x, y, w, h)`. """
-    # Dev note: no more subclassing namedtuple to allow usual inheritance via __init__, not __new__.
+    # Dev note: i'm avoiding subclassing namedtuple to allow usual inheritance via __init__, not __new__.
     
-    __slots__ = ('__tuple')
+    __slots__ = ('_tuple')
     # Dev note: using __slots__ tells CPython to not to store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
-        self.__tuple = (x, y, w, h)
+        self._tuple = (x, y, w, h)
         
     def as_tuple(self):
-        return self.__tuple
+        return self._tuple
         
-    # staff that mimics behavior ot `tuple`:
+    # staff that mimics behavior of `tuple`:
     def __len__(self): return 4
-    def __getitem__(self, key): return self.__tuple[key]
-    def __iter__(self): return iter(self.__tuple)
-    def __hash__(self): return hash(self.__tuple)
-    def __eq__(self, other): return self.__tuple.__eq__(other)
-    def __ne__(self, other): return self.__tuple.__ne__(other)
-    # def __lt__(self, other): return self.__tuple.__lt__(other)
-    # def __le__(self, other): return self.__tuple.__le__(other)
-    # def __gt__(self, other): return self.__tuple.__gt__(other)
-    # def __ge__(self, other): return self.__tuple.__ge__(other)
+    def __getitem__(self, key): return self._tuple[key]
+    def __iter__(self): return iter(self._tuple)
+    def __hash__(self): return hash(self._tuple)
+    def __eq__(self, other): return self._tuple.__eq__(other)
+    def __ne__(self, other): return self._tuple.__ne__(other)
+    # def __lt__(self, other): return self._tuple.__lt__(other)
+    # def __le__(self, other): return self._tuple.__le__(other)
+    # def __gt__(self, other): return self._tuple.__gt__(other)
+    # def __ge__(self, other): return self._tuple.__ge__(other)
         
     @property
-    def x(self): return self.__tuple[0]
+    def x(self): return self._tuple[0]
     @property
-    def y(self): return self.__tuple[1]
+    def y(self): return self._tuple[1]
     @property
-    def w(self): return self.__tuple[2]
+    def w(self): return self._tuple[2]
     @property
-    def h(self): return self.__tuple[3]
+    def h(self): return self._tuple[3]
 
     # other stuff.
-    @staticmethod
-    def from_2points(x1: int, y1: int, x2: int, y2: int) -> 'Box':
+    @classmethod
+    def from_2points(cls, x1: int, y1: int, x2: int, y2: int) -> 'Box':
         """ Construct a new Box from two diagonal points (4 coordinates), no matter which diagonal.
 
         Args:
@@ -174,7 +174,7 @@ class Box:
         Returns:
             Box: new instance
         """
-        return Box(
+        return cls(
             min(x1, x2),
             min(y1, y2),
             abs(x1 - x2),
@@ -206,6 +206,8 @@ class Box:
     
     def __str__(self) -> str:
         return f'[({self.x},{self.y})→{self.w}x{self.h}]'
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}{str(self)}'
 
 
     def __contains__(self, other):
