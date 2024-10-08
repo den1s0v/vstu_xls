@@ -1,5 +1,5 @@
 import unittest
-from geom2d import Box, Point
+from geom2d import Box, Point, VariBox
 
 
 class BoxTestCase(unittest.TestCase):
@@ -78,6 +78,25 @@ class BoxTestCase(unittest.TestCase):
 
         self.assertEqual(b.manhattan_distance_to_touch(a), 0)
 
+
+class VariBoxTestCase(unittest.TestCase):
+    def test_in_1(self):
+        b = VariBox(10, 20, 15, 4)
+        r = VariBox(10, 20, 15, 4)
+
+        self.assertIn(r, b)
+        self.assertIn(b, r)
+        
+        b.x = 15
+        self.assertEqual(15, b.left)
+
+        r.left = 15
+        r.w += 5
+        self.assertEqual(b, r)
+
+        r.w -= 5
+        r.right = 30
+        self.assertEqual(b, r)
 
 
 
