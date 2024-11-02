@@ -4,5 +4,6 @@ lxml
 xls2xlsx
 adict
 PyYAML
+sympy
 
 # pywin32 (optional, Windows only)
