@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from timeit import default_timer as timer
 
 
@@ -31,11 +32,48 @@ class Checkpointer:
             self.last = now
         return delta
 
-     
+
 def reverse_if(iterable, reverse=True):
     """ Return `reversed(iterable)` if `reverse==True`, and untouched `iterable` otherwise.
     """
     if reverse:
         return reversed(iterable)
     return iterable
+
+
+
+@contextmanager
+def global_vars(**kwargs):
+    """ Declare a global var for usage within context block.
+    Usage:
+    print(foo)  # NameError: name 'foo' is not defined
+
+    with global_vars(foo='bar'):
+        ...
+        print(foo)  # prints 'bar'
+        ...
+        with global_vars(foo='BAZ'):
+            print(foo)  # prints 'BAZ'
+        ...
+        print(foo)  # prints 'bar'
+        ...
+
+    print(foo)  # NameError: name 'foo' is not defined
+    """
+    # setup: back up previous values of global variables, if set.
+    glob = globals()  # updatable dict of global variables
+    prev_values = {}
+    for name, new_value in kwargs.items():
+        if name in glob:
+            prev_values[name] = glob[name]
+        glob[name] = new_value
+    try:
+        yield
+    finally:
+        # cleanup: restore previous values or delete used variables.
+        for name in kwargs.keys():
+            if name in prev_values:
+                glob[name] = prev_values[name]
+            elif name in glob:  # if it was not deleted within wrapped code
+                del glob[name]
 
