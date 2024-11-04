@@ -169,10 +169,16 @@ class SpatialConstraint(BoolExpr):
         var_name2value = self._map_vars_to_component_coordinates(component2box)
         return self.eval(var_name2value)
 
+    def inline_component_positions(self, component2box: dict[str, Box]):
+        var_name2value = self._map_vars_to_component_coordinates(component2box)
+        self.replace_vars(var_name2value)
+        return self
+
     def replace_components(self, mapping: dict[str, str]):
         """ Rename variables — change leading parts of variables so these denote different components. In-place. """
         vars_mapping = self._vars_mapping_for_replacing_components(mapping)
         self.replace_vars(vars_mapping)
+        return self
 
 
     def _fit_component_mapping(self, mapping: set[str]):
@@ -207,7 +213,7 @@ class SpatialConstraint(BoolExpr):
         return var_names_mapping
 
 
-    def _map_vars_to_component_coordinates(self, component2box: dict[str, Box]):
+    def _map_vars_to_component_coordinates(self, component2box: dict[str, Box]) -> dict[str, int]:
         component2box = self._fit_component_mapping(component2box)
         var_name2value = {}
         for v in self.referenced_variables():
