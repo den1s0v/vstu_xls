@@ -76,7 +76,7 @@ class constraints_2d_TestCase(unittest.TestCase):
         area = sc.eval_with_components({'this': Box(1, 10, 7, 9)})
         self.assertEqual(True, area)
 
-    def test_eval_box_2(self):
+    def test_eval_box_3(self):
         # note x: 1 != 2, so full conjunction gives False.
         expr = 'x == 2 and y == 10 and left == x and top == y and right == 8 and bottom == 19'
         sc = SpatialConstraint(expr)
