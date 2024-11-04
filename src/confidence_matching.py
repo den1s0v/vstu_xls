@@ -111,7 +111,7 @@ class ConfidentPattern:
 
         `preprocess`: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' or nothing
 
-        `update_content`: 'clear' or nothing
+        `update_content`: 'clear', 'replace_with_preprocessed' or nothing
     """
     pattern: str = None
     confidence: float = 0.5
@@ -238,6 +238,7 @@ class CellType:
         return ps
 
     def match(self, cell_text: str) -> Optional[Match]:
+        """Return match according to pattern with highest confidence."""
         for p in self.patterns:
             if m := p.match(cell_text):
                 return m

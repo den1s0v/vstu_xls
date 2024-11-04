@@ -35,7 +35,7 @@ class Grid(ABC):
         return self.point2cell.get(point)
 
     def getBoundingBox(self, force_recalc = False) -> Box:
-        """ Размеры эффективной области расположения данных (за пределами этой области могут быть только пустые ячейки). 
+        """ Размеры эффективной области расположения данных (за пределами этой области могут быть только пустые ячейки).
             Default implementation that can be improved by subclasses.
         """
         if not self._bb_cache or force_recalc:
@@ -46,7 +46,7 @@ class Grid(ABC):
             b = max(box.bottom for box in boxes)
             self._bb_cache = Box.from_2points(l, t, r, b)
         return self._bb_cache
-    
+
     def getView(self, box: Box = None) -> Optional['GridView']:
         """Проекция заданной области внутри сетки или всей сетки целиком."""
         boundingBox = self.getBoundingBox()
@@ -55,8 +55,8 @@ class Grid(ABC):
 
     def supportsCellMerging(self) -> bool:
         return False
-    
-    
+
+
 class GridWithCellMerging(Grid):
     """
         Двумерная сетка/решётка ограниченных размеров.
@@ -64,7 +64,7 @@ class GridWithCellMerging(Grid):
     """
     def supportsCellMerging(self) -> bool:
         return True
-    
+
 
 
 
@@ -112,8 +112,8 @@ class Region(Box):
                 box.overlaps(self) and (box := box.intersect(self)) and box):
             return None  # не показывать ничего за пределами области проекции.
         return self.grid_view.getRegion(box)
-        
-    def iterateCells(self, directions = (RIGHT, DOWN)):
+
+    def iterate_cells(self, directions = (RIGHT, DOWN)):
         """ Yield all non-empty cells within this region.
 
         Args:
@@ -129,7 +129,7 @@ class Region(Box):
 
     def findCell(self, predicate: callable, directions = (RIGHT, DOWN)) -> Optional['CellView']:
         """ Найти первую ячейку, удовлетворяющую условию `predicate`. Перебор осуществляется в заданных направлениях.
-            Find the first cell that satisfies the `predicate` condition. The search is carried out in a given `directions`. 
+            Find the first cell that satisfies the `predicate` condition. The search is carried out in a given `directions`.
             `predicate` should take CellView as the only argument and return bool.
             """
         for cw in self.findAllCells(predicate, directions):
@@ -137,7 +137,7 @@ class Region(Box):
         return None
 
     def findAllCells(self, predicate: callable, directions = (RIGHT, DOWN)):
-        for cw in self.iterateCells(directions):
+        for cw in self.iterate_cells(directions):
             if predicate(cw):
                 yield cw
 
@@ -158,7 +158,7 @@ class Region(Box):
             end_in_direction = side + distance * direction.coordinate_sign
             # limit value to be within view borders
             end = (min if direction.coordinate_sign > 0 else max)(end_in_direction, end)
-            
+
         if direction.is_horizontal:
             coords = side, self.top, end, self.bottom
         else:
@@ -174,13 +174,14 @@ class CellView(Region):
     def __init__(self, grid_view: 'GridView', cell: Cell) -> None:
         super().__init__(grid_view, cell.box)
         self.cell = cell
-        
+        self.data = adict()
+
     def __str__(self) -> str:
         return str(self.cell)
 
 
 class GridView(Region):
-    """ Проекция всей 2D-сетки (grid). Проекция может хранить дополнительные данные о ячейках и регионах (в соответствующих объектах проекций). 
+    """ Проекция всей 2D-сетки (grid). Проекция может хранить дополнительные данные о ячейках и регионах (в соответствующих объектах проекций).
         Предполагается, что сама grid не будет изменяться после создания GridView для неё.
     """
     grid: Grid
@@ -192,7 +193,7 @@ class GridView(Region):
         self.grid = grid
         self.cell_cache = dict()  # WeakValueDictionary()
         self.region_cache = dict()  # WeakValueDictionary()
-        
+
     def getCell(self, point: Point) -> Optional['CellView']:
         if point not in self:
             return None  # не показывать ничего за пределами области проекции.
@@ -217,17 +218,17 @@ class GridView(Region):
                 # Запомним проекцию ячейки: там, откуда мы ячейку запрашивали.
                 self.cell_cache[point] = cw
                 return cw
-            
+
             else:
                 # В этой точке нет ячейки, запомним это.
                 self.cell_cache[point] = None
         return None
-        
+
     def getRegion(self, box: Box) -> Optional['Region']:
         if not (box in self or
                 box.overlaps(self) and (box := box.intersect(self)) and box):
             return None  # не показывать ничего за пределами области проекции.
-        
+
         rg = self.region_cache.get(box)
         if not rg:
             rg = Region(self, box)
