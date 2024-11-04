@@ -16,6 +16,13 @@ class constraints_2d_TestCase(unittest.TestCase):
         self.assertEqual('a + 1', str(sc._expr))
         self.assertEqual(6, sc.eval({'a': 5}))
 
+        # def test_read_and_eval_2(self):
+        #     expr = '1 + + a'
+        #     sc = _SpatialConstraint(expr)
+        #     self.assertEqual(expr, str(sc))
+        #     self.assertEqual('a + 1', str(sc._expr))
+        #     self.assertEqual(6, sc.eval({'a': 5}))
+
     def test_simple_replace(self):
         expr = '1 + b + a'
         sc = SpatialConstraint(expr)
