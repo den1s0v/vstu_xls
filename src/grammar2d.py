@@ -6,6 +6,7 @@ from typing import Optional, Union
 
 from confidence_matching import CellType
 from constraints_2d import SpatialConstraint
+from utils import WithCache
 
 
 GRAMMAR: 'Grammar' = None
@@ -121,30 +122,30 @@ class Terminal(GrammarElement):
 
 
 
-class NonTerminal(GrammarElement):
+class NonTerminal(GrammarElement, WithCache):
     """Структура или Коллекция"""
     components: list[PatternComponent]
 
-    _dependencies: list[GrammarElement] = None
+    # dependencies: list[GrammarElement] = None
     def dependencies(self, recursive=False) -> list[GrammarElement]:
-        if not self._dependencies:
+        if not self._cache.dependencies:
             dependency_set = set()
             for comp in self.components:
                 dependency_set |= comp.dependencies(recursive)
             # check circular dependencies
             assert self not in dependency_set, 'Grammar element `{self.name}` has circular dependency on itself!'
-            self._dependencies = list(sorted(dependency_set))
-        return self._dependencies
+            self._cache.dependencies = list(sorted(dependency_set))
+        return self._cache.dependencies
 
-    _component_by_name: dict[str, GrammarElement] = None
+    # component_by_name: dict[str, GrammarElement] = None
     @property
     def component_by_name(self, name: str) -> GrammarElement | None:
-        if not self._component_by_name:
-            self._component_by_name = {
+        if not self._cache.component_by_name:
+            self._cache.component_by_name = {
                 comp.name: comp
                 for comp in self.components
             }
-        return self._component_by_name.get(name)
+        return self._cache.component_by_name.get(name)
 
     def max_score(self) -> float:
         """ precision = score / max_score """
@@ -158,7 +159,7 @@ class NonTerminal(GrammarElement):
 
 
 @dataclass
-class Grammar:
+class Grammar(WithCache):
     """Грамматика описывает весь документ, начиная от корня"""
     
     cell_types: dict[str, CellType]
@@ -209,12 +210,12 @@ class Grammar:
                 effective_cell_types[requested_cell_type] = self.cell_types[requested_cell_type]
         return effective_cell_types
 
-    _dependency_waves: list[set[GrammarElement]] = None
+    # dependency_waves: list[set[GrammarElement]] = None
 
     @property
     def dependency_waves(self) -> list[set[GrammarElement]]:
         """get list of sets `_dependency_waves`"""
-        if not self._dependency_waves:
+        if not self._cache.dependency_waves:
             assert self.elements, 'Cannot process empty grammar!'
             
             # build dependency "tree" by tracing stages of matching process.
@@ -252,16 +253,16 @@ class Grammar:
             elif self.root not in waves[-1]:
                 print('WARNING: `root` of grammar is not the top-level element!')
             
-            self._dependency_waves = waves
+            self._cache.dependency_waves = waves
             
-        return self._dependency_waves
+        return self._cache.dependency_waves
 
-    _can_be_extended_by: dict[GrammarElement, list[GrammarElement]] = None
+    # can_be_extended_by: dict[GrammarElement, list[GrammarElement]] = None
 
     @property
     def extension_map(self) -> dict[GrammarElement, list[GrammarElement]]:
-        """get dict `_can_be_extended_by`"""
-        if not self._can_be_extended_by:
+        """get dict `can_be_extended_by`"""
+        if not self._cache.can_be_extended_by:
             # build map
             can_be_extended_by = defaultdict(list)
 
@@ -284,8 +285,8 @@ class Grammar:
 
                     # Note: infinite propagation is not implemented, only 2 levels. Please declare all bases in Element's specification, do not rely on automatic inference.
 
-            self._can_be_extended_by = dict(can_be_extended_by)  # convert to ordinary dict
-        return self._can_be_extended_by
+            self._cache.can_be_extended_by = dict(can_be_extended_by)  # convert to ordinary dict
+        return self._cache.can_be_extended_by
 
     def can_extend(self, base_element: str | GrammarElement, extension_element: str | GrammarElement) -> bool:
         children = self.extension_map.get(self[base_element], None)

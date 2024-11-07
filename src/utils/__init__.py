@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from timeit import default_timer as timer
 
+from adict import adict
 
 class Checkpointer:
     """Measures time between hits. Requires the `from timeit import default_timer as timer`"""
@@ -45,7 +46,8 @@ def reverse_if(iterable, reverse=True):
 @contextmanager
 def global_vars(**kwargs):
     """ Declare a global var for usage within context block.
-    Usage:
+    This is not thread-safe.
+    Usage example:
     print(foo)  # NameError: name 'foo' is not defined
 
     with global_vars(foo='bar'):
@@ -76,4 +78,23 @@ def global_vars(**kwargs):
                 glob[name] = prev_values[name]
             elif name in glob:  # if it was not deleted within wrapped code
                 del glob[name]
+
+
+
+class safe_adict(adict):
+    """Seme as `adict` but `__getattr__` behaves as `dict.get`, i.e. `None` is just returned if a key is absent."""
+    def __getattr__(self, name):
+        # don't throw any exception on key absence
+        return self.get(name)
+
+
+class WithCache:
+    """ Mixin that adds `self._cache` attribute to object (on demand, not in constructor).
+    type: adict, i.e. ordinary dict but allowing access to a key as an attr."""
+
+    @property
+    def _cache(self) -> safe_adict:
+        if not hasattr(self, '_cache_d'):
+            self._cache_d = safe_adict()
+        return self._cache_d
 
