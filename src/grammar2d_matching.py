@@ -127,7 +127,7 @@ class NonTerminalMatcher(ElementMacher):
         
         existing_constraint: 'SpatialConstraint' = partial_match.data.constraint
         # add constraints from candidate.
-        comp_constraints = component.get_constraints_as_for_parent()
+        comp_constraints = component.global_constraints
         if comp_constraints:
             appended_constraint = reduce(and_, [*comp_constraints, existing_constraint])
         else:
