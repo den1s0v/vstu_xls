@@ -36,8 +36,8 @@ class CoordVar:
         'y', 'top', 'T',
         'right', 'R',
         'bottom', 'B',
-        'width', 'W',
-        'height', 'H',
+        'width', 'w', 'W',
+        'height', 'h', 'H',
         # 'start', 'S',
         # 'end', 'E',
         # 'size', 'length', 'D',  # 'D': L & S were taken :)
@@ -68,13 +68,15 @@ class CoordVar:
         else:
             sep = ''
         return f"{self.component}{sep}{self.attr}"
+    
+    def __str__(self): return self.var_name
 
     def attr_for_box(self) -> str:
         return self.box_attrs.get(self.attr, self.attr)
 
     @classmethod
     def validate_attr(cls, attr_name: str) -> str:
-        assert attr_name in (cls.valid_attrs), f"Unknown attribute: '{attr_name}'."
+        assert attr_name in (cls.valid_attrs), f"Unknown attribute name: '{attr_name}' (expected one of: {cls.valid_attrs})."
         return attr_name
 
     @classmethod

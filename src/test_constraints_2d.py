@@ -1,27 +1,27 @@
 import unittest
 from geom2d import Box
 
-from utils.sympy_expr import register_sympy_as_expr_backend # this registers subclass of SpatialConstraint
+from utils.sympy_expr import register_sympy_as_expr_backend
 from constraints_2d import SpatialConstraint
 
-register_sympy_as_expr_backend()
+register_sympy_as_expr_backend()  # this registers subclass of SpatialConstraint
 
 
 class constraints_2d_TestCase(unittest.TestCase):
 
     def test_read_and_eval(self):
-        expr = '1 + + a'
+        expr = '1 + + x'
         sc = SpatialConstraint(expr)
         self.assertEqual(expr, str(sc))
-        self.assertEqual('a + 1', str(sc._expr))
-        self.assertEqual(6, sc.eval({'a': 5}))
+        self.assertEqual('x + 1', str(sc._expr))
+        self.assertEqual(6, sc.eval({'x': 5}))
 
-        # def test_read_and_eval_2(self):
-        #     expr = '1 + + a'
-        #     sc = _SpatialConstraint(expr)
-        #     self.assertEqual(expr, str(sc))
-        #     self.assertEqual('a + 1', str(sc._expr))
-        #     self.assertEqual(6, sc.eval({'a': 5}))
+    def test_read_and_eval_2(self):
+        expr = 'y + + h'
+        sc = SpatialConstraint(expr)
+        self.assertEqual(expr, str(sc))
+        self.assertEqual('h + y', str(sc._expr))
+        self.assertEqual(6, sc.eval({'h': 5, 'y': 1}))
 
     def test_simple_replace(self):
         expr = '1 + b + a'
