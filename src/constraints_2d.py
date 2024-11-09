@@ -163,9 +163,9 @@ class SpatialConstraint(BoolExpr):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
-    def referenced_components(self) -> list[str]:
+    def referenced_components(self) -> set[str]:
         components = {var.component for var in self.referenced_variables()}
-        return list(sorted(components))
+        return components
 
     def eval_with_components(self, component2box: dict[str, Box]) -> bool:
         var_name2value = self._map_vars_to_component_coordinates(component2box)
@@ -185,7 +185,7 @@ class SpatialConstraint(BoolExpr):
 
     def _fit_component_mapping(self, mapping: set[str]):
         """ Update mapping to utilize component_name_aliases to exisiting components if required """
-        this_components = set(self.referenced_components())
+        this_components = self.referenced_components()
         components_requested = set(mapping.keys())
         unmatched_components = components_requested - this_components
 
