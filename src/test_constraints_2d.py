@@ -66,6 +66,26 @@ class constraints_2d_TestCase(unittest.TestCase):
         sc = SpatialConstraint(expr)
         self.assertSetEqual(set(['_y_z_a', 'b', 'c', '', '_']), sc.referenced_components())
 
+    def test_components_3(self):
+        expr = '_y_z_a_x < b_L < c_R == L < _right'
+        sc = SpatialConstraint(expr)
+        self.assertDictEqual({
+            '_y_z_a': ['left'],
+            'b': ['left'],
+            'c': ['right'],
+            '': ['left'],
+            '_': ['right'], 
+        }, sc.referenced_components_with_attributes())
+
+    def test_components_4(self):
+        expr = '_y_z_a_B < b_L < b_R == L < R'
+        sc = SpatialConstraint(expr)
+        self.assertDictEqual({
+            '_y_z_a': ['bottom'],
+            'b': ['left', 'right'],
+            '': ['left', 'right'],
+        }, sc.referenced_components_with_attributes())
+
     def test_replace_components_1(self):
         expr = 'G_x < G_L < G_R <= _L < G_right - W'
         sc = SpatialConstraint(expr)

@@ -51,7 +51,7 @@ class PatternComponent(WithCache):
         return [self.element, *self.element.dependencies(recursive=True)]
 
     # constraints_with_full_names: list[SpatialConstraint] = None
-    
+
     @property
     def global_constraints(self) -> list[SpatialConstraint]:
         """ "Глобальные" ограничения — запись координат преобразована из сокращённой формы в полную:
@@ -67,24 +67,24 @@ class PatternComponent(WithCache):
                 for ex in self.constraints
             ]
         return self._cache.constraints_with_full_names
-        
+
     def constraints_conjunction(self) -> SpatialConstraint:
         if self._cache.constraints_conjunction is None:
             self._cache.constraints_conjunction = reduce(and_, self.global_constraints)
         return self._cache.constraints_conjunction
-        
+
     def checks_components(self) -> set[str]:
         """ Find which components are checked within constraints.
         This method usually returns 'element' as parent, and `self.name` as well. """
         if self._cache.components_in_constraints is None:
             self._cache.components_in_constraints = frozenset(self.constraints_conjunction().referenced_components())
         return self._cache.components_in_constraints
-        
+
     def checks_other_components(self) -> set[str]:
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {'element', self.name}
-        
+
 
 
 
@@ -139,7 +139,7 @@ class Terminal(GrammarElement):
 
     def max_score(self) -> float:
         return 1
-    
+
     def get_matcher(self, grammar_macher):
         from grammar2d_matching import TerminalMatcher
         return TerminalMatcher(self, grammar_macher)
@@ -175,7 +175,7 @@ class NonTerminal(GrammarElement, WithCache):
         """ precision = score / max_score """
         return sum(comp.weight for comp in self.components if comp.weight > 0)
     ...
-    
+
     def get_matcher(self, grammar_macher):
         from grammar2d_matching import NonTerminalMatcher
         return NonTerminalMatcher(self, grammar_macher)
@@ -185,11 +185,11 @@ class NonTerminal(GrammarElement, WithCache):
 @dataclass
 class Grammar(WithCache):
     """Грамматика описывает весь документ, начиная от корня"""
-    
+
     cell_types: dict[str, CellType]
     elements: dict[str, GrammarElement]
     root_name: str = None
-    
+
     def register_element(self, elem: GrammarElement):
         assert elem.name, f"Cannot register element without name: {elem}"
         self.elements[elem.name] = elem
@@ -223,7 +223,7 @@ class Grammar(WithCache):
         else:
             elem = self.elements[name_or_el]
         return elem
-    
+
     def get_effective_cell_types(self) -> dict[str, CellType]:
         """ Get cell types only used for matching, i.e. omit unused ones. """
         effective_cell_types = {}
@@ -241,7 +241,7 @@ class Grammar(WithCache):
         """get list of sets `_dependency_waves`"""
         if not self._cache.dependency_waves:
             assert self.elements, 'Cannot process empty grammar!'
-            
+
             # build dependency "tree" by tracing stages of matching process.
             waves = []
             unmatched_elements = set(self.elements.values())
@@ -254,16 +254,16 @@ class Grammar(WithCache):
                     if not(elem_deps - matched_elements):
                         # this one can be matched now.
                         current_wave.add(elem)
-                
+
                 if not current_wave:
                     raise ValueError(f"Grammar defined improperly: some elements cannot be matched due to circular dependencies ({unmatched_elements}). Elements could be matched correctly: {matched_elements}.")
 
                 waves.append(current_wave)
                 unmatched_elements -= current_wave
                 matched_elements |= current_wave
-            
+
             assert waves, 'Cannot infer any matching stages for the grammar!'
-            
+
             # check root
             if (n := len(waves[-1])) > 1:
                 print(f'WARNING: grammar defines several ({n}) top-level elements!')
@@ -276,9 +276,9 @@ class Grammar(WithCache):
                 print('INFO: Grammar root inferred automatically:', self.root_name)
             elif self.root not in waves[-1]:
                 print('WARNING: `root` of grammar is not the top-level element!')
-            
+
             self._cache.dependency_waves = waves
-            
+
         return self._cache.dependency_waves
 
     # can_be_extended_by: dict[GrammarElement, list[GrammarElement]] = None

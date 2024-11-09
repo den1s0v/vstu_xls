@@ -1,5 +1,7 @@
 # constraints_2d.py
 
+from collections import defaultdict
+
 from geom2d import Box
 
 
@@ -44,6 +46,8 @@ class CoordVar:
     )
 
     box_attrs = {
+        'x': 'left',
+        'y': 'top',
         'L': 'left',
         'T': 'top',
         'R': 'right',
@@ -166,6 +170,16 @@ class SpatialConstraint(BoolExpr):
     def referenced_components(self) -> set[str]:
         components = {var.component for var in self.referenced_variables()}
         return components
+
+    def referenced_components_with_attributes(self) -> dict[list[str]]:
+        component2attrs = defaultdict(list)
+        for var in self.referenced_variables():
+            attr4box = var.attr_for_box()
+            attr_list = component2attrs[var.component]
+            if attr4box not in attr_list:
+                attr_list.append(attr4box)
+                attr_list.sort()
+        return dict(component2attrs)
 
     def eval_with_components(self, component2box: dict[str, Box]) -> bool:
         var_name2value = self._map_vars_to_component_coordinates(component2box)
