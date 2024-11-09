@@ -5,7 +5,7 @@ from utils.ast_to_sympy import parse_expression
 
 
 class SympyExpr(BoolExpr):
-    """ Wrapper around SymPy expression """
+    """ Adapter to SymPy expression """
 
     def __init__(self, expr_string: str = None, expr: object = None):
         sympy_expr = (expr or parse_expression(expr_string)).simplify()

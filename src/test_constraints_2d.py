@@ -1,10 +1,27 @@
 import unittest
 from geom2d import Box
 
-from utils.sympy_expr import register_sympy_as_expr_backend
+from utils.sympy_expr import SympyExpr, register_sympy_as_expr_backend
 from constraints_2d import SpatialConstraint
 
 register_sympy_as_expr_backend()  # this registers subclass of SpatialConstraint
+
+
+class sumpy_expr_TestCase(unittest.TestCase):
+
+    def test_1(self):
+        expr = '1 + + A_x'
+        ex = SympyExpr(expr)
+        self.assertEqual(expr, str(ex))
+        self.assertEqual('A_x + 1', str(ex._expr))
+        self.assertEqual(6, ex.eval({'A_x': 5}))
+        ex.replace_vars({'A_x': 'y'})
+        self.assertEqual('y + 1', str(ex._expr))
+        ex.replace_vars()
+        self.assertEqual('y + 1', str(ex._expr))
+        ex.replace_vars({'A_x': 'z'})  # 'A_x' is no more in the exr, so it wouldn't change.
+        self.assertEqual('y + 1', str(ex._expr))
+
 
 
 class constraints_2d_TestCase(unittest.TestCase):
