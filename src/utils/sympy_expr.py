@@ -1,4 +1,4 @@
-from sympy import Symbol, lambdify
+from sympy import Eq, Symbol, lambdify
 
 from constraints_2d import BoolExpr, CoordVar, SpatialConstraint, register_SpatialConstraint_default_subclass
 from utils.ast_to_sympy import parse_expression
@@ -38,8 +38,12 @@ class SympyExpr(BoolExpr):
             self.lambdified = lambdify(expr_vars, self._expr, docstring_limit=0)
         return self.lambdified
 
-    def eval(self, var2value = ()) -> bool:
+    def eval(self, var2value: dict[str, int] = ()) -> bool:
         """ Evaluate the expr for given values of variables """
+        # Check if vars provided are sufficient to fully evaluate the expr.
+        missing_vars = {str(v) for v in self.referenced_variables()} - set(var2value)
+        if missing_vars:
+            raise ValueError(f"Cannot evaluate {self}: missing vars {missing_vars}")
         return self.to_callable()(**var2value)
     
     def _subs(self, var2value = ()) -> object:
@@ -50,12 +54,27 @@ class SympyExpr(BoolExpr):
         
         return self._expr.subs(var2value, simultaneous=True)  # `simultaneous=True` avoids possible variable clash
     
-    def replace_vars(self, var_mapping: dict[str, str] = ()):
+    def replace_vars(self, var_mapping: dict[str, int|str] = ()):
         """ Change variables in-place """
         self._expr = self._subs(var_mapping)
+        if var_mapping and any(isinstance(val, (int, float)) for val in var_mapping.values()):
+            # numbers inserted, should try to simplify
+            self._expr = self._expr.simplify()
         self.expr_string = str(self._expr)  # update textual repr as well
         self.vars = None
         self.lambdified = None
+
+    def assignable_vars(self) -> set[str]:
+        """ Find which variables can take values via Equality 
+            Ex. in `a == b + 1` both `a` and `b` can be "assigned" if the other is materialized.
+        """
+        return extract_vars_with_equality(self._expr)
+
+    def assigned_vars(self) -> dict[str, int]:
+        """ Find which variables have taken values via Equality 
+            Ex. for `a == 5 and 1 == b` returns: `{'a': 5, 'b': 1}`.
+        """
+        return extract_var_values_from_sympy_expr(self._expr)
 
     def __and__(self, y: 'SympyExpr') -> 'SympyExpr':
         """x&y""" 
@@ -79,6 +98,37 @@ class SpatialConstraintSympyBacked(SympyExpr, SpatialConstraint):
 def register_sympy_as_expr_backend():
     """register subclass of SpatialConstraint"""
     register_SpatialConstraint_default_subclass(SpatialConstraintSympyBacked)
+
+
+
+def extract_vars_with_equality(expr) -> set[str]:
+    """ Find which variables are "assigned" to values via Eq 
+            Ex. for `a == 5 and 1 = b` returns: `{'a': 5, 'b': 1}`. """
+    var_set = set()
+    if hasattr(expr, 'atoms'):
+        for eq in expr.atoms(Eq):
+            for sym in eq.atoms(Symbol):
+                var_set.add(sym.name)
+    return var_set
+
+
+def extract_var_values_from_sympy_expr(expr) -> dict[str, int]:
+    """ Find which variables are "assigned" to values via Eq 
+            Ex. for `a == 5 and 1 == b` returns: `{'a': 5, 'b': 1}`. """
+    var2val = {}
+    if hasattr(expr, 'atoms'):
+        for eq in expr.atoms(Eq):
+            var = None
+            val = None
+            for arg in eq.args:
+                if arg.is_symbol:
+                    var = arg.name
+                elif arg.is_number:
+                    val = int(arg)  # Note domain assumption: any value is int.
+
+            if var is not None and val is not None:
+                var2val[var] = val
+    return var2val
 
 
 if __name__ == "__main__":

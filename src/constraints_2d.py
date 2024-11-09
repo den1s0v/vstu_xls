@@ -124,8 +124,20 @@ class BoolExpr:
         """ Evaluate the expr for given values of variables """
         raise NotImplementedError(type(self))
 
-    def replace_vars(self, var_mapping: dict[str, str]):
+    def replace_vars(self, var_mapping: dict[str, int|str]):
         """ Change variables in-place """
+        raise NotImplementedError(type(self))
+
+    def assignable_vars(self) -> set[str]:
+        """ Find which variables can take values via Equality 
+            Ex. in `a == b + 1` both `a` and `b` can be "assigned" if the other is materialized.
+        """
+        raise NotImplementedError(type(self))
+
+    def assigned_vars(self) -> dict[str, int]:
+        """ Find which variables have taken values via Equality 
+            Ex. for `a == 5 and 1 = b` returns: `{'a': 5, 'b': 1}`.
+        """
         raise NotImplementedError(type(self))
 
     def __str__(self) -> str:

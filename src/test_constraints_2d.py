@@ -48,6 +48,14 @@ class constraints_2d_TestCase(unittest.TestCase):
         sc.replace_vars({'a': 'Y'})
         self.assertEqual('Y + b + 1', str(sc._expr))
 
+    def test_replace_to_values(self):
+        expr = '1 + b + a'
+        sc = SpatialConstraint(expr)
+        self.assertEqual(expr, str(sc))
+        self.assertEqual('a + b + 1', str(sc._expr))
+        sc.replace_vars({'a': '5'})
+        self.assertEqual('b + 6', str(sc._expr))
+
     def test_exchange_vars(self):
         expr = '1 - b / a'
         sc = SpatialConstraint(expr)
