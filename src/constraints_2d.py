@@ -257,7 +257,14 @@ class SpatialConstraint(BoolExpr):
 
 
 
-
+def trivial_constraints_for_box(component_name: str) -> SpatialConstraint:
+    comp = component_name
+    return SpatialConstraint(f"""
+            {comp}_left + {comp}_w == {comp}_right  and
+            {comp}_left < {comp}_right  and
+            {comp}_top  + {comp}_h == {comp}_bottom  and
+            {comp}_top  < {comp}_bottom
+                             """.strip())
 
 
 

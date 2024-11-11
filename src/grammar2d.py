@@ -62,7 +62,7 @@ class PatternComponent(WithCache):
             self._cache.constraints_with_full_names = [
                 ex.clone().replace_components({
                     'this': self.name,
-                    'parent': 'element',
+                    'parent': GrammarElement.name_for_constraints,  # 'element'
                 })
                 for ex in self.constraints
             ]
@@ -83,7 +83,7 @@ class PatternComponent(WithCache):
     def checks_other_components(self) -> set[str]:
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
-        return self.checks_components() - {'element', self.name}
+        return self.checks_components() - {GrammarElement.name_for_constraints, self.name}
 
 
 
@@ -91,8 +91,10 @@ class PatternComponent(WithCache):
 
 
 @dataclass
-class GrammarElement:
+class GrammarElement(WithCache):
     """Элемент грамматики: """
+    
+    name_for_constraints = 'element'
 
     name: str  # имя узла грамматики (определяет тип содержимого)
     root: bool = False  # whether this element is the grammars's root.
@@ -105,7 +107,23 @@ class GrammarElement:
     # components: dict[str, 'PatternComponent']
 
     extends: list[str | 'GrammarElement'] = ()  # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
+    
+    constraints: list[SpatialConstraint] = ()
 
+    @property
+    def global_constraints(self) -> list[SpatialConstraint]:
+        """ "Глобальные" ограничения — запись координат преобразована из сокращённой формы в полную:
+            'x' или 'this_x' → 'element_x' и т.п.
+        """
+        if not self._cache.constraints_with_full_names:
+            self._cache.constraints_with_full_names = [
+                ex.clone().replace_components({
+                    'this': self.name_for_constraints,
+                })
+                for ex in self.constraints
+            ]
+        return self._cache.constraints_with_full_names
+    
     def dependencies(self, recursive=False) -> list['GrammarElement']:
         """ GrammarElement must be known before this one can be matched. """
         raise NotImplementedError(type(self))
@@ -146,7 +164,7 @@ class Terminal(GrammarElement):
 
 
 
-class NonTerminal(GrammarElement, WithCache):
+class NonTerminal(GrammarElement):
     """Структура или Коллекция"""
     components: list[PatternComponent]
 
@@ -179,6 +197,14 @@ class NonTerminal(GrammarElement, WithCache):
     def get_matcher(self, grammar_macher):
         from grammar2d_matching import NonTerminalMatcher
         return NonTerminalMatcher(self, grammar_macher)
+
+
+
+class StructureElement(NonTerminal):
+    ...
+
+class ArrayElement(NonTerminal):
+    ...
 
 
 

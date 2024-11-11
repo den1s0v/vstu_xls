@@ -403,6 +403,8 @@ class Box:
             return Box(h.a, h.b, v.a, v.b)
         return None
 
+    def perimeter(self) -> int:
+        return (self.w + self.h) * 2
 
 
 class VariBox(Box):
@@ -468,3 +470,16 @@ class VariBox(Box):
         """ Change position of bottom side. Keep hight non-negative. """
         new_val = max(value, self.top)
         self.h += (new_val - self.bottom)
+
+    def grow_to_cover(self, other: Box|Point):
+        """ Grow size so `other` box or oint is covered by this box. """
+        self.left = min(self.x, other.x)
+        self.top  = min(self.y, other.y)
+
+        if isinstance(other, Box):
+            self.right  = max(self.right, other.bottom)
+            self.bottom = max(self.bottom, other.bottom)
+
+        elif isinstance(other, Point):
+            self.right  = max(self.right, other.x)
+            self.bottom = max(self.bottom, other.y)
