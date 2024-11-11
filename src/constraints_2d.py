@@ -171,6 +171,7 @@ class SpatialConstraint(BoolExpr):
 
     def __new__(self, *args, **kw):
         """Modified class constructor.
+        Expected args: expr_string: str = None, expr: object = None.
         In fact, it returns an instance of class currently registered as default `SpatialConstraint` implementation """
         obj = object.__new__(get_SpatialConstraint_default_subclass())
         obj.__init__(*args, **kw)

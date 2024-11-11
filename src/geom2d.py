@@ -82,6 +82,37 @@ LEFT = Direction.get(180)
 DOWN = Direction.get(270)
 
 
+class ManhattanDistance:
+    """ Расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. 
+    Для точки: Рассчитывается как минимальное число ходов ладьёй для перемещения между двумя точками и равно сумме модулей разностей их координат. """
+    __slots__ = ('x', 'y')
+
+    def __init__(self, tuple_or_x, y=None):
+        if isinstance(tuple_or_x, (tuple, list)):
+            self.x, self.y = tuple_or_x
+        else:
+            assert y is not None, repr(y)
+            self.x, self.y = tuple_or_x, y
+
+    def __int__(self):
+        return self.x + self.y
+    def __str__(self):
+        return f"[dx={self.x}, dy={self.y}]"
+    __repr__ = __str__
+    def __iter__(self):
+        return iter((self.x, self.y))
+    def __eq__(self, other: 'int|ManhattanDistance'):
+        if isinstance(other, int):
+            return int(self) == other
+        else:  # if isinstance(other, ManhattanDistance):
+            return tuple(self) == tuple(other)
+        
+    def __lt__(self, other: 'int|ManhattanDistance'):
+        return int(self) < int(other)
+    def __gt__(self, other: 'int|ManhattanDistance'):
+        return int(self) > int(other)
+    
+
 
 class Point(namedtuple('Point', ['x', 'y'])):
     """Точка (x, y) на координатной плоскости (2d)"""
@@ -92,26 +123,29 @@ class Point(namedtuple('Point', ['x', 'y'])):
         """ "Диагональное" Евклидово расстояние между двумя точками на плоскости. Рассчитывается как длина гипотенузы. """
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
-    def manhattan_distance_to(self, other: Union['Point', 'Box']) -> int:
+    def manhattan_distance_to(self, other: Union['Point', 'Box'], per_axis=False) -> int:
         """ Расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. 
         Для точки: Рассчитывается как минимальное число ходов ладьёй для перемещения между двумя точками и равно сумме модулей разностей их координат. 
-        Для прямоугольника: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала на границу (внутрь) прямоугольника.
+        Для прямоугольника: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу (внутрь) прямоугольника.
         """
         if isinstance(other, Point):
-            return abs(self.x - other.x) + abs(self.y - other.y)
+            dx, dy = abs(self.x - other.x), abs(self.y - other.y)
+            return ManhattanDistance(dx, dy) if per_axis else dx + dy
         if isinstance(other, Box):
             if self in other:
-                return 0
+                return ManhattanDistance(0, 0) if per_axis else 0
             
             if (other.left <= self.x <= other.right):
                 # ближе до стороны
-                return min(abs(self.y - other.top), abs(self.y - other.bottom))
+                dy = min(abs(self.y - other.top), abs(self.y - other.bottom))
+                return ManhattanDistance(0, dy) if per_axis else dy
             if (other.top <= self.y <= other.bottom):
                 # ближе до стороны
-                return min(abs(self.x - other.left), abs(self.x - other.right))
+                dx = min(abs(self.x - other.left), abs(self.x - other.right))
+                return ManhattanDistance(dx, 0) if per_axis else dx
             # ближе до угла
             return min(
-                corner.manhattan_distance_to(self)
+                corner.manhattan_distance_to(self, per_axis=per_axis)
                 for corner in other.iterate_corners()
             )
 
@@ -238,36 +272,36 @@ class Box:
     def relates_to(self, other):
         ...
         
-    def manhattan_distance_to_overlap(self, other: Union[Point, 'Box']) -> int:
+    def manhattan_distance_to_overlap(self, other: Union[Point, 'Box'], per_axis=False) -> int:
         """ Целочисленное расстояние до максимального перекрытия:
-            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала внутрь прямоугольника.
-            Для прямоугольника: 0, если один из прямоугольников полностью вкладывается в другой, иначе минимальное количество единичных перемещений, чтобы совместить один из углов этих прямоугольников (таким образом, один оказывается внутри другого). В случае, если прямоугольники   не могут быть перекрыты полностью из-за  несовместимых размеров, эта метрика покажет расстояние до ближайшего максимально возможного перекрытия.
+            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала внутрь прямоугольника.
+            Для прямоугольника: 0, если один из прямоугольников полностью вкладывается в другой, иначе минимальное количество единичных перемещений, чтобы совместить один из углов этих прямоугольников (таким образом, один оказывается внутри другого). В случае, если прямоугольники не могут быть перекрыты полностью из-за несовместимых размеров, эта метрика покажет расстояние до ближайшего максимально возможного перекрытия.
         Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. """
         if isinstance(other, Point):
-            return other.manhattan_distance_to(self)
+            return other.manhattan_distance_to(self, per_axis=per_axis)
         
         if isinstance(other, Box):
             if other in self or self in other:
-                return 0
+                return ManhattanDistance(0, 0) if per_axis else 0
             return min(
-                corner1.manhattan_distance_to(corner2)
+                corner1.manhattan_distance_to(corner2, per_axis=per_axis)
                 for corner1, corner2 in zip(
                     self.iterate_corners(),
                     other.iterate_corners())
             )
         return None
 
-    def manhattan_distance_to_touch(self, other: Union[Point, 'Box']) -> int:
+    def manhattan_distance_to_touch(self, other: Union[Point, 'Box'], per_axis=False) -> int:
         """ Целочисленное расстояние до ближайшего касания:
-            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество  единичных перемещений, чтобы точка попала на границу прямоугольника.
+            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу прямоугольника.
             Для прямоугольника: 0, если прямоугольники касаются или перекрываются, иначе минимальное количество единичных перемещений, чтобы они стали касаться сторонами или углами.
         Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. """
         if isinstance(other, Point):
-            return other.manhattan_distance_to(self)
+            return other.manhattan_distance_to(self, per_axis=per_axis)
         
         if isinstance(other, Box):
             if other in self or self in other:
-                return 0
+                return ManhattanDistance(0, 0) if per_axis else 0
             
             rel_h = LinearRelation(
                 self.project('h'), 
@@ -277,8 +311,9 @@ class Box:
                 self.project('v'), 
                 other.project('v')
             )
-            return (max(0, rel_v.outer_gap)
-                  + max(0, rel_h.outer_gap))
+            dx = max(0, rel_h.outer_gap)
+            dy = max(0, rel_v.outer_gap)
+            return ManhattanDistance(dx, dy) if per_axis else dx + dy
         return None
 
 
