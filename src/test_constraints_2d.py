@@ -2,7 +2,7 @@ import unittest
 from geom2d import Box
 
 from utils.sympy_expr import SympyExpr, register_sympy_as_expr_backend
-from constraints_2d import SpatialConstraint
+from constraints_2d import SpatialConstraint, constraints_for_box_inside_container, trivial_constraints_for_box
 
 register_sympy_as_expr_backend()  # this registers subclass of SpatialConstraint
 
@@ -82,7 +82,7 @@ class constraints_2d_TestCase(unittest.TestCase):
             'b': ['left'],
             'c': ['right'],
             '': ['left'],
-            '_': ['right'], 
+            '_': ['right'],
         }, sc.referenced_components_with_attributes())
 
     def test_components_4(self):
@@ -128,6 +128,38 @@ class constraints_2d_TestCase(unittest.TestCase):
         area = sc.eval_with_components({'this': Box(1, 10, 7, 9)})
         self.assertEqual(False, area)
 
+
+class constraints_for_box_TestCase(unittest.TestCase):
+
+    def test_1(self):
+        name = 'element'
+        cs = trivial_constraints_for_box(name)
+
+        box = Box(1,2, 3,4)
+        self.assertTrue(cs.eval_with_components({name: box}))
+
+    def test_2(self):
+        name = 'room'
+        container = 'element'
+        cs = constraints_for_box_inside_container(name, container)
+
+        # included
+        box1 = Box(1,2, 3,4)
+        box2 = Box(1,1, 3,6)
+        self.assertTrue(cs.eval_with_components({name: box1, container: box2, }))
+        self.assertFalse(cs.eval_with_components({name: box2, container: box1, }))
+
+        # overlap
+        box1 = Box(1,1, 4,4)
+        box2 = Box(2,2, 5,5)
+        self.assertFalse(cs.eval_with_components({name: box1, container: box2, }))
+        self.assertFalse(cs.eval_with_components({name: box2, container: box1, }))
+
+        # equal
+        box1 = Box(1,2, 3,4)
+        box2 = Box(1,2, 3,4)
+        self.assertTrue(cs.eval_with_components({name: box1, container: box2, }))
+        self.assertTrue(cs.eval_with_components({name: box2, container: box1, }))
 
 
 

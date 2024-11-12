@@ -72,7 +72,7 @@ class CoordVar:
         else:
             sep = ''
         return f"{self.component}{sep}{self.attr}"
-    
+
     def __str__(self): return self.var_name
 
     def attr_for_box(self) -> str:
@@ -129,13 +129,13 @@ class BoolExpr:
         raise NotImplementedError(type(self))
 
     def assignable_vars(self) -> set[str]:
-        """ Find which variables can take values via Equality 
+        """ Find which variables can take values via Equality
             Ex. in `a == b + 1` both `a` and `b` can be "assigned" if the other is materialized.
         """
         raise NotImplementedError(type(self))
 
     def assigned_vars(self) -> dict[str, int]:
-        """ Find which variables have taken values via Equality 
+        """ Find which variables have taken values via Equality
             Ex. for `a == 5 and 1 = b` returns: `{'a': 5, 'b': 1}`.
         """
         raise NotImplementedError(type(self))
@@ -264,7 +264,17 @@ def trivial_constraints_for_box(component_name: str) -> SpatialConstraint:
             {comp}_left < {comp}_right  and
             {comp}_top  + {comp}_h == {comp}_bottom  and
             {comp}_top  < {comp}_bottom
-                             """.strip())
+                             """.strip().replace('\n', ''))
+
+def constraints_for_box_inside_container(component_name: str, container_name: str) -> SpatialConstraint:
+    comp = component_name
+    outer = container_name
+    return SpatialConstraint(f"""
+            {outer}_left <= {comp}_left  and
+            {outer}_top  <= {comp}_bottom  and
+            {comp}_right <= {outer}_right  and
+            {comp}_bottom <= {outer}_bottom
+                             """.strip().replace('\n', ''))
 
 
 
