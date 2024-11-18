@@ -178,8 +178,8 @@ class Box:
     def __getitem__(self, key): return self._tuple[key]
     def __iter__(self): return iter(self._tuple)
     def __hash__(self): return hash(self._tuple)
-    def __eq__(self, other): return self._tuple.__eq__(other)
-    def __ne__(self, other): return self._tuple.__ne__(other)
+    def __eq__(self, other): return hasattr(other, '_tuple') and self._tuple.__eq__(other)
+    def __ne__(self, other): return not self == other
     # def __lt__(self, other): return self._tuple.__lt__(other)
     # def __le__(self, other): return self._tuple.__le__(other)
     # def __gt__(self, other): return self._tuple.__gt__(other)
@@ -483,3 +483,134 @@ class VariBox(Box):
         elif isinstance(other, Point):
             self.right  = max(self.right, other.x)
             self.bottom = max(self.bottom, other.y)
+
+
+
+class PartialBox(Box):
+    """ НЕизменяемый, но в общем случае не полностью определённый Прямоугольник на целочисленной координатной плоскости (2d). 
+        Изменение возможно только в части до-определения незаданных координат прямоугольника.
+        `PartialBox(left, top, w, h, right, bottom)`. All args are optional. """
+    # Dev note: using updatable list here, not tuple as parent class does.
+    
+    __slots__ = ('_tuple')
+    # Dev note: using __slots__ tells CPython to not to store object's data within __dict__.
+
+    def __init__(self, 
+                 left: int = None, top: int = None, 
+                 w: int = None, h: int = None, 
+                 right: int = None, bottom: int = None):
+        self._tuple = [left, top, w, h, right, bottom]  # it's actually a list!
+        
+    def as_tuple(self):
+        return tuple(self._tuple[:4])
+        
+    # staff that mimics behavior of `list` (in adintion to inherited tuple's behaviour):
+    # def __hash__(self): return hash(self._tuple)
+    def __eq__(self, other):
+        return hasattr(other, '_tuple') and (self._tuple.__eq__(other._tuple)
+                if len(other._tuple) == len(self._tuple) 
+                else self.as_tuple().__eq__(other._tuple))
+    # def __ne__(self, other): return not self == other
+
+    def __setitem__(self, key, value):
+        """ set if empty of raise if this item was set before """
+        # if self._tuple[key] is not None:
+            # raise RuntimeError(f'Attempt to set not-None element `{key}` of {repr(self)} !')
+        if self._tuple[key] is not None:
+            if self._tuple[key] != value:
+                raise ValueError(f'Attempt to change not-None element `{key}` to `{value}` within write-once {repr(self)} !')
+            # Ignore the case of setting the same value.
+        else:
+            self._tuple[key] = value
+
+    def __contains__(self, key: str):
+        """ True iff this item was set before and is not None """
+        return getattr(self, key) is not None
+
+    # redefine `right` & `bottom` to read stored values
+    @property
+    def right(self): return self._tuple[4]
+    @property
+    def bottom(self): return self._tuple[5]
+    
+    def __str__(self) -> str:
+        return f'[({self.x},{self.y})+{self.w}x{self.h}→({self.right},{self.bottom})]'
+
+    @Box.x.setter
+    def x(self, value): self.left = value  # redirect to identical setter (see below)
+    @Box.y.setter
+    def y(self, value): self.top = value  # redirect to identical setter (see below)
+        
+    @Box.w.setter
+    def w(self, value):
+        assert value >= 0, value
+        self[2] = value
+        # infer other coordinates if possible
+        if 'left' in self:
+            self.right = self.left + self.w
+        elif 'right' in self:
+            self.left = self.right - self.w
+        
+    @Box.h.setter
+    def h(self, value):
+        assert value >= 0, value
+        self[3] = value
+        # infer other coordinates if possible
+        if 'top' in self:
+            self.bottom = self.top + self.w
+        elif 'bottom' in self:
+            self.top = self.bottom - self.w
+
+
+    @Box.left.setter
+    def left(self, value):
+        """ Set position of left side. Raises if already set, or when wigth becomes < 0. """
+        self[0] = value
+        # infer other coordinates if possible
+        if 'right' in self:
+            assert value <= self.right, (value, self.right)
+            self.w = self.right - value
+        elif 'w' in self:
+            self.right = value + self.w
+
+    @Box.top.setter
+    def top(self, value):
+        """ Set position of top side. Raises if already set, or when hight becomes < 0. """
+        self[1] = value
+        # infer other coordinates if possible
+        if 'bottom' in self:
+            assert value <= self.bottom, (value, self.bottom)
+            self.h = self.bottom - value
+        elif 'h' in self:
+            self.bottom = value + self.h
+
+    @Box.right.setter
+    def right(self, value):
+        """ Set position of right side. Raises if already set, or when wigth becomes < 0. """
+        self[4] = value
+        # infer other coordinates if possible
+        if 'left' in self:
+            assert self.left <= value, (self.left, value)
+            self.w = value - self.left
+        elif 'w' in self:
+            self.left = value - self.w
+
+    @Box.bottom.setter
+    def bottom(self, value):
+        """ Set position of bottom side. Raises if already set, or when hight becomes < 0. """
+        self[5] = value
+        # infer other coordinates if possible
+        if 'top' in self:
+            assert self.top <= value, (self.top, value)
+            self.h = value - self.top
+        elif 'h' in self:
+            self.top = value - self.h
+
+
+    @Box.position.setter
+    def position(self, point: Point):
+        (self.x, self.y) = point
+
+    @Box.size.setter
+    def size(self, size: Size):
+        (self.w, self.h) = size
