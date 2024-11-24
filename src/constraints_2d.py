@@ -45,7 +45,7 @@ class CoordVar:
         # 'size', 'length', 'D',  # 'D': L & S were taken :)
     )
 
-    box_attrs = {
+    box_attrs = {  # keys returned by Box.as_dict()
         'x': 'left',
         'y': 'top',
         'L': 'left',

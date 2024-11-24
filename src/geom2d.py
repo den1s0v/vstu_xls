@@ -172,6 +172,14 @@ class Box:
         
     def as_tuple(self):
         return self._tuple
+    
+    def as_dict(self) -> dict:
+        """ Get a dict representing all 6 parameters of the Box. """
+        return {
+            k: getattr(self, k)
+            for k in ('left', 'top', 'w', 'h', 'right', 'bottom')
+        }
+
         
     # staff that mimics behavior of `tuple`:
     def __len__(self): return 4
@@ -244,7 +252,7 @@ class Box:
         return f'{self.__class__.__name__}{str(self)}'
 
 
-    def __contains__(self, other):
+    def __contains__(self, other: 'Box | Point'):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return (
                     self.x <= other.x and
@@ -420,7 +428,7 @@ class VariBox(Box):
     def as_tuple(self):
         return tuple(self._tuple)
         
-    # staff that mimics behavior of `list` (in adintion to inherited tuple's behaviour):
+    # staff that mimics behavior of `list`:
     def __setitem__(self, key, value): self._tuple[key] = value
     def __hash__(self): return hash(self.as_tuple())
     def __eq__(self, other): return self._tuple.__eq__(other._tuple)
@@ -499,23 +507,30 @@ class PartialBox(Box):
                  left: int = None, top: int = None, 
                  w: int = None, h: int = None, 
                  right: int = None, bottom: int = None):
-        self._tuple = [left, top, w, h, right, bottom]  # it's actually a list!
+        # Set everything from input & try to deduce unset properties.
+        self._tuple = [None, None, None, None, None, None]  # it's actually a list!
+        for key in ('left', 'top', 'w', 'h', 'right', 'bottom'):
+            val = locals()[key]
+            if val is not None:
+                setattr(self, key, val)
+        #### self._tuple = [left, top, w, h, right, bottom]  # don`t set directly
         
     def as_tuple(self):
         return tuple(self._tuple[:4])
         
-    # staff that mimics behavior of `list` (in adintion to inherited tuple's behaviour):
-    # def __hash__(self): return hash(self._tuple)
+    # staff that mimics behavior of `list`:
+    def __iter__(self): return iter(self.as_tuple())
+    def __hash__(self): return hash(self.as_tuple())
     def __eq__(self, other):
-        return hasattr(other, '_tuple') and (self._tuple.__eq__(other._tuple)
-                if len(other._tuple) == len(self._tuple) 
-                else self.as_tuple().__eq__(other._tuple))
+        if isinstance(other, Box):
+            return self.as_tuple() == other.as_tuple()
+        return self.as_tuple() == tuple(other)
     # def __ne__(self, other): return not self == other
 
     def __setitem__(self, key, value):
         """ set if empty of raise if this item was set before """
         # if self._tuple[key] is not None:
-            # raise RuntimeError(f'Attempt to set not-None element `{key}` of {repr(self)} !')
+        #     raise RuntimeError(f'Attempt to set not-None element `{key}` of {repr(self)} !')
         if self._tuple[key] is not None:
             if self._tuple[key] != value:
                 raise ValueError(f'Attempt to change not-None element `{key}` to `{value}` within write-once {repr(self)} !')
@@ -523,11 +538,17 @@ class PartialBox(Box):
         else:
             self._tuple[key] = value
 
-    def __contains__(self, key: str):
-        """ True iff this item was set before and is not None """
-        return getattr(self, key) is not None
+    def as_dict(self) -> dict:
+        """ Get a dict representing all 6 parameters of the Box.
+            A key is present iff this item was set before and is not None """
+        dct = {}
+        for k in ('left', 'top', 'w', 'h', 'right', 'bottom'):
+            v = getattr(self, k)
+            if v is not None:
+                dct[k] = v
+        return dct
 
-    # redefine `right` & `bottom` to read stored values
+    # redefine `right` & `bottom` properties (setters: see below)    
     @property
     def right(self): return self._tuple[4]
     @property
@@ -537,74 +558,90 @@ class PartialBox(Box):
         return f'[({self.x},{self.y})+{self.w}x{self.h}→({self.right},{self.bottom})]'
 
     @Box.x.setter
-    def x(self, value): self.left = value  # redirect to identical setter (see below)
+    def x(self, value): self.left = value  # redirect to advanced setter (see below)
     @Box.y.setter
-    def y(self, value): self.top = value  # redirect to identical setter (see below)
+    def y(self, value): self.top = value  # redirect to advanced setter (see below)
         
     @Box.w.setter
     def w(self, value):
-        assert value >= 0, value
+        assert value is not None and value >= 0, value
         self[2] = value
         # infer other coordinates if possible
-        if 'left' in self:
-            self.right = self.left + self.w
-        elif 'right' in self:
-            self.left = self.right - self.w
+        if self.left is not None:
+            # self.right = 
+            self[4] = self.left + value
+        elif self.right is not None:
+            # self.left = 
+            self[0] = self.right - value
         
     @Box.h.setter
     def h(self, value):
-        assert value >= 0, value
+        assert value is not None and value >= 0, value
         self[3] = value
         # infer other coordinates if possible
-        if 'top' in self:
-            self.bottom = self.top + self.w
-        elif 'bottom' in self:
-            self.top = self.bottom - self.w
+        if self.top is not None:
+            # self.bottom = 
+            self[5] = self.top + value
+        elif self.bottom is not None:
+            # self.top = 
+            self[1] = self.bottom - value
 
 
     @Box.left.setter
     def left(self, value):
         """ Set position of left side. Raises if already set, or when wigth becomes < 0. """
+        assert value is not None
         self[0] = value
         # infer other coordinates if possible
-        if 'right' in self:
+        if self.right is not None:
             assert value <= self.right, (value, self.right)
-            self.w = self.right - value
-        elif 'w' in self:
-            self.right = value + self.w
+            # self.w = 
+            self[2] = self.right - value
+        elif self.w is not None:
+            # self.right = 
+            self[4] = value + self.w
 
     @Box.top.setter
     def top(self, value):
         """ Set position of top side. Raises if already set, or when hight becomes < 0. """
+        assert value is not None
         self[1] = value
         # infer other coordinates if possible
-        if 'bottom' in self:
+        if self.bottom is not None:
             assert value <= self.bottom, (value, self.bottom)
-            self.h = self.bottom - value
-        elif 'h' in self:
-            self.bottom = value + self.h
+            # self.h = 
+            self[3] = self.bottom - value
+        elif self.h is not None:
+            # self.bottom = 
+            self[5] = value + self.h
 
-    @Box.right.setter
+    @right.setter
     def right(self, value):
         """ Set position of right side. Raises if already set, or when wigth becomes < 0. """
+        assert value is not None
         self[4] = value
         # infer other coordinates if possible
-        if 'left' in self:
+        if self.left is not None:
             assert self.left <= value, (self.left, value)
-            self.w = value - self.left
-        elif 'w' in self:
-            self.left = value - self.w
+            # self.w = 
+            self[2] = value - self.left
+        elif self.w is not None:
+            # self.left = 
+            self[0] = value - self.w
 
-    @Box.bottom.setter
+    @bottom.setter
     def bottom(self, value):
         """ Set position of bottom side. Raises if already set, or when hight becomes < 0. """
+        assert value is not None
         self[5] = value
         # infer other coordinates if possible
-        if 'top' in self:
+        if self.top is not None:
             assert self.top <= value, (self.top, value)
-            self.h = value - self.top
-        elif 'h' in self:
-            self.top = value - self.h
+            # self.h = 
+            self[3] = value - self.top
+        elif self.h is not None:
+            # self.top = 
+            self[1] = value - self.h
 
 
     @Box.position.setter

@@ -1,5 +1,5 @@
 import unittest
-from geom2d import Box, ManhattanDistance, Point, VariBox
+from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox
 
 
 class BoxTestCase(unittest.TestCase):
@@ -106,7 +106,7 @@ class VariBoxTestCase(unittest.TestCase):
 
         self.assertIn(r, b)
         self.assertIn(b, r)
-        
+
         b.x = 15
         self.assertEqual(15, b.left)
 
@@ -118,6 +118,80 @@ class VariBoxTestCase(unittest.TestCase):
         r.right = 30
         self.assertEqual(b, r)
 
+
+
+class PartialBoxTestCase(unittest.TestCase):
+    def test_ordinary(self):
+        b = PartialBox(10, 20, 15, 4)
+        r = PartialBox(10, 20, 15, 4)
+
+        self.assertEqual(b, r)
+        self.assertDictEqual({'left': 10, 'top': 20, 'w': 15, 'h': 4, 'right': 25, 'bottom': 24}, b.as_dict())
+
+        self.assertIn(r, b)
+        self.assertIn(b, r)
+
+
+    def test_eq(self):
+        b = PartialBox(10, 20, 15, 4)
+        
+        r = Box(10, 20, 15, 4)
+        self.assertEqual(b, r)
+
+        r = tuple((10, 20, 15, 4))
+        self.assertEqual(b, r)
+
+        r = VariBox(10, 20, 15, 4)
+        self.assertEqual(b, r)
+
+
+    def test_partially_filled(self):
+        b = PartialBox()
+
+        self.assertDictEqual({}, b.as_dict())
+
+        b.bottom = 24
+        self.assertDictEqual({'bottom': 24}, b.as_dict())
+
+        b.h = 4  # infers `top`
+        self.assertDictEqual({'top': 20, 'h': 4, 'bottom': 24}, b.as_dict())
+
+        b.x = 10
+        self.assertDictEqual({'left': 10, 'top': 20, 'h': 4, 'bottom': 24}, b.as_dict())
+
+        b.right = 25  # infers `w`
+        self.assertDictEqual({'left': 10, 'top': 20, 'w': 15, 'h': 4, 'right': 25, 'bottom': 24}, b.as_dict())
+
+        r = Box(10, 20, 15, 4)
+        self.assertEqual(b, r)
+
+
+    def test_set_same(self):
+        b = PartialBox(10, 20, 15, 4)
+
+        b.x = 10
+
+        r = PartialBox(10, 20, 15, 4)
+        self.assertEqual(b, r)
+
+
+    def test_set_different(self):
+        b = PartialBox(10, 20, 15, 4)
+
+        with self.assertRaises(ValueError):
+            b.x = 15
+
+    def test_set_invalid(self):
+        b = PartialBox(10, 20, 15, 4)
+
+        with self.assertRaises(AssertionError):
+            b.h = -1   # negative
+
+        with self.assertRaises(AssertionError):
+            b.h = None
+
+        with self.assertRaises(AssertionError):
+            b.bottom = None
 
 
 if __name__ == '__main__':
