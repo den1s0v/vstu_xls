@@ -1,6 +1,9 @@
 # test_classify_cells.py
 
-from src.confidence_matching import read_cell_types
+from tests_bootstrapper import init_testing_environment
+init_testing_environment()
+
+from confidence_matching import read_cell_types
 
 
 def run_matching(tokens, only=()):

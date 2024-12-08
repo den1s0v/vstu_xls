@@ -1,5 +1,9 @@
 import math
 import unittest
+
+from tests_bootstrapper import init_testing_environment
+init_testing_environment()
+
 from geom1d import LinearSegment, LinearRelation
 
 

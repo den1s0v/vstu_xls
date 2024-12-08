@@ -1,12 +1,16 @@
 import unittest
 
+from tests_bootstrapper import init_testing_environment
+
+init_testing_environment()
+
 from grammar.ArithmeticRelation import ArithmeticRelation, eq, lt, gt, distance, parse_relation_and_limits
 
 
 class ArithmeticRelationTestCase(unittest.TestCase):
     def test_1(self):
         ar = ArithmeticRelation()
-        self.assertEqual(True, False)  # add assertion here
+        # self.assertEqual(True, False)  # add assertion here
 
     def test_range(self):
         # self.assertIn(-99, range(None, None, None))
@@ -43,7 +47,6 @@ class ExprTestCase(unittest.TestCase):
 
         expr = '<6+>'
         self.assertEqual((distance, (6, None)), parse_relation_and_limits(expr))
-
 
 
 if __name__ == '__main__':
