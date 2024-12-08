@@ -1,11 +1,10 @@
 # grid.py
 
-from abc import ABC, abstractmethod
-# from weakref import WeakValueDictionary
+from abc import ABC
+from typing import Optional
 
 from adict import adict
 
-from geom2d import Point, Box, Size
 from geom2d import *
 
 
@@ -146,7 +145,7 @@ class Region(Box):
         Get a region that is externally adjacent to this one from a given side and extended by a given distance (by default to the border of the grid_view).
 
         Args:
-            direction (Direction): direction that determines target side.
+            direction (geom2d.Direction): direction that determines target side.
             distance (int, optional): length of region along `direction`. Values below zero mean maximum possible length. Defaults to -1.
 
         Returns:
