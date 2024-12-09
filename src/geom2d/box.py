@@ -130,6 +130,32 @@ class Box:
     def relates_to(self, other):
         ...
 
+    def manhattan_distance_to(self, other: Union['Point', 'Box'], per_axis=False) -> int:
+        """ Расстояние городских кварталов, или манхеттенское расстояние между двумя точками на плоскости.
+        Для прямоугольника: расстояние до касания, см. `Box.manhattan_distance_to_touch()`.
+        Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу (внутрь) прямоугольника.
+        """
+        if isinstance(other, Box):
+            return self.manhattan_distance_to_touch(other)
+
+        if isinstance(other, Point):
+            if other in self:
+                return ManhattanDistance(0, 0) if per_axis else 0
+
+            if (self.left <= other.x <= self.right):
+                # ближе до стороны
+                dy = min(abs(other.y - self.top), abs(other.y - self.bottom))
+                return ManhattanDistance(0, dy) if per_axis else dy
+            if (self.top <= other.y <= self.bottom):
+                # ближе до стороны
+                dx = min(abs(other.x - self.left), abs(other.x - self.right))
+                return ManhattanDistance(dx, 0) if per_axis else dx
+            # ближе до угла
+            return min(
+                corner.manhattan_distance_to(other, per_axis=per_axis)
+                for corner in self.iterate_corners()
+            )
+
     def manhattan_distance_to_overlap(self, other: Union[Point, 'Box'], per_axis=False) -> int:
         """ Целочисленное расстояние до максимального перекрытия:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала внутрь прямоугольника.
