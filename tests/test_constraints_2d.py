@@ -5,10 +5,9 @@ init_testing_environment()
 
 from geom2d import Box
 
-from utils.sympy_expr import SympyExpr, register_sympy_as_expr_backend
-from constraints_2d import SpatialConstraint, constraints_for_box_inside_container, trivial_constraints_for_box
-
-register_sympy_as_expr_backend()  # this registers subclass of SpatialConstraint
+from constraints_2d import SpatialConstraint
+from constraints_2d import SympyExpr
+from constraints_2d import constraints_for_box_inside_container, trivial_constraints_for_box
 
 
 class sumpy_expr_TestCase(unittest.TestCase):

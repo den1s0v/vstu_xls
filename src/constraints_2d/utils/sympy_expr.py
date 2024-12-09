@@ -1,7 +1,9 @@
 from sympy import Eq, Symbol, lambdify
 
-from constraints_2d import BoolExpr, CoordVar, SpatialConstraint, register_SpatialConstraint_default_subclass
-from utils.ast_to_sympy import parse_expression
+from constraints_2d.BoolExpr import BoolExpr
+from constraints_2d.CoordVar import CoordVar
+from constraints_2d.SpatialConstraint import SpatialConstraint, register_SpatialConstraint_default_subclass
+from constraints_2d.utils.ast_to_sympy import parse_expression
 
 
 class SympyExpr(BoolExpr):
