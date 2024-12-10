@@ -9,7 +9,7 @@ from openpyxl import load_workbook
 from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill
 
-from confidence_matching import CellClassifier, Match
+from string_matching import CellClassifier, Match
 from utils import Checkpointer
 
 

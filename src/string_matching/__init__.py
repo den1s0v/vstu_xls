@@ -98,7 +98,7 @@ def fix_sparse_words(string: str, _mul_of_longest_as_sep=2, _min_spaces=5):
     return " ".join(w for w in words if w)
 
 
-class ConfidentPattern:
+class StringPattern:
     """ Паттерн для сопоставления строк со степенью уверенности.
         Синтаксисы паттерна (`pattern_syntax`):
          - 're' (regexp)
@@ -118,7 +118,7 @@ class ConfidentPattern:
     pattern_syntax: str = 're'  # plain / re (regexp) / re-spaces
     pattern_flags: int | str = 0
     pattern_fields: tuple = ()
-    content_class: 'CellType' = None
+    content_class: 'CellType' = '<Unspecified content_class>'
     preprocess: list[str] = None
 
     def __init__(self, *args, **kwargs):
@@ -138,12 +138,12 @@ class ConfidentPattern:
             args = ()
         elif len(args) > 0:
             # integrate positional arguments
-            for key, val in zip(ConfidentPattern.__annotations__.keys(), args):
+            for key, val in zip(StringPattern.__annotations__.keys(), args):
                 if key not in kwargs:
                     kwargs[key] = val
 
         # read defaults from annotations
-        kw = {k: getattr(ConfidentPattern, k) for k in ConfidentPattern.__annotations__}
+        kw = {k: getattr(StringPattern, k) for k in StringPattern.__annotations__}
         kw.update(kwargs)
         assert kw['pattern'], 'Please specify pattern for ConfidentPattern!'
         assert kw['content_class'], 'Please specify content_class for ConfidentPattern!'
@@ -198,7 +198,7 @@ class ConfidentPattern:
 @dataclass
 class Match:
     re_match: re.Match
-    pattern: ConfidentPattern
+    pattern: StringPattern
     cell_text: str
 
     @property
@@ -211,7 +211,7 @@ class CellType:
         характеризующийся собственным набором паттернов """
     name: str
     description: str
-    patterns: List[ConfidentPattern]
+    patterns: List[StringPattern]
     update_content: list[str] = ()
 
     def __init__(self, name='a', description='no info', patterns=None, update_content=None):
@@ -225,13 +225,13 @@ class CellType:
     @classmethod
     def prepare_patterns(cls, patterns, content_class, transformations=None):
         assert patterns, 'at least one pattern is required'
-        if isinstance(patterns, ConfidentPattern):
+        if isinstance(patterns, StringPattern):
             return [patterns]
         if isinstance(patterns, str):
-            return [ConfidentPattern(patterns)]
+            return [StringPattern(patterns)]
 
         ps = [
-            p if isinstance(patterns, ConfidentPattern) else ConfidentPattern(**p, content_class=content_class)
+            p if isinstance(patterns, StringPattern) else StringPattern(**p, content_class=content_class)
             for p in patterns
         ]
         ps.sort(key=lambda p: p.confidence, reverse=True)

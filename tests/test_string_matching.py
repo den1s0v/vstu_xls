@@ -3,18 +3,18 @@ import unittest
 from tests_bootstrapper import init_testing_environment
 init_testing_environment()
 
-from confidence_matching import ConfidentPattern, read_cell_types, shrink_extra_inner_spaces, fix_sparse_words
+from string_matching import StringPattern, read_cell_types, shrink_extra_inner_spaces, fix_sparse_words
 
 
-class ConfidentPatternTestCase(unittest.TestCase):
+class StringPatternTestCase(unittest.TestCase):
     def test_init1(self):
-        p = ConfidentPattern('\\w+')
+        p = StringPattern('\\w+')
         self.assertIsNotNone(p.match('abcde'))  # add assertion here
         self.assertIsNotNone(p.match('124'))
         self.assertIsNone(p.match('****'))
 
     def test_init2(self):
-        p = ConfidentPattern({'pattern': 'a bc+', 'confidence': 0.9, 'pattern_syntax': 're-spaces'})
+        p = StringPattern({'pattern': 'a bc+', 'confidence': 0.9, 'pattern_syntax': 're-spaces'})
 
         self.assertIsNotNone(p.match('abcde'))
         self.assertIsNone(p.match('124'))
