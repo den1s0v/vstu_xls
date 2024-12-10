@@ -6,8 +6,8 @@ from functools import reduce
 from operator import and_
 from typing import Optional, Union
 
-from confidence_matching import CellType
-from constraints_2d import SpatialConstraint
+from string_matching import CellType
+from constraints_2d.SpatialConstraint import SpatialConstraint
 from utils import WithCache
 
 
