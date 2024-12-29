@@ -43,7 +43,7 @@ def run_classification(tokens, show_bad_only=False):
             if m:
                 confidence = round(m.confidence * 100)
                 # text = m.re_match.group(0)
-                text = m.cell_text
+                text = m.text
                 matched.append((confidence, f"`{ct.name}` \t-> [0]: `{text}`"))
 
         if not matched:
