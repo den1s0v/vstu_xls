@@ -160,6 +160,10 @@ class StringPattern:
         except (ValueError, IndexError):
             return None
 
+    def calc_precision_of_match(self, match: StringMatch) -> float:
+        """ Precision of `match` in range [0..1], by default defined as `pattern.confidence * match.coverage_ratio`. """
+        return self.confidence * match.coverage_ratio
+
 
 def re_flags_to_int(re_flags: str = '') -> int:
     """Get int union of flags for re.* constants:

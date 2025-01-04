@@ -15,6 +15,8 @@ class StringPatternTestCase(unittest.TestCase):
         self.assertIsNotNone(p.match('abcde'))  # add assertion here
         self.assertIsNotNone(p.match('124'))
         self.assertIsNone(p.match('****'))
+        p.confidence = 1
+        self.assertEqual(1, p.match('abcdef').precision)
 
     def test_init2(self):
         p = StringPattern('a bc+', 0.9, 're-spaces')
@@ -184,6 +186,11 @@ class StringPatternTestCase(unittest.TestCase):
             'middle': 'b',
             'right': 'f'
         }, m.groupdict())
+
+        p.confidence = 1
+        # last char of 8 is not included
+        self.assertEqual(7/8, m.precision)
+
 
     def test_preprocess0(self):
         p = StringPattern(
