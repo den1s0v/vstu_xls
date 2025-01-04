@@ -25,6 +25,7 @@ from string_matching.StringPattern import StringPattern
 
 from string_matching.helper_transformers import shrink_extra_inner_spaces, fix_sparse_words
 
+from string_matching.CellClassifier import CellClassifier
 
 
 def read_cell_types(config_file: str = '../cnf/cell_types.yml') -> Dict[str, CellType]:

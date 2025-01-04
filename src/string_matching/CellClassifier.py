@@ -1,4 +1,4 @@
-from string_matching import read_cell_types
+import string_matching as ns
 from string_matching.CellType import CellType
 from string_matching.StringMatch import StringMatch
 
@@ -14,7 +14,7 @@ class CellClassifier:
 
     def __init__(self, cell_types=None):
         if not cell_types:
-            cell_types = list(read_cell_types().values())
+            cell_types = list(ns.read_cell_types().values())
         self.cell_types = cell_types
 
     def match(self, cell_text: str) -> List[StringMatch]:

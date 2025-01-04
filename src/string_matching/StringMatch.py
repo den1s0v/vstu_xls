@@ -2,13 +2,14 @@ import re
 from dataclasses import dataclass
 
 
-# from string_matching.StringPattern import StringPattern
+# Circular import workaround: https://stackoverflow.com/a/17229804/12824563
+import string_matching.StringPattern as ns
 
 
 @dataclass
 class StringMatch:
     re_match: re.Match | list[str]
-    pattern: 'StringPattern'
+    pattern: 'ns.StringPattern'
     text: str
 
     @property

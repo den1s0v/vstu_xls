@@ -1,5 +1,4 @@
 from collections import namedtuple
-from typing import Union
 
 from geom2d.manhattan_distance import ManhattanDistance
 

@@ -9,7 +9,8 @@ from openpyxl import load_workbook
 from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill
 
-from string_matching import CellClassifier, Match
+from string_matching.CellClassifier import CellClassifier
+from string_matching.StringMatch import StringMatch
 from utils import Checkpointer
 
 
@@ -30,7 +31,7 @@ def extract_unique_values_to_txt(filename_xlsx_in, filename_txt_out=None):
 classifier = None
 
 
-def classify_cell_content(content: str) -> list[Match]:
+def classify_cell_content(content: str) -> list[StringMatch]:
     global classifier
     classifier = classifier or CellClassifier()
     matches = classifier.match(content)
@@ -49,7 +50,7 @@ def colorize_values_on_sheet(sheet) -> None:
                     if confidence == 1.0 and 'clear' in best.pattern.content_class.update_content:
                         cell.value = '-'
                     if confidence >= 0.8 and 'replace_with_preprocessed' in best.pattern.content_class.update_content:
-                        cell.value = best.cell_text
+                        cell.value = best.text
 
                     comment = '\n'.join(
                         f'{m.pattern.content_class.description}: {round(m.confidence * 100)}'

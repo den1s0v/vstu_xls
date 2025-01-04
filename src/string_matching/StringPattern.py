@@ -1,7 +1,7 @@
 import re
 from typing import Union
 
-# from string_matching.CellType import CellType
+import string_matching.CellType as ns
 from string_matching.StringMatch import StringMatch
 from string_matching.StringTransformer import StringTransformer
 
@@ -44,7 +44,7 @@ class StringPattern:
     pattern_syntax: str = 're'  # one of: 'plain' / 're' (regexp) / 're-spaces'
     pattern_flags: int | str = 0
     captures: tuple = ()
-    content_class: 'CellType|str' = '<Unspecified content_class>'
+    content_class: 'ns.CellType|str' = '<Unspecified content_class>'
     preprocess: list[str] = None
 
     def __init__(self, *args, **kwargs):
