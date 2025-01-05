@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from grammar2d.GrammarElement import GrammarElement
+from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Terminal import Terminal
 from string_matching import CellType
 from utils import WithCache

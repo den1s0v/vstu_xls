@@ -34,5 +34,5 @@ class NonTerminal(GrammarElement):
     ...
 
     def get_matcher(self, grammar_macher):
-        from grammar2d_matching import NonTerminalMatcher
+        from grammar2d.NonTerminalMatcher import NonTerminalMatcher
         return NonTerminalMatcher(self, grammar_macher)

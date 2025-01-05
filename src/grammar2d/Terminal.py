@@ -2,7 +2,10 @@ from dataclasses import dataclass
 
 # from grammar2d import GRAMMAR
 from grammar2d.GrammarElement import GrammarElement
+from grammar2d.Grammar import Grammar
 from string_matching import CellType
+
+GRAMMAR: 'Grammar'
 
 
 @dataclass
@@ -14,9 +17,7 @@ class Terminal(GrammarElement):
     @property
     def cell_type(self) -> CellType:
         if not self._cell_type:
-            ...
-            # TODO
-            # self._cell_type = GRAMMAR.cell_types[self.cell_type_name]
+            self._cell_type = GRAMMAR.cell_types[self.cell_type_name]
         return self._cell_type
 
     def dependencies(self, recursive=False) -> list['GrammarElement']:
@@ -26,5 +27,5 @@ class Terminal(GrammarElement):
         return 1
 
     def get_matcher(self, grammar_matcher):
-        from grammar2d_matching import TerminalMatcher
+        from grammar2d.TerminalMatcher import TerminalMatcher
         return TerminalMatcher(self, grammar_matcher)

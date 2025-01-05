@@ -3,6 +3,7 @@ from timeit import default_timer as timer
 
 from adict import adict
 
+
 class Checkpointer:
     """Measures time between hits. Requires the `from timeit import default_timer as timer`"""
 
@@ -42,9 +43,8 @@ def reverse_if(iterable, reverse=True):
     return iterable
 
 
-
 @contextmanager
-def global_vars(**kwargs):
+def global_var(**kwargs):
     """ Declare a global var for usage within context block.
     This is not thread-safe.
     Usage example:
@@ -80,9 +80,9 @@ def global_vars(**kwargs):
                 del glob[name]
 
 
-
 class safe_adict(adict):
-    """Seme as `adict` but `__getattr__` behaves as `dict.get`, i.e. `None` is just returned if a key is absent."""
+    """Same as `adict` but `__getattr__` behaves as `dict.get`, i.e. `None` is just returned if a key is absent."""
+
     def __getattr__(self, name):
         # don't throw any exception on key absence
         return self.get(name)
@@ -97,4 +97,3 @@ class WithCache:
         if not hasattr(self, '_cache_d'):
             self._cache_d = safe_adict()
         return self._cache_d
-

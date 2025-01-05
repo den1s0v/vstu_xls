@@ -21,6 +21,7 @@ import yaml
 
 from adict import adict
 from string_matching.CellType import CellType
+from string_matching.StringMatch import StringMatch
 from string_matching.StringPattern import StringPattern
 
 from string_matching.helper_transformers import shrink_extra_inner_spaces, fix_sparse_words

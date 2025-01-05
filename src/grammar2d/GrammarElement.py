@@ -1,8 +1,11 @@
 from dataclasses import dataclass
 
 from constraints_2d import SpatialConstraint
-# from grammar2d import GRAMMAR
+from grammar2d.Grammar import Grammar
 from utils import WithCache
+
+
+GRAMMAR: 'Grammar'
 
 
 @dataclass
@@ -57,9 +60,7 @@ class GrammarElement(WithCache):
         raise NotImplementedError(type(self))
 
     def can_be_extended_by(self, child_element: 'GrammarElement') -> bool:
-        # TODO
-        # return GRAMMAR.can_extend(self, child_element)
-        ...
+        return GRAMMAR.can_extend(self, child_element)
 
     def get_matcher(self, grammar_matcher):
         raise NotImplementedError()
