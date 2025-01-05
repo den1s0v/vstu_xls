@@ -34,10 +34,10 @@ class CellType:
         if update_content is not None and isinstance(update_content, str):
             self.update_content = RE_COMMON_SEPARATOR.split(update_content)
 
-        assert not (set(self.update_content or ()) - VALID_update_content), f"CellType.update_content must contain one or more of {VALID_update_content}, got: `{self.update_content}`."
+        assert not (set(self.update_content or ()) - VALID_update_content), \
+            f"CellType.update_content must contain one or more of {VALID_update_content}, got: `{self.update_content}`."
 
-    @classmethod
-    def prepare_patterns(cls, patterns, content_class, transformations=None):
+    def prepare_patterns(self, patterns, content_class, transformations=None):
         assert patterns, 'at least one pattern is required'
         if isinstance(patterns, StringPattern):
             return [patterns]
@@ -45,7 +45,10 @@ class CellType:
             return [StringPattern(patterns)]
 
         ps = [
-            p if isinstance(p, StringPattern) else StringPattern(**p, content_class=content_class)
+            (self._accept_pattern(p)
+             if isinstance(p, StringPattern)
+             else StringPattern(**p, content_class=content_class)
+            )
             for p in patterns
         ]
         ps.sort(key=lambda p: p.confidence, reverse=True)
@@ -57,3 +60,8 @@ class CellType:
             if m := p.match(cell_text):
                 return m
         return None
+
+    def _accept_pattern(self, p: StringPattern) -> StringPattern:
+        """Set self as content_class for the pattern."""
+        p.content_class = self
+        return p
