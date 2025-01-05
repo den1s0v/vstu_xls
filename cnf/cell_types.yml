@@ -78,7 +78,7 @@ cell_types:
 
         - confidence: 0.80
             # 3+ цифры
-          pattern: '(?:\d{3,}(-\d+|[а-я])* [,]? )+'
+          pattern: '(?:\d{3,}(?:-\d+|[а-я])* [,]? )+'
           pattern_syntax: re-spaces
           pattern_flags: I
 
@@ -90,7 +90,7 @@ cell_types:
 
         - confidence: 0.30
             # слово и 3+ цифры
-          pattern: '(?:\S{1,10} \d{3,}(-\d+|[а-я])* [,]? )+'
+          pattern: '(?:\S{1,10} \d{3,}(?:-\d+|[а-я])* [,]? )+'
           pattern_syntax: re-spaces
           pattern_flags: I
 

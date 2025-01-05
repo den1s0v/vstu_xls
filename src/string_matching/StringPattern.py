@@ -44,7 +44,7 @@ class StringPattern:
     pattern_syntax: str = 're'  # one of: 'plain' / 're' (regexp) / 're-spaces'
     pattern_flags: int | str = 0
     captures: tuple = ()
-    content_class: 'ns.CellType|str' = '<Unspecified content_class>'
+    content_class: 'ns.CellType' = '<Unspecified content_class>'
     preprocess: list[str] = None
 
     def __init__(self, *args, **kwargs):

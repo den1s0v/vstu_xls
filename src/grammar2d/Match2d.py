@@ -21,7 +21,7 @@ def filter_best_matches(matches: list['Match2d'], precision_ratio_cutoff=0.9) ->
 class Match2d:
     element: GrammarElement
     component2match: dict[str, 'Match2d'] = None
-    precision = None
+    precision: float = None
     box: Box = None
     data: dict = None
 

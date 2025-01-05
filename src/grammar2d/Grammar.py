@@ -55,7 +55,7 @@ class Grammar(WithCache):
         effective_cell_types = {}
         for elem in self.elements.values():
             if isinstance(elem, Terminal):
-                requested_cell_type = elem.cell_type
+                requested_cell_type = elem.cell_type.name
                 assert requested_cell_type in self.cell_types, f"Used undeclared cell type {requested_cell_type} for element {elem.name}."
                 effective_cell_types[requested_cell_type] = self.cell_types[requested_cell_type]
         return effective_cell_types

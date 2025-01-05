@@ -1,11 +1,12 @@
 # grid.py
+from dataclasses import dataclass
 
 from abc import ABC
 from typing import Optional
 
 from adict import adict
 
-from geom2d import *
+from geom2d import Point, Size, Box, Direction, LEFT, RIGHT, UP, DOWN
 
 
 # Данные 2D-сетки.
@@ -15,7 +16,7 @@ class Grid(ABC):
         Двумерная сетка/решётка ограниченных размеров.
         Сама "матрица" с чистыми данными, без их интерпретации.
     """
-    point2cell: dict
+    point2cell: dict[Point, 'Cell']
 
     def __init__(self) -> None:
         self.point2cell = dict()
@@ -24,35 +25,35 @@ class Grid(ABC):
     def _clear_cells(self) -> None:
         self.point2cell.clear()
 
-    def registerCell(self, cell: 'Cell') -> None:
-        """ Запомнить ссылку на ячейку (или, если она объединённая, ссылки на ячейку из всех кооррдинат внутри неё) """
+    def register_cell(self, cell: 'Cell') -> None:
+        """ Запомнить ссылку на ячейку (или, если она объединённая, ссылки на ячейку из всех координат внутри неё) """
         for point in cell.box.iterate_points():
             self.point2cell[point] = cell
         # super().__init__()
 
-    def getCell(self, point: Point) -> Optional['Cell']:
+    def get_cell(self, point: Point) -> Optional['Cell']:
         return self.point2cell.get(point)
 
-    def getBoundingBox(self, force_recalc = False) -> Box:
+    def get_bounding_box(self, force_recalc=False) -> Box:
         """ Размеры эффективной области расположения данных (за пределами этой области могут быть только пустые ячейки).
             Default implementation that can be improved by subclasses.
         """
         if not self._bb_cache or force_recalc:
             boxes = [cell.box for cell in self.point2cell.values()]
-            l = min(box.left   for box in boxes)
-            r = max(box.right  for box in boxes)
-            t = min(box.top    for box in boxes)
+            L = min(box.left for box in boxes)
+            r = max(box.right for box in boxes)
+            t = min(box.top for box in boxes)
             b = max(box.bottom for box in boxes)
-            self._bb_cache = Box.from_2points(l, t, r, b)
+            self._bb_cache = Box.from_2points(L, t, r, b)
         return self._bb_cache
 
-    def getView(self, box: Box = None) -> Optional['GridView']:
+    def get_view(self, box: Box = None) -> Optional['GridView']:
         """Проекция заданной области внутри сетки или всей сетки целиком."""
-        boundingBox = self.getBoundingBox()
-        box = box.intersect(boundingBox) if box else boundingBox
+        bounding_box = self.get_bounding_box()
+        box = box.intersect(bounding_box) if box else bounding_box
         return GridView(self, box)
 
-    def supportsCellMerging(self) -> bool:
+    def supports_cell_merging(self) -> bool:
         return False
 
 
@@ -61,15 +62,17 @@ class GridWithCellMerging(Grid):
         Двумерная сетка/решётка ограниченных размеров.
         Допустимо объединение прямоугольных областей в целые ячейки.
     """
-    def supportsCellMerging(self) -> bool:
+
+    def supports_cell_merging(self) -> bool:
         return True
 
 
-
-
 class Cell:
-    """ Ячейка 2D-матрицы, содержащая текст. Обычно размером 1x1, но может быть задана и больше посредством поля size. """
-    def __init__(self, grid: Grid, point: Point, size:Size=None, content = '', style = None):
+    """ Ячейка 2D-матрицы, содержащая текст.
+        Обычно размером 1x1,
+        но может быть задана и больше посредством поля size. """
+
+    def __init__(self, grid: Grid, point: Point, size: Size = None, content='', style=None):
         self.grid = grid
         self.point = point
         self.size = size or Size(1, 1)
@@ -84,6 +87,7 @@ class Cell:
         return '%s@%s' % (repr(self.content), str(self.box))
 
 
+@dataclass()
 class CellStyle:
     font_style: set
     background_color: str
@@ -91,28 +95,28 @@ class CellStyle:
     pass
 
 
-
 # Проекция 2D-сетки.
 
 class Region(Box):
     """ Проекция определённой области (региона) 2D-сетки. Может хранить дополнительные данные о регионе в поле data """
+
     def __init__(self, grid_view: 'GridView', box: Box) -> None:
         super().__init__(*box)
         self.grid_view = grid_view
         self.data = adict()
 
-    def getCell(self, point) -> Optional['CellView']:
+    def get_cell_view(self, point) -> Optional['CellView']:
         if point not in self:
             return None  # не показывать ничего за пределами области проекции.
-        return self.grid_view.getCell(point)
+        return self.grid_view.get_cell_view(point)
 
-    def getRegion(self, box) -> Optional['Region']:
+    def get_region(self, box) -> Optional['Region']:
         if not (box in self or
                 box.overlaps(self) and (box := box.intersect(self)) and box):
             return None  # не показывать ничего за пределами области проекции.
-        return self.grid_view.getRegion(box)
+        return self.grid_view.get_region(box)
 
-    def iterate_cells(self, directions = (RIGHT, DOWN)):
+    def iterate_cells(self, directions=(RIGHT, DOWN)):
         """ Yield all non-empty cells within this region.
 
         Args:
@@ -122,11 +126,11 @@ class Region(Box):
             Point: non-empty cell within this region
         """
         for point in self.iterate_points(directions):
-            cw = self.getCell(point)
+            cw = self.get_cell_view(point)
             if cw:
                 yield cw
 
-    def findCell(self, predicate: callable, directions = (RIGHT, DOWN)) -> Optional['CellView']:
+    def findCell(self, predicate: callable, directions=(RIGHT, DOWN)) -> Optional['CellView']:
         """ Найти первую ячейку, удовлетворяющую условию `predicate`. Перебор осуществляется в заданных направлениях.
             Find the first cell that satisfies the `predicate` condition. The search is carried out in a given `directions`.
             `predicate` should take CellView as the only argument and return bool.
@@ -135,7 +139,7 @@ class Region(Box):
             return cw
         return None
 
-    def findAllCells(self, predicate: callable, directions = (RIGHT, DOWN)):
+    def findAllCells(self, predicate: callable, directions=(RIGHT, DOWN)):
         for cw in self.iterate_cells(directions):
             if predicate(cw):
                 yield cw
@@ -166,8 +170,6 @@ class Region(Box):
         return Region(self.grid_view, Box.from_2points(*coords))
 
 
-
-
 class CellView(Region):
     # Проекция одной ячейки 2D-сетки. Может хранить дополнительные данные о ячейке в поле data.
     def __init__(self, grid_view: 'GridView', cell: Cell) -> None:
@@ -180,12 +182,13 @@ class CellView(Region):
 
 
 class GridView(Region):
-    """ Проекция всей 2D-сетки (grid). Проекция может хранить дополнительные данные о ячейках и регионах (в соответствующих объектах проекций).
+    """ Проекция всей 2D-сетки (grid). Проекция может хранить дополнительные данные о ячейках и регионах
+        (в соответствующих объектах проекций — *View).
         Предполагается, что сама grid не будет изменяться после создания GridView для неё.
     """
     grid: Grid
-    cell_cache: dict[Point, CellView]
-    region_cache: dict[Point, Region]
+    cell_cache: dict[Point, CellView|None]
+    region_cache: dict[Box, Region]
 
     def __init__(self, grid: Grid, box: Box) -> None:
         super().__init__(self, box)  # Note. `self` here is meaningful param for Region's constructor.
@@ -193,7 +196,7 @@ class GridView(Region):
         self.cell_cache = dict()  # WeakValueDictionary()
         self.region_cache = dict()  # WeakValueDictionary()
 
-    def getCell(self, point: Point) -> Optional['CellView']:
+    def get_cell_view(self, point: Point) -> Optional['CellView']:
         if point not in self:
             return None  # не показывать ничего за пределами области проекции.
 
@@ -201,9 +204,9 @@ class GridView(Region):
         if cw:
             return cw
         if cw is False:
-            cell = self.grid.getCell(point)
+            cell = self.grid.get_cell(point)
             if cell:
-                if (not self.grid.supportsCellMerging() or point == cell.point):
+                if not self.grid.supports_cell_merging() or point == cell.point:
                     cw = CellView(self, cell)
 
                 else:  # `cell.point` may differ from requested `point` for a merged cell.
@@ -223,7 +226,7 @@ class GridView(Region):
                 self.cell_cache[point] = None
         return None
 
-    def getRegion(self, box: Box) -> Optional['Region']:
+    def get_region(self, box: Box) -> Optional['Region']:
         if not (box in self or
                 box.overlaps(self) and (box := box.intersect(self)) and box):
             return None  # не показывать ничего за пределами области проекции.

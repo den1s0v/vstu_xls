@@ -18,7 +18,7 @@ class GrammarMatcher:
     type_to_cells: dict[str, list[CellView]] = None
 
     def run_match(self, grid: Grid) -> Match2d:
-        self._grid_view = grid.getView()
+        self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
 
         with global_var(GRAMMAR=self):
@@ -55,7 +55,8 @@ class GrammarMatcher:
                     data['cell_matches'][cell_type.name] = m
 
     def _roll_matching_waves(self):
-        """ Find matches of all grammar elements per all matching waves defined by grammar, from terminals to the root. """
+        """ Find matches of all grammar elements per all matching waves defined by grammar,
+            from terminals to the root. """
         for wave in self.grammar.dependency_waves():
             if self.grammar.root in wave:
                 _res_ = self._find_matches_of_element(self.grammar.root)
