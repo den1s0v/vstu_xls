@@ -5,6 +5,7 @@ from geom2d import Point
 from grammar2d import Grammar, GrammarElement
 from grammar2d.Match2d import Match2d
 from grid import GridView, CellView, Grid
+from string_matching import CellClassifier
 from utils import global_var
 
 
@@ -40,19 +41,27 @@ class GrammarMatcher:
         self.matches_by_position[match.box.position].append(match)
         self.matches_by_element[match.element].append(match)
 
-    def _recognise_all_cells_content(self):
+    def _recognise_all_cells_content(self, max_hypotheses_per_cell=5):
+
+        ccl = CellClassifier(self.grammar.get_effective_cell_types().values())
         self.type_to_cells = defaultdict(list)
+
         for cw in self._grid_view.iterate_cells():
-            for cell_type in self.grammar.get_effective_cell_types().values():
-                m = cell_type.match(cw.cell.content)
-                if m:
+            match_list = ccl.match(cw.cell.content, max_hypotheses_per_cell)
+            if match_list:
+                for m in match_list:
                     # save to local cache
-                    self.type_to_cells[cell_type.name].append(cw)
-                    # save to cell_view's data
-                    data = cw.data  # reference to updatable dict
-                    if 'cell_matches' not in data:
-                        data['cell_matches'] = dict()
-                    data['cell_matches'][cell_type.name] = m
+                    ct_name = m.pattern.content_class.name
+                    self.type_to_cells[ct_name].append(cw)
+
+            # save to cell_view's data
+            data = cw.data  # reference to updatable dict
+            # if 'cell_matches' not in data:
+            #     data['cell_matches'] = dict()
+            data['cell_matches'] = {
+                m.pattern.content_class.name: m
+                for m in match_list
+            }
 
     def _roll_matching_waves(self):
         """ Find matches of all grammar elements per all matching waves defined by grammar,

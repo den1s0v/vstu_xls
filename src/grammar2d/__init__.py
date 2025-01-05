@@ -7,7 +7,6 @@ from grammar2d.NonTerminal import NonTerminal
 from grammar2d.PatternComponent import PatternComponent
 from grammar2d.Terminal import Terminal
 
-GRAMMAR: 'Grammar' = None
 
 
 class StructureElement(NonTerminal):
