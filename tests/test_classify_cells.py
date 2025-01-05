@@ -1,5 +1,8 @@
 # test_classify_cells.py
 
+""" This is not really a test (no ASSERT checks);
+    it's just an entry point to test classifying method on a lot of strings. """
+
 from tests_bootstrapper import init_testing_environment
 init_testing_environment()
 
@@ -68,7 +71,7 @@ def run_classification(tokens, show_bad_only=False):
             print(f'{confidence}: {ct}')
 
 
-def test_content_from_real_sheets():
+def try_content_from_real_sheets():
     filepaths = [
         r'../materials/ОН_ФАТ_1_курс - unique-values.txt',
         r'../materials/ОН_ФЭВТ_1 курс - unique-values.txt',
@@ -106,4 +109,4 @@ def test_content_from_real_sheets():
 
 
 if __name__ == '__main__':
-    test_content_from_real_sheets()
+    try_content_from_real_sheets()

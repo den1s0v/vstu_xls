@@ -10,8 +10,8 @@ from string_matching import CellType
 from constraints_2d.SpatialConstraint import SpatialConstraint
 from utils import WithCache
 
-
 GRAMMAR: 'Grammar' = None
+
 
 @dataclass
 class PatternComponent(WithCache):
@@ -24,6 +24,7 @@ class PatternComponent(WithCache):
     element_name: str  # имя дочернего элемента, включаемого в родительский как компонент.
 
     _element: 'GrammarElement' = None  # дочерний элемент грамматики
+
     @property
     def element(self) -> 'GrammarElement':
         """дочерний элемент грамматики"""
@@ -31,8 +32,8 @@ class PatternComponent(WithCache):
             self._element = GRAMMAR[self.element_name]  # TODO: assign GRAMMAR befor usage.
         return self._element
 
-
-    constraints: list[SpatialConstraint]  # "Локальные" ограничения, накладываемые на расположение этого компонента по отношению к родителю. Используются координаты текущего дочернего элемента и родительского элемента. Также могут использоваться координаты других компонентов родителя, которые были определены по списку компонентов выше этого компонента. "Локальные" означает, то для записи координат может быть использована сокращёная форма: 'x' — свой 'x', '_x' — 'x' родителя, и т.п.
+    constraints: list[
+        SpatialConstraint] = ()  # "Локальные" ограничения, накладываемые на расположение этого компонента по отношению к родителю. Используются координаты текущего дочернего элемента и родительского элемента. Также могут использоваться координаты других компонентов родителя, которые были определены по списку компонентов выше этого компонента. "Локальные" означает, то для записи координат может быть использована сокращёная форма: 'x' — свой 'x', '_x' — 'x' родителя, и т.п.
 
     weight: float = 1  # (-∞, ∞) вес компонента для регулирования вклада в точность опредления родителя. >0: наличие желательно, 0: безразлично (компонент может быть опущен без потери точности), <0: наличие нежелательно.
 
@@ -86,19 +87,20 @@ class PatternComponent(WithCache):
         return self.checks_components() - {GrammarElement.name_for_constraints, self.name}
 
 
-
-
-
-
 @dataclass
 class GrammarElement(WithCache):
     """Элемент грамматики: """
-    
+
     name_for_constraints = 'element'
 
     name: str  # имя узла грамматики (определяет тип содержимого)
-    root: bool = False  # whether this element is the grammars's root.
-    precision_treshold = 0.3  # [0, 1] порог допустимой точности, ниже которого элемент считается не найденным.
+    root: bool = False  # whether this element is the grammar's root.
+    precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого элемент считается не найденным.
+
+    @property
+    def name2component(self):
+        """ ??? """
+        return {}
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -106,8 +108,9 @@ class GrammarElement(WithCache):
     # parent: Optional['GrammarElement'] = None # родительский узел грамматики
     # components: dict[str, 'PatternComponent']
 
-    extends: list[str | 'GrammarElement'] = ()  # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
-    
+    extends: list[
+        str | 'GrammarElement'] = ()  # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
+
     constraints: list[SpatialConstraint] = ()
 
     @property
@@ -123,7 +126,7 @@ class GrammarElement(WithCache):
                 for ex in self.constraints
             ]
         return self._cache.constraints_with_full_names
-    
+
     def dependencies(self, recursive=False) -> list['GrammarElement']:
         """ GrammarElement must be known before this one can be matched. """
         raise NotImplementedError(type(self))
@@ -138,12 +141,14 @@ class GrammarElement(WithCache):
     def can_be_extended_by(self, child_element: 'GrammarElement') -> bool:
         return GRAMMAR.can_extend(self, child_element)
 
+    def get_matcher(self, grammar_matcher):
+        raise NotImplementedError()
 
 
 @dataclass
 class Terminal(GrammarElement):
-    """просто ячейка"""
-    cell_type_name: str
+    """Просто ячейка"""
+    cell_type_name: str = '<unknown cell_type!>'
     _cell_type: CellType = None
 
     @property
@@ -158,10 +163,9 @@ class Terminal(GrammarElement):
     def max_score(self) -> float:
         return 1
 
-    def get_matcher(self, grammar_macher):
+    def get_matcher(self, grammar_matcher):
         from grammar2d_matching import TerminalMatcher
-        return TerminalMatcher(self, grammar_macher)
-
+        return TerminalMatcher(self, grammar_matcher)
 
 
 class NonTerminal(GrammarElement):
@@ -181,17 +185,18 @@ class NonTerminal(GrammarElement):
 
     # component_by_name: dict[str, GrammarElement] = None
     @property
-    def component_by_name(self, name: str) -> GrammarElement | None:
+    def component_by_name(self) -> dict[str, PatternComponent] | None:
         if not self._cache.component_by_name:
             self._cache.component_by_name = {
                 comp.name: comp
                 for comp in self.components
             }
-        return self._cache.component_by_name.get(name)
+        return self._cache.component_by_name
 
     def max_score(self) -> float:
         """ precision = score / max_score """
         return sum(comp.weight for comp in self.components if comp.weight > 0)
+
     ...
 
     def get_matcher(self, grammar_macher):
@@ -199,13 +204,12 @@ class NonTerminal(GrammarElement):
         return NonTerminalMatcher(self, grammar_macher)
 
 
-
 class StructureElement(NonTerminal):
     ...
 
+
 class ArrayElement(NonTerminal):
     ...
-
 
 
 @dataclass
@@ -231,8 +235,8 @@ class Grammar(WithCache):
             elem.root = True  # update element
             self._root = elem
 
-
     _root: GrammarElement = None
+
     @property
     def root(self) -> GrammarElement:
         """корень грамматики"""
@@ -277,12 +281,13 @@ class Grammar(WithCache):
                 current_wave: set[GrammarElement] = set()
                 for elem in list(unmatched_elements):  # iterate over a copy
                     elem_deps = set(elem.dependencies(recursive=False))
-                    if not(elem_deps - matched_elements):
+                    if not (elem_deps - matched_elements):
                         # this one can be matched now.
                         current_wave.add(elem)
 
                 if not current_wave:
-                    raise ValueError(f"Grammar defined improperly: some elements cannot be matched due to circular dependencies ({unmatched_elements}). Elements could be matched correctly: {matched_elements}.")
+                    raise ValueError(
+                        f"Grammar defined improperly: some elements cannot be matched due to circular dependencies ({unmatched_elements}). Elements could be matched correctly: {matched_elements}.")
 
                 waves.append(current_wave)
                 unmatched_elements -= current_wave
@@ -294,7 +299,8 @@ class Grammar(WithCache):
             if (n := len(waves[-1])) > 1:
                 print(f'WARNING: grammar defines several ({n}) top-level elements!')
                 if not self.root_name:
-                    raise ValueError(f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
+                    raise ValueError(
+                        f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
             elif not self.root_name:
                 top_elem = waves[-1][0]
                 self.root_name = top_elem.name
@@ -332,7 +338,6 @@ class Grammar(WithCache):
                         if superbase not in elem.extends:
                             elem.extends.append(superbase)
 
-
                     # Note: infinite propagation is not implemented, only 2 levels. Please declare all bases in Element's specification, do not rely on automatic inference.
 
             self._cache.can_be_extended_by = dict(can_be_extended_by)  # convert to ordinary dict
@@ -341,7 +346,3 @@ class Grammar(WithCache):
     def can_extend(self, base_element: str | GrammarElement, extension_element: str | GrammarElement) -> bool:
         children = self.extension_map.get(self[base_element], None)
         return children and extension_element in children
-
-
-
-
