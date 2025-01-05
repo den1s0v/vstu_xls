@@ -1,13 +1,13 @@
-from grammar2d.GrammarElement import GrammarElement
+from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 from grammar2d.PatternComponent import PatternComponent
 
 
-class NonTerminal(GrammarElement):
+class NonTerminal(Pattern2d):
     """Структура или Коллекция"""
     components: list[PatternComponent]
 
     # dependencies: list[GrammarElement] = None
-    def dependencies(self, recursive=False) -> list[GrammarElement]:
+    def dependencies(self, recursive=False) -> list[Pattern2d]:
         if not self._cache.dependencies:
             dependency_set = set()
             for comp in self.components:

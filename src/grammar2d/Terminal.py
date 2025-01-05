@@ -1,18 +1,22 @@
 from dataclasses import dataclass
 
 # from grammar2d import GRAMMAR
-from grammar2d.GrammarElement import GrammarElement
-from grammar2d.Grammar import Grammar
+from grammar2d.Pattern2d import Pattern2d, PatternRegistry
+import grammar2d.Grammar as ns
 from string_matching import CellType
 
-GRAMMAR: 'Grammar'
+GRAMMAR: 'ns.Grammar'
 
 
 @dataclass
-class Terminal(GrammarElement):
+class Terminal(Pattern2d):
     """Просто ячейка"""
     cell_type_name: str = '<unknown cell_type!>'
     _cell_type: CellType = None
+
+    @classmethod
+    def get_kind(cls):
+        return "cell"
 
     @property
     def cell_type(self) -> CellType:
@@ -20,7 +24,7 @@ class Terminal(GrammarElement):
             self._cell_type = GRAMMAR.cell_types[self.cell_type_name]
         return self._cell_type
 
-    def dependencies(self, recursive=False) -> list['GrammarElement']:
+    def dependencies(self, recursive=False) -> list['Pattern2d']:
         return ()
 
     def max_score(self) -> float:
@@ -29,3 +33,6 @@ class Terminal(GrammarElement):
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher
         return TerminalMatcher(self, grammar_matcher)
+
+
+PatternRegistry.register(Terminal)

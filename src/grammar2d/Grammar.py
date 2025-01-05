@@ -1,99 +1,110 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
-from grammar2d.GrammarElement import GrammarElement
+import yaml
+
+from grammar2d.Pattern2d import Pattern2d, read_pattern
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Terminal import Terminal
-from string_matching import CellType
+from string_matching import CellType, read_cell_types
 from utils import WithCache
 
 
-@dataclass
+# @dataclass
 class Grammar(WithCache):
     """Грамматика описывает весь документ, начиная от корня"""
 
     cell_types: dict[str, CellType]
-    elements: dict[str, GrammarElement]
+    patterns: dict[str, Pattern2d]
     root_name: str = None
 
-    def register_element(self, elem: GrammarElement):
-        assert elem.name, f"Cannot register element without name: {elem}"
-        self.elements[elem.name] = elem
+    def __init__(self, cell_types: dict[str, CellType], patterns: list[Pattern2d]):
+        self.cell_types = cell_types
+
+        self.patterns = {}
+        for pt in patterns:
+            self.register_pattern(pt)
+
+    def register_pattern(self, pattern: Pattern2d):
+        assert pattern.name, f"Cannot register pattern without name: {pattern}"
+        self.patterns[pattern.name] = pattern
 
         # check root
-        if elem.root:
+        if pattern.root:
             if self.root_name:
-                assert self.root_name == elem.name, f"Grammar element `{elem.name}` is declared as root, but grammar itself declares `{self.root_name}` as root."
+                assert self.root_name == pattern.name,\
+                    f"Grammar pattern `{pattern.name}` is declared as root, but grammar itself declares `{self.root_name}` as root."
             else:
-                self.root_name = elem.name
-            self._root = elem
-        elif self.root_name == elem.name:
-            elem.root = True  # update element
-            self._root = elem
+                self.root_name = pattern.name
+            self._root = pattern
+        elif self.root_name == pattern.name:
+            pattern.root = True  # update pattern
+            self._root = pattern
 
-    _root: GrammarElement = None
+    _root: Pattern2d = None
 
     @property
-    def root(self) -> GrammarElement:
+    def root(self) -> Pattern2d:
         """корень грамматики"""
         if not self._root:
             assert self.root_name, '`root` of grammar not specified!'
-            self._root = self.elements[self.root_name]
+            self._root = self.patterns[self.root_name]
         return self._root
 
-    def __getitem__(self, name_or_el: str | GrammarElement):
-        """Short syntax to access element of the grammar"""
-        if isinstance(name_or_el, GrammarElement):
-            assert name_or_el.name in self.elements, name_or_el
-            elem = name_or_el
+    def __getitem__(self, name_or_el: str | Pattern2d):
+        """Short syntax to access pattern of the grammar"""
+        if isinstance(name_or_el, Pattern2d):
+            assert name_or_el.name in self.patterns, name_or_el
+            pattern = name_or_el
         else:
-            elem = self.elements[name_or_el]
-        return elem
+            pattern = self.patterns[name_or_el]
+        return pattern
 
     def get_effective_cell_types(self) -> dict[str, CellType]:
         """ Get cell types only used for matching, i.e. omit unused ones. """
         effective_cell_types = {}
-        for elem in self.elements.values():
-            if isinstance(elem, Terminal):
-                requested_cell_type = elem.cell_type.name
-                assert requested_cell_type in self.cell_types, f"Used undeclared cell type {requested_cell_type} for element {elem.name}."
+        for pattern in self.patterns.values():
+            if isinstance(pattern, Terminal):
+                requested_cell_type = pattern.cell_type.name
+                assert requested_cell_type in self.cell_types, \
+                    f"Used undeclared cell type {requested_cell_type} for pattern {pattern.name}."
                 effective_cell_types[requested_cell_type] = self.cell_types[requested_cell_type]
         return effective_cell_types
 
-    # dependency_waves: list[set[GrammarElement]] = None
+    # dependency_waves: list[set[Pattern2d]] = None
 
     @property
-    def dependency_waves(self) -> list[set[GrammarElement]]:
+    def dependency_waves(self) -> list[set[Pattern2d]]:
         """get list of sets `_dependency_waves`"""
         if not self._cache.dependency_waves:
-            assert self.elements, 'Cannot process empty grammar!'
+            assert self.patterns, 'Cannot process empty grammar!'
 
             # build dependency "tree" by tracing stages of matching process.
             waves = []
-            unmatched_elements = set(self.elements.values())
-            matched_elements = set()
+            unmatched_patterns = set(self.patterns.values())
+            matched_patterns = set()
 
-            while unmatched_elements:
-                current_wave: set[GrammarElement] = set()
-                for elem in list(unmatched_elements):  # iterate over a copy
-                    elem_deps = set(elem.dependencies(recursive=False))
-                    if not (elem_deps - matched_elements):
+            while unmatched_patterns:
+                current_wave: set[Pattern2d] = set()
+                for pattern in list(unmatched_patterns):  # iterate over a copy
+                    elem_deps = set(pattern.dependencies(recursive=False))
+                    if not (elem_deps - matched_patterns):
                         # this one can be matched now.
-                        current_wave.add(elem)
+                        current_wave.add(pattern)
 
                 if not current_wave:
                     raise ValueError(
-                        f"Grammar defined improperly: some elements cannot be matched due to circular dependencies ({unmatched_elements}). Elements could be matched correctly: {matched_elements}.")
+                        f"Grammar defined improperly: some patterns cannot be matched due to circular dependencies ({unmatched_patterns}). Elements could be matched correctly: {matched_patterns}.")
 
                 waves.append(current_wave)
-                unmatched_elements -= current_wave
-                matched_elements |= current_wave
+                unmatched_patterns -= current_wave
+                matched_patterns |= current_wave
 
             assert waves, 'Cannot infer any matching stages for the grammar!'
 
             # check root
             if (n := len(waves[-1])) > 1:
-                print(f'WARNING: grammar defines several ({n}) top-level elements!')
+                print(f'WARNING: grammar defines several ({n}) top-level patterns!')
                 if not self.root_name:
                     raise ValueError(
                         f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
@@ -103,42 +114,42 @@ class Grammar(WithCache):
                 self._root = top_elem
                 print('INFO: Grammar root inferred automatically:', self.root_name)
             elif self.root not in waves[-1]:
-                print('WARNING: `root` of grammar is not the top-level element!')
+                print('WARNING: `root` of grammar is not the top-level pattern!')
 
             self._cache.dependency_waves = waves
 
         return self._cache.dependency_waves
 
-    # can_be_extended_by: dict[GrammarElement, list[GrammarElement]] = None
+    # can_be_extended_by: dict[Pattern2d, list[Pattern2d]] = None
 
     @property
-    def extension_map(self) -> dict[GrammarElement, list[GrammarElement]]:
+    def extension_map(self) -> dict[Pattern2d, list[Pattern2d]]:
         """get dict `can_be_extended_by`"""
         if not self._cache.can_be_extended_by:
             # build map
             can_be_extended_by = defaultdict(list)
 
-            for elem in self.elements.values():
-                for base in elem.extends:
+            for pattern in self.patterns.values():
+                for base in pattern.extends:
                     # direct extension
                     bases = can_be_extended_by[self[base]]
-                    if elem not in bases:
-                        bases.append(elem)
+                    if pattern not in bases:
+                        bases.append(pattern)
 
                     # indirect extension
                     for superbase in base.extends:
                         superbases = can_be_extended_by[self[superbase]]
-                        if elem not in superbases:
-                            superbases.append(elem)
-                        # add superbase to elem's bases for ршрук completeness
-                        if superbase not in elem.extends:
-                            elem.extends.append(superbase)
+                        if pattern not in superbases:
+                            superbases.append(pattern)
+                        # add superbase to pattern's bases for ршрук completeness
+                        if superbase not in pattern.extends:
+                            pattern.extends.append(superbase)
 
                     # Note: infinite propagation is not implemented, only 2 levels. Please declare all bases in Element's specification, do not rely on automatic inference.
 
             self._cache.can_be_extended_by = dict(can_be_extended_by)  # convert to ordinary dict
         return self._cache.can_be_extended_by
 
-    def can_extend(self, base_element: str | GrammarElement, extension_element: str | GrammarElement) -> bool:
-        children = self.extension_map.get(self[base_element], None)
-        return children and extension_element in children
+    def can_extend(self, base_pattern: str | Pattern2d, extension_pattern: str | Pattern2d) -> bool:
+        children = self.extension_map.get(self[base_pattern], None)
+        return children and extension_pattern in children

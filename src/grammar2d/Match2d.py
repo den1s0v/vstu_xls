@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from geom2d import Box
-from grammar2d import GrammarElement
+from grammar2d.Pattern2d import Pattern2d
 
 
 def filter_best_matches(matches: list['Match2d'], precision_ratio_cutoff=0.9) -> list['Match2d']:
@@ -19,26 +19,29 @@ def filter_best_matches(matches: list['Match2d'], precision_ratio_cutoff=0.9) ->
 
 @dataclass()
 class Match2d:
-    element: GrammarElement
-    component2match: dict[str, 'Match2d'] = None
-    precision: float = None
+    """
+    Match of a `pattern` on a specific location expressed by `box`.
+    """
+    pattern: Pattern2d
     box: Box = None
+    precision: float = None
+    component2match: dict[str, 'Match2d'] = None
     data: dict = None
 
     def calc_precision(self) -> float:
         if self.precision is None:
             self.precision = sum(
-                comp_m.precision * self.element.component_by_name[name].weight
+                comp_m.precision * self.pattern.component_by_name[name].weight
                 for name, comp_m in self.component2match.items()
-            ) / self.element.max_score()
+            ) / self.pattern.max_score()
         return self.precision
 
     def clone(self):
         """Make a shallow copy"""
         return Match2d(
-            self.element,
-            dict(self.component2match),
-            self.precision,
+            self.pattern,
             self.box,
+            self.precision,
+            dict(self.component2match),
             dict(self.data),
         )

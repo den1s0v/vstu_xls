@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from geom2d import Point
-from grammar2d import Grammar, GrammarElement
+from grammar2d import Grammar, Pattern2d
 from grammar2d.Match2d import Match2d
 from grid import GridView, CellView, Grid
 from string_matching import CellClassifier
@@ -15,7 +15,7 @@ class GrammarMatcher:
 
     _grid_view: GridView = None
     _matches_by_position: dict[Point, list[Match2d]] = None
-    _matches_by_element: dict[GrammarElement, list[Match2d]] = None
+    _matches_by_element: dict[Pattern2d, list[Match2d]] = None
     type_to_cells: dict[str, list[CellView]] = None
 
     def run_match(self, grid: Grid) -> Match2d:
@@ -32,14 +32,14 @@ class GrammarMatcher:
         return self._matches_by_position
 
     @property
-    def matches_by_element(self) -> dict[GrammarElement, list[Match2d]]:
+    def matches_by_element(self) -> dict[Pattern2d, list[Match2d]]:
         if not self._matches_by_element:
             self._matches_by_element = defaultdict(list)
         return self._matches_by_element
 
     def register_match(self, match: Match2d):
         self.matches_by_position[match.box.position].append(match)
-        self.matches_by_element[match.element].append(match)
+        self.matches_by_element[match.pattern].append(match)
 
     def _recognise_all_cells_content(self, max_hypotheses_per_cell=5):
 
@@ -74,7 +74,7 @@ class GrammarMatcher:
                     self._find_matches_of_element(elem)
             ...
 
-    def _find_matches_of_element(self, element: GrammarElement):
+    def _find_matches_of_element(self, element: Pattern2d):
         """Try finding matches of element on all grid space"""
         ...
         # for wave in self.grammar.dependency_waves():
