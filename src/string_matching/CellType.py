@@ -45,7 +45,7 @@ class CellType:
             return [StringPattern(patterns)]
 
         ps = [
-            p if isinstance(patterns, StringPattern) else StringPattern(**p, content_class=content_class)
+            p if isinstance(p, StringPattern) else StringPattern(**p, content_class=content_class)
             for p in patterns
         ]
         ps.sort(key=lambda p: p.confidence, reverse=True)
