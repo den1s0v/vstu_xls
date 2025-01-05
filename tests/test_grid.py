@@ -73,7 +73,7 @@ class GridTestCase(unittest.TestCase):
         rect = gw.get_region(Box(3, 3, 3, 3))
         print('rect-view range:', rect)
         for d in Direction._cache.values():
-            outer = rect.lookOutside(d)
+            outer = rect.look_outside(d)
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
             print('                   ', ''.join(chars))
@@ -82,7 +82,7 @@ class GridTestCase(unittest.TestCase):
         rect = gw.get_region(Box(2, 2, 5, 5))
         print('rect-view range:', rect)
         for d in Direction._cache.values():
-            outer = rect.lookOutside(d, distance=2)
+            outer = rect.look_outside(d, distance=2)
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
             print('                   ', ''.join(chars))
@@ -92,7 +92,7 @@ class GridTestCase(unittest.TestCase):
         rect = gw.get_region(Box(2, 2, 4, 4))
         print('rect-view range:', rect)
         for d in Direction._cache.values():
-            outer = rect.lookOutside(d, distance=0)
+            outer = rect.look_outside(d, distance=0)
             # chars = (cell.cell.content for cell in outer.iterateCells())
             print('rect-view range, %s:' % d.prop_name, outer)
             # print('                   ', ''.join(chars))
@@ -102,7 +102,7 @@ class GridTestCase(unittest.TestCase):
         rect = gw.get_region(Box(2, 2, 4, 4))
         print('rect-view range:', rect)
         for d in Direction._cache.values():
-            outer = rect.lookOutside(d, distance=-10)  # ignored distance
+            outer = rect.look_outside(d, distance=-10)  # ignored distance
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
             print('                   ', ''.join(chars))
@@ -112,7 +112,7 @@ class GridTestCase(unittest.TestCase):
         rect = gw.get_region(Box(2, 2, 4, 4))
         print('rect-view range:', rect)
         for d in Direction._cache.values():
-            outer = rect.lookOutside(d, distance=999)  # too large distance, clamp.
+            outer = rect.look_outside(d, distance=999)  # too large distance, clamp.
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
             print('                   ', ''.join(chars))

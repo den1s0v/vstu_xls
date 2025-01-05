@@ -71,6 +71,11 @@ class Cell:
     """ Ячейка 2D-матрицы, содержащая текст.
         Обычно размером 1x1,
         но может быть задана и больше посредством поля size. """
+    grid: Grid
+    point: Point
+    size: Size
+    content: str
+    style: 'CellStyle'
 
     def __init__(self, grid: Grid, point: Point, size: Size = None, content='', style=None):
         self.grid = grid
@@ -98,7 +103,11 @@ class CellStyle:
 # Проекция 2D-сетки.
 
 class Region(Box):
-    """ Проекция определённой области (региона) 2D-сетки. Может хранить дополнительные данные о регионе в поле data """
+    """ Проекция определённой области (региона) 2D-сетки.
+        Может хранить дополнительные данные о регионе в поле `data` """
+
+    grid_view: 'GridView'
+    data: adict
 
     def __init__(self, grid_view: 'GridView', box: Box) -> None:
         super().__init__(*box)
@@ -120,37 +129,46 @@ class Region(Box):
         """ Yield all non-empty cells within this region.
 
         Args:
-            directions (tuple, optional): Directions of traversal for main & secondary loop over 2D area. Second element of the 2-tuple may be omitted. Defaults to (RIGHT, DOWN).
+            directions (tuple, optional): Directions of traversal for main & secondary loop over 2D area.
+                Second element of the 2-tuple may be omitted. Defaults to (RIGHT, DOWN).
 
         Yields:
             Point: non-empty cell within this region
         """
+        # Note: in case of grid.supports_cell_merging() -> True, cell may repeat.
+        cells_seen = set()
         for point in self.iterate_points(directions):
             cw = self.get_cell_view(point)
-            if cw:
+            if cw and cw not in cells_seen:
                 yield cw
+                cells_seen.add(cw)
 
-    def findCell(self, predicate: callable, directions=(RIGHT, DOWN)) -> Optional['CellView']:
-        """ Найти первую ячейку, удовлетворяющую условию `predicate`. Перебор осуществляется в заданных направлениях.
-            Find the first cell that satisfies the `predicate` condition. The search is carried out in a given `directions`.
+    def find_cell(self, predicate: callable, directions=(RIGHT, DOWN)) -> Optional['CellView']:
+        """ Найти первую ячейку, удовлетворяющую условию `predicate`.
+            Перебор осуществляется в заданных направлениях.
+            Find the first `cellView` that satisfies the `predicate` condition.
+            The search is carried out in a given `directions`.
             `predicate` should take CellView as the only argument and return bool.
             """
-        for cw in self.findAllCells(predicate, directions):
+        for cw in self.find_all_cells(predicate, directions):
             return cw
         return None
 
-    def findAllCells(self, predicate: callable, directions=(RIGHT, DOWN)):
+    def find_all_cells(self, predicate: callable, directions=(RIGHT, DOWN)):
         for cw in self.iterate_cells(directions):
             if predicate(cw):
                 yield cw
 
-    def lookOutside(self, direction: Direction, distance: int = -1) -> 'Region':
-        """ Получить регион, снаружи примыкающий к этому с заданной стороны и протяжённый на заданное расстояние (по умолчанию до границы проекции решетки).
-        Get a region that is externally adjacent to this one from a given side and extended by a given distance (by default to the border of the grid_view).
+    def look_outside(self, direction: Direction, distance: int = -1) -> 'Region':
+        """ Получить регион, снаружи примыкающий к этому с заданной стороны и протяжённый на заданное расстояние
+            (по умолчанию до границы проекции решетки).
+        Get a region that is externally adjacent to this one from a given side and extended by a given distance
+        (by default to the border of the grid_view).
 
         Args:
             direction (geom2d.Direction): direction that determines target side.
-            distance (int, optional): length of region along `direction`. Values below zero mean maximum possible length. Defaults to -1.
+            distance (int, optional): length of region along `direction`. Values below zero mean maximum possible length.
+                Defaults to -1.
 
         Returns:
             Region: new non-overlapping Region having the same adjacent side to this one.
@@ -190,8 +208,10 @@ class GridView(Region):
     cell_cache: dict[Point, CellView|None]
     region_cache: dict[Box, Region]
 
-    def __init__(self, grid: Grid, box: Box) -> None:
-        super().__init__(self, box)  # Note. `self` here is meaningful param for Region's constructor.
+    def __init__(self, grid: Grid, box: Box = None) -> None:
+        # Note. `self` here is meaningful param for Region's constructor.
+        super().__init__(self, box or grid.get_bounding_box())
+
         self.grid = grid
         self.cell_cache = dict()  # WeakValueDictionary()
         self.region_cache = dict()  # WeakValueDictionary()
