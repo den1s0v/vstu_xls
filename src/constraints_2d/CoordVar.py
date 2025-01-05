@@ -1,5 +1,5 @@
 class CoordVar:
-    """ Имя переменной в форме `[[<component>]_]<attr>` ,
+    """ Имя переменной в форме `[[<component>]_]<attr>`,
     где <attr> относится к одному из параметров прямоугольника на плоскости
     """
 
@@ -48,14 +48,16 @@ class CoordVar:
             sep = ''
         return f"{self.component}{sep}{self.attr}"
 
-    def __str__(self): return self.var_name
+    def __str__(self):
+        return self.var_name
 
     def attr_for_box(self) -> str:
         return self.box_attrs.get(self.attr, self.attr)
 
     @classmethod
     def validate_attr(cls, attr_name: str) -> str:
-        assert attr_name in (cls.valid_attrs), f"Unknown attribute name: '{attr_name}' (expected one of: {cls.valid_attrs})."
+        assert attr_name in cls.valid_attrs, \
+            f"Unknown attribute name: '{attr_name}' (expected one of: {cls.valid_attrs})."
         return attr_name
 
     @classmethod

@@ -1,29 +1,32 @@
-from constraints_2d.BoolExpr import BoolExpr
-from geom2d import Box
 
+
+from constraints_2d.ArbitraryBoolExprBase import ArbitraryBoolExprBase
+from geom2d import Box
 
 from collections import defaultdict
 
-
 # Helpers for redefining a class >>
-SpatialConstraint_factory_class = None  # global var, can be modified from other module via function below.
+AlgebraicExpr_factory_class = None  # global var, can be modified from other module via function below.
 
-def register_SpatialConstraint_default_subclass(cls):
-    """Register default SpatialConstraint implementation"""
-    global SpatialConstraint_factory_class
-    assert issubclass(cls, SpatialConstraint), f"{cls} does not derive from SpatialConstraint."
-    SpatialConstraint_factory_class = cls
+
+def register_AlgebraicExpr_default_subclass(cls):
+    """Register default AlgebraicExpr implementation"""
+    global AlgebraicExpr_factory_class
+    assert issubclass(cls, AlgebraicExpr), f"{cls} does not derive from AlgebraicExpr."
+    AlgebraicExpr_factory_class = cls
     # print(' - registered class:', cls)
     # print(' - mro:', cls.mro())
 
-def get_SpatialConstraint_default_subclass() -> type:
-    cls = SpatialConstraint_factory_class or SpatialConstraint
+
+def get_AlgebraicExpr_default_subclass() -> type:
+    cls = AlgebraicExpr_factory_class or AlgebraicExpr
     return cls
+
 
 # << Helpers.
 
 
-class SpatialConstraint(BoolExpr):
+class AlgebraicExpr(ArbitraryBoolExprBase):
     """ Система неравенств с переменными, содержащими координаты прямоугольников-компонентов. """
     # expr: BoolExpr
 
@@ -32,11 +35,15 @@ class SpatialConstraint(BoolExpr):
         'parent': '_',
     }
 
+    @classmethod
+    def get_kind(cls):
+        return "inequality"
+
     def __new__(self, *args, **kw):
         """Modified class constructor.
         Expected args: expr_string: str = None, expr: object = None.
-        In fact, it returns an instance of class currently registered as default `SpatialConstraint` implementation """
-        obj = object.__new__(get_SpatialConstraint_default_subclass())
+        In fact, it returns an instance of class currently registered as default `AlgebraicExpr` implementation """
+        obj = object.__new__(get_AlgebraicExpr_default_subclass())
         obj.__init__(*args, **kw)
         return obj
 
@@ -72,7 +79,6 @@ class SpatialConstraint(BoolExpr):
         self.replace_vars(vars_mapping)
         return self
 
-
     def _fit_component_mapping(self, mapping: set[str]):
         """ Update mapping to utilize component_name_aliases to exisiting components if required """
         this_components = self.referenced_components()
@@ -92,7 +98,6 @@ class SpatialConstraint(BoolExpr):
 
         return mapping
 
-
     def _vars_mapping_for_replacing_components(self, component_mapping: dict[str, str]):
         component_mapping = self._fit_component_mapping(component_mapping)
         var_names_mapping = {}
@@ -103,7 +108,6 @@ class SpatialConstraint(BoolExpr):
                 new_var.component = target_component  # change `component` in the copy
                 var_names_mapping[v.var_name] = new_var.var_name
         return var_names_mapping
-
 
     def _map_vars_to_component_coordinates(self, component2box: dict[str, Box]) -> dict[str, int]:
         component2box = self._fit_component_mapping(component2box)

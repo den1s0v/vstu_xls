@@ -1,13 +1,16 @@
-from sympy import Eq, Symbol, lambdify
+from sympy import Eq, Symbol, lambdify, Expr as SympyOp
 
+from constraints_2d.ArbitraryBoolExprBase import ArbitraryBoolExprBase
 from constraints_2d.BoolExpr import BoolExpr
 from constraints_2d.CoordVar import CoordVar
-from constraints_2d.SpatialConstraint import SpatialConstraint, register_SpatialConstraint_default_subclass
+from constraints_2d.AlgebraicExpr import AlgebraicExpr, register_AlgebraicExpr_default_subclass
 from constraints_2d.utils.ast_to_sympy import parse_expression
 
 
-class SympyExpr(BoolExpr):
+class SympyExpr(AlgebraicExpr):
     """ Adapter to SymPy expression """
+
+    _expr: SympyOp
 
     def __init__(self, expr_string: str = None, expr: object = None):
         sympy_expr = (expr or parse_expression(expr_string)).simplify()
@@ -21,21 +24,20 @@ class SympyExpr(BoolExpr):
             if not hasattr(self._expr, 'atoms'):
                 # not a SymPy expression, thus no vars in it.
                 self.vars = ()
-                
+
             # extract vars
             self.vars = [CoordVar(v.name) for v in self._expr.atoms(Symbol)]
         return self.vars
 
     def decidable(self) -> bool:
         return self._expr != False
-    
-    
+
     def to_callable(self) -> callable:
         expr_vars = self.referenced_variables()
         if not expr_vars:
             # not a SymPy expression
             return lambda: self._expr
-        
+
         if not self.lambdified:
             self.lambdified = lambdify(expr_vars, self._expr, docstring_limit=0)
         return self.lambdified
@@ -47,16 +49,16 @@ class SympyExpr(BoolExpr):
         if missing_vars:
             raise ValueError(f"Cannot evaluate {self}: missing vars {missing_vars}")
         return self.to_callable()(**var2value)
-    
-    def _subs(self, var2value = ()) -> object:
+
+    def _subs(self, var2value=()) -> SympyOp:
         """ Replace given values of variables within the expr """
         if not hasattr(self._expr, 'subs'):
             # not a SymPy expression
             return self._expr
-        
+
         return self._expr.subs(var2value, simultaneous=True)  # `simultaneous=True` avoids possible variable clash
-    
-    def replace_vars(self, var_mapping: dict[str, int|str] = ()):
+
+    def replace_vars(self, var_mapping: dict[str, int | str] = ()):
         """ Change variables in-place """
         self._expr = self._subs(var_mapping)
         if var_mapping and any(isinstance(val, (int, float)) for val in var_mapping.values()):
@@ -79,28 +81,25 @@ class SympyExpr(BoolExpr):
         return extract_var_values_from_sympy_expr(self._expr)
 
     def __and__(self, y: 'SympyExpr') -> 'SympyExpr':
-        """x&y""" 
-        return type(self)(expr = self._expr & y._expr)
+        """x&y"""
+        return type(self)(expr=self._expr & y._expr)
+
     def __or__(self, y: 'SympyExpr') -> 'SympyExpr':
-        """x|y""" 
-        return type(self)(expr = self._expr | y._expr)
+        """x|y"""
+        return type(self)(expr=self._expr | y._expr)
+
     def __xor__(self, y: 'SympyExpr') -> 'SympyExpr':
-        """x^y""" 
-        return type(self)(expr = self._expr ^ y._expr)
+        """x^y"""
+        return type(self)(expr=self._expr ^ y._expr)
+
     def __invert__(self) -> 'SympyExpr':
-        """~x""" 
-        return type(self)(expr = ~self._expr)
+        """~x"""
+        return type(self)(expr=~self._expr)
 
-
-
-class SpatialConstraintSympyBacked(SympyExpr, SpatialConstraint):
-    """ Diamond-inherited class to get all features in one """
-    pass
 
 def register_sympy_as_expr_backend():
-    """register subclass of SpatialConstraint"""
-    register_SpatialConstraint_default_subclass(SpatialConstraintSympyBacked)
-
+    """register subclass of AlgebraicExpr"""
+    register_AlgebraicExpr_default_subclass(SympyExpr)
 
 
 def extract_vars_with_equality(expr) -> set[str]:
