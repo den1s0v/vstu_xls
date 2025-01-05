@@ -4,7 +4,7 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from string_matching import StringPattern
+from string_matching import CellType, StringPattern, StringMatch
 from string_matching.helper_transformers import shrink_extra_inner_spaces
 from string_matching import read_cell_types, fix_sparse_words
 
@@ -16,7 +16,7 @@ class StringPatternTestCase(unittest.TestCase):
         self.assertIsNotNone(p.match('124'))
         self.assertIsNone(p.match('****'))
         p.confidence = 1
-        self.assertEqual(1, p.match('abcdef').precision)
+        self.assertEqual(1, p.match('abcd123_').precision)
 
     def test_init2(self):
         p = StringPattern('a bc+', 0.9, 're-spaces')
@@ -260,6 +260,16 @@ class StringPatternTestCase(unittest.TestCase):
 
 class CellTypeTestCase(unittest.TestCase):
     def test_init1(self):
+        ct = CellType('test_type', patterns=[
+            StringPattern('one two three', confidence=1)
+        ])
+
+        m = ct.match('one two three')
+        self.assertIsNotNone(m)
+        self.assertTrue(isinstance(m, StringMatch))
+        self.assertEqual(1, m.precision)
+
+    def test_config(self):
         cell_types = read_cell_types()
         self.assertIn('teacher', cell_types)
         self.assertIn('room', cell_types)
