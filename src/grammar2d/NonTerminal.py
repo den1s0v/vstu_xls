@@ -6,6 +6,10 @@ class NonTerminal(Pattern2d):
     """Структура или Коллекция"""
     components: list[PatternComponent]
 
+    @classmethod
+    def get_kind(cls):
+        return "area"  # ???
+
     # dependencies: list[GrammarElement] = None
     def dependencies(self, recursive=False) -> list[Pattern2d]:
         if not self._cache.dependencies:
@@ -36,3 +40,6 @@ class NonTerminal(Pattern2d):
     def get_matcher(self, grammar_macher):
         from grammar2d.NonTerminalMatcher import NonTerminalMatcher
         return NonTerminalMatcher(self, grammar_macher)
+
+
+PatternRegistry.register(NonTerminal)
