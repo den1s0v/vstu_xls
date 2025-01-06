@@ -1,9 +1,11 @@
 import unittest
 
 from tests_bootstrapper import init_testing_environment
+
 init_testing_environment()
 
 from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox
+from geom2d import parse_range, parse_size_range
 
 
 class BoxTestCase(unittest.TestCase):
@@ -52,31 +54,31 @@ class BoxTestCase(unittest.TestCase):
 
     def test_box_dist_1(self):
         # triangle: 2 * (3, 4, 5)
-        a = Box(-4, -3, 1,1)
-        b = Box(4, 3, 1,1)
+        a = Box(-4, -3, 1, 1)
+        b = Box(4, 3, 1, 1)
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 2 * 7)
         self.assertEqual(b.manhattan_distance_to_touch(a), 2 * 7 - 2)
 
     def test_box_dist_2(self):
-        a = Box(4, 1, 1,1)
-        b = Box(4, 3, 1,1)
+        a = Box(4, 1, 1, 1)
+        b = Box(4, 3, 1, 1)
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 2)
         self.assertEqual(b.manhattan_distance_to_touch(a), 1)
 
     def test_box_dist_3(self):
         # inside
-        a = Box(-4, -3, 10,10)
-        b = Box(4, 3, 1,1)
+        a = Box(-4, -3, 10, 10)
+        b = Box(4, 3, 1, 1)
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 0)
         self.assertEqual(b.manhattan_distance_to_touch(a), 0)
 
     def test_box_dist_4(self):
         # overlaps and (1, 1) is outside
-        a = Box(-4, -3, 10,10)
-        b = Box(4, 3, 3,5)
+        a = Box(-4, -3, 10, 10)
+        b = Box(4, 3, 3, 5)
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 1 + 1)
 
@@ -84,8 +86,8 @@ class BoxTestCase(unittest.TestCase):
 
     def test_box_dist_5(self):
         # overlaps and (1, 1) is outside
-        a = Box(-4, -3, 10,10)
-        b = Box(4, 3, 3,5)
+        a = Box(-4, -3, 10, 10)
+        b = Box(4, 3, 3, 5)
 
         self.assertEqual(b.manhattan_distance_to_overlap(a, True), (1, 1))
 
@@ -93,14 +95,13 @@ class BoxTestCase(unittest.TestCase):
 
     def test_box_dist_6(self):
         # triangle: 2 * (3, 4, 5)
-        a = Box(-4, -3, 1,1)
-        b = Box(4, 3, 1,1)
+        a = Box(-4, -3, 1, 1)
+        b = Box(4, 3, 1, 1)
 
         self.assertEqual(b.manhattan_distance_to_overlap(a, True), 2 * 7)
         self.assertEqual(b.manhattan_distance_to_overlap(a, True), (8, 6))
         self.assertEqual(b.manhattan_distance_to_touch(a, True), 2 * 7 - 2)
         self.assertEqual(b.manhattan_distance_to_touch(a, True), ManhattanDistance(7, 5))
-
 
 
 class VariBoxTestCase(unittest.TestCase):
@@ -123,7 +124,6 @@ class VariBoxTestCase(unittest.TestCase):
         self.assertEqual(b, r)
 
 
-
 class PartialBoxTestCase(unittest.TestCase):
     def test_ordinary(self):
         b = PartialBox(10, 20, 15, 4)
@@ -135,10 +135,9 @@ class PartialBoxTestCase(unittest.TestCase):
         self.assertIn(r, b)
         self.assertIn(b, r)
 
-
     def test_eq(self):
         b = PartialBox(10, 20, 15, 4)
-        
+
         r = Box(10, 20, 15, 4)
         self.assertEqual(b, r)
 
@@ -147,7 +146,6 @@ class PartialBoxTestCase(unittest.TestCase):
 
         r = VariBox(10, 20, 15, 4)
         self.assertEqual(b, r)
-
 
     def test_partially_filled(self):
         b = PartialBox()
@@ -169,7 +167,6 @@ class PartialBoxTestCase(unittest.TestCase):
         r = Box(10, 20, 15, 4)
         self.assertEqual(b, r)
 
-
     def test_set_same(self):
         b = PartialBox(10, 20, 15, 4)
 
@@ -177,7 +174,6 @@ class PartialBoxTestCase(unittest.TestCase):
 
         r = PartialBox(10, 20, 15, 4)
         self.assertEqual(b, r)
-
 
     def test_set_different(self):
         b = PartialBox(10, 20, 15, 4)
@@ -189,13 +185,168 @@ class PartialBoxTestCase(unittest.TestCase):
         b = PartialBox(10, 20, 15, 4)
 
         with self.assertRaises(AssertionError):
-            b.h = -1   # negative
+            b.h = -1  # negative
 
         with self.assertRaises(AssertionError):
             b.h = None
 
         with self.assertRaises(AssertionError):
             b.bottom = None
+
+
+class RangeTestCase(unittest.TestCase):
+
+    def test_range(self):
+        self.assertNotIn(-1, range(0, 5))
+        self.assertIn(0, range(0, 5))
+        self.assertIn(4, range(0, 5))
+        self.assertNotIn(5, range(0, 5))
+
+        inf = 999999  # See default value for `inf_value` arg of `parse_range()`
+
+        expr = '1'
+        self.assertEqual(range(1, 1 + 1), parse_range(expr))
+
+        expr = '1'
+        self.assertEqual(range(1, 1 + 0), parse_range(expr, incr_upper_bound=False))
+
+        expr = '9'
+        self.assertEqual(range(9, 9 + 1), parse_range(expr))
+
+        expr = '194'
+        self.assertEqual(range(194, 194 + 1), parse_range(expr))
+
+        expr = '0+'
+        self.assertEqual(range(0, inf), parse_range(expr))
+
+        expr = '0+'
+        self.assertEqual(range(0, inf), parse_range(expr, incr_upper_bound=False))
+
+        expr = '0-'
+        self.assertEqual(range(-inf, 0 + 1), parse_range(expr))
+
+        expr = '0-'
+        self.assertEqual(range(-inf, 0 + 0), parse_range(expr, incr_upper_bound=False))
+
+        expr = '3'
+        self.assertEqual(range(3, 3 + 1), parse_range(expr))
+
+        expr = '+3'
+        self.assertEqual(range(3, 3 + 1), parse_range(expr))
+
+        expr = '3+'
+        self.assertEqual(range(3, inf), parse_range(expr))
+
+        expr = '+3+'
+        self.assertEqual(range(3, inf), parse_range(expr))
+
+        expr = '3-'
+        self.assertEqual(range(-inf, 3 + 1), parse_range(expr))
+
+        expr = ' * '
+        self.assertEqual(range(-inf, inf), parse_range(expr))
+
+        expr = '3..5'
+        self.assertEqual(range(3, 5 + 1), parse_range(expr))
+
+        expr = '3, 5'
+        self.assertEqual(range(3, 5 + 1), parse_range(expr))
+
+        expr = '-3'
+        self.assertEqual(range(-3, -3 + 1), parse_range(expr))
+
+        expr = '-3+'
+        self.assertEqual(range(-3, inf), parse_range(expr))
+
+        expr = '-3-'
+        self.assertEqual(range(-inf, -3 + 1), parse_range(expr))
+
+        expr = '-5..-3'
+        self.assertEqual(range(-5, -3 + 1), parse_range(expr))
+
+        expr = '-5 ... -3'
+        self.assertEqual(range(-5, -3 + 1), parse_range(expr))
+
+        expr = '-5, -3'
+        self.assertEqual(range(-5, -3 + 1), parse_range(expr))
+
+        expr = '-5, -3'
+        self.assertEqual(range(-5, -3 + 0), parse_range(expr, incr_upper_bound=False))
+
+        expr = '-5, *'
+        self.assertEqual(range(-5, inf), parse_range(expr))
+
+        expr = '-5 .. *'
+        self.assertEqual(range(-5, inf), parse_range(expr))
+
+        expr = '* .. 5'
+        self.assertEqual(range(-inf, 5 + 1), parse_range(expr))
+
+        expr = '* .. *'
+        self.assertEqual(range(-inf, inf), parse_range(expr))
+
+    def test_size_range(self):
+        inf = 999999
+
+        expr = '1x0'
+        self.assertEqual((
+            range(1, 1 + 1),
+            range(0, 0 + 1)),
+            parse_size_range(expr))
+
+        expr = '0x974'
+        self.assertEqual((
+            range(0, 0 + 1),
+            range(974, 974 + 1)),
+            parse_size_range(expr))
+
+        expr = '8+ x 1'
+        self.assertEqual((
+            range(8, inf),
+            range(1, 1 + 1)),
+            parse_size_range(expr))
+
+        expr = '4+ x 1..2'
+        self.assertEqual((
+            range(4, inf),
+            range(1, 2 + 1)),
+            parse_size_range(expr))
+
+        expr = '5- x 59+'
+        self.assertEqual((
+            range(-inf, 5 + 1),
+            range(59, inf)),
+            parse_size_range(expr))
+
+        expr = '1 x 1'
+        self.assertEqual((
+            range(1, 1 + 1),
+            range(1, 1 + 1)),
+            parse_size_range(expr))
+
+        expr = '5+ x 4'
+        self.assertEqual((
+            range(5, inf),
+            range(4, 4 + 1)),
+            parse_size_range(expr))
+
+        expr = '1..4 x 2+'
+        self.assertEqual((
+            range(1, 4 + 1),
+            range(2, inf)),
+            parse_size_range(expr))
+
+    @unittest.expectedFailure
+    def test_size_range_empty_error1(self):
+        """ Reversed range """
+        expr = '-5, -8'
+        parse_range(expr)
+
+    @unittest.expectedFailure
+    def test_size_range_empty_error2(self):
+        """ Too low inf_value """
+        expr = '-5000-'
+        parse_range(expr, inf_value=999)
 
 
 if __name__ == '__main__':
