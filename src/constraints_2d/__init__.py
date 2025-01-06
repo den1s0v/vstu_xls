@@ -1,28 +1,30 @@
 # constraints_2d
 
+from constraints_2d.AlgebraicExpr import AlgebraicExpr
+from constraints_2d.SizeConstraint import SizeConstraint
 from constraints_2d.SpatialConstraint import SpatialConstraint
 
 from constraints_2d.utils.sympy_expr import SympyExpr, register_sympy_as_expr_backend
 
 # Note: global code (runs once all classes have initialized)
-register_sympy_as_expr_backend()  # this registers subclass of SpatialConstraint
+register_sympy_as_expr_backend()  # this registers subclass of AlgebraicExpr
 
 
 
 # TODO: refactor as static methods of SpatialConstraint ??
-def trivial_constraints_for_box(component_name: str) -> SpatialConstraint:
+def trivial_constraints_for_box(component_name: str) -> AlgebraicExpr:
     comp = component_name
-    return SpatialConstraint(f"""
+    return AlgebraicExpr(f"""
             {comp}_left + {comp}_w == {comp}_right  and
             {comp}_left < {comp}_right  and
             {comp}_top  + {comp}_h == {comp}_bottom  and
             {comp}_top  < {comp}_bottom
                              """.strip().replace('\n', ''))
 
-def constraints_for_box_inside_container(component_name: str, container_name: str) -> SpatialConstraint:
+def constraints_for_box_inside_container(component_name: str, container_name: str) -> AlgebraicExpr:
     comp = component_name
     outer = container_name
-    return SpatialConstraint(f"""
+    return AlgebraicExpr(f"""
             {outer}_left <= {comp}_left  and
             {outer}_top  <= {comp}_bottom  and
             {comp}_right <= {outer}_right  and

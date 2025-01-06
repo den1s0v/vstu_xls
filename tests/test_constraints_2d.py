@@ -5,7 +5,7 @@ init_testing_environment()
 
 from geom2d import Box
 
-from constraints_2d import AlgebraicExpr
+from constraints_2d import AlgebraicExpr, SizeConstraint
 from constraints_2d import SympyExpr
 from constraints_2d import constraints_for_box_inside_container, trivial_constraints_for_box
 
@@ -163,6 +163,30 @@ class constraints_for_box_TestCase(unittest.TestCase):
         self.assertTrue(cs.eval_with_components({name: box1, container: box2, }))
         self.assertTrue(cs.eval_with_components({name: box2, container: box1, }))
 
+
+class SizeConstraintTestCase(unittest.TestCase):
+
+    def test_1(self):
+        name = 'this'
+        cs = SizeConstraint(size_range_str='4+ x 1..2')
+
+        box = Box(1,2, 4,1)
+        self.assertTrue(cs.eval(box.as_dict()))
+
+        box = Box(1,2, 5,0)
+        self.assertFalse(cs.eval(box.as_dict()))
+
+        box = Box(1,2, 4,1)
+        self.assertTrue(cs.eval_with_components({name: box}))
+
+        box = Box(1,2, 5,2)
+        self.assertTrue(cs.eval_with_components({name: box}))
+
+        box = Box(1,2, 3,4)
+        self.assertFalse(cs.eval_with_components({name: box}))
+
+        box = Box(1,2, 5,0)
+        self.assertFalse(cs.eval_with_components({name: box}))
 
 
 if __name__ == '__main__':
