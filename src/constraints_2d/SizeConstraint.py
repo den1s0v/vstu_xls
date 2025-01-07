@@ -11,14 +11,16 @@ class SizeConstraint(SpatialConstraint):
     def get_kind(cls):
         return "size"
 
+    size_range_tuple: tuple[range, range]
     _predicates: dict[str, callable]
 
-    def __init__(self, size_range_tuple: tuple | list = None, size_range_str: str = None):
+    def __init__(self, size_range_str: str = None, size_range_tuple: tuple[range, range] | list = None):
         """ Pass either: `size_range_str='4+ x 1..2'` or `size_range_tuple=(range(4, 999), range(1, 3))` """
         if size_range_str:
             size_range_tuple = parse_size_range(size_range_str)
         assert size_range_tuple, size_range_tuple
         assert len(size_range_tuple) == 2, size_range_tuple
+        self.size_range_tuple = size_range_tuple
 
         functions = (range_.__contains__ for range_ in size_range_tuple)
         self._predicates = dict(zip('wh', functions))
@@ -50,6 +52,9 @@ class SizeConstraint(SpatialConstraint):
 
         f = self._predicates[key]
         return f(value)
+
+    def clone(self) -> 'SizeConstraint':
+        return type(self)(size_range_tuple=self.size_range_tuple)
 
 
 BoolExprRegistry.register(SizeConstraint)

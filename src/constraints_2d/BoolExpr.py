@@ -11,6 +11,10 @@ class BoolExpr:
     def referenced_variables(self) -> list[CoordVar]:
         raise NotImplementedError(type(self))
 
+    def clone(self) -> 'BoolExpr':
+        raise NotImplementedError(type(self))
+
+
     @classmethod
     def get_kind(cls):
         return "Base BoolExpr"

@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 
 from constraints_2d import SpatialConstraint
+from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
+import grammar2d.PatternComponent as pc
 from utils import WithCache
 
 GRAMMAR: 'ns.Grammar'
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Pattern2d(WithCache):
     """Элемент грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
@@ -19,6 +21,8 @@ class Pattern2d(WithCache):
     precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого элемент считается не найденным.
 
     description: str = None  # текстовое описание
+    style: dict = None  # оформление области; пока только `borders`
+    count: range = range(0, 999)  # кратность элемента в документе (1 = уникален)
 
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
     extends: list['Pattern2d|str'] = ()
@@ -93,6 +97,7 @@ def read_pattern(data: dict) -> Pattern2d | None:
     # find kind of pattern
     try:
         kind = data['kind']
+        del data['kind']
     except KeyError:
         raise ValueError('Format error: `kind` key expected for any pattern of grammar.')
 
@@ -102,11 +107,106 @@ def read_pattern(data: dict) -> Pattern2d | None:
     if not pattern_cls:
         return None
 
-    components = []
-    constraints = []
+    pattern_name = data.get('name')
+    components = read_pattern_components(data, pattern_name)
+    constraints = extract_pattern_constraints(data, pattern_name)
 
-    if 'inner' in data:
-        ...
+    if components:
+        data['components'] = components
+    if constraints:
+        data['constraints'] = constraints
 
     # create new Pattern of specific subclass.
-    return pattern_cls(**data)
+    try:
+        return pattern_cls(**data)
+    except TypeError as e:
+        print(repr(e))
+    return None
+
+
+def read_pattern_components(data: dict, pattern_name=None) -> list[pc.PatternComponent]:
+    components = []
+
+    for component_section_key in ('inner', 'outer'):
+        if component_section_key not in data:
+            continue
+        component_dict: dict = data.get(component_section_key)
+        # Note: remove used key from data!
+        del data[component_section_key]
+        if not isinstance(component_dict, dict):
+            print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid/empty `{component_section_key}` section.")
+            continue
+
+        for name, fields in component_dict.items():
+            component = read_pattern_component(name, fields, component_section_key, pattern_name)
+            if component:
+                components.append(component)
+            else:
+                print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid/empty `{name}` component.")
+    return components
+
+
+def read_pattern_component(
+        name: str,
+        data: dict,
+        role: str = 'outer',
+        pattern_name: str = None) -> pc.PatternComponent | None:
+    component_name = (pattern_name or '') + '.' + name
+
+    assert isinstance(data, dict), data
+
+    if role:
+        if 'location' in data:
+            data['location'] += ', ' + role
+        else:
+            data['location'] = role
+        # location_list = data.get('location') or []
+        # location_list.append(role)
+        # data['location'] = location_list
+
+    # Note: this removes keys related to constraints from data!
+    constraints = extract_pattern_constraints(data, component_name, )
+
+    if 'pattern' not in data:
+        # got inline pattern definition...
+
+        # pattern_data = dict(data)
+        # make a name for anon pattern
+        data['name'] = component_name + '[inline]'
+        # parse inline pattern
+        parsed_pattern = read_pattern(data)
+        if not parsed_pattern:
+            return None  # Fail too
+
+        # data for component:
+        data['_subpattern'] = parsed_pattern
+        data['pattern'] = parsed_pattern.name
+
+    if constraints:
+        data['constraints'] = constraints
+    data['name'] = name
+
+    # remove all not supported keys from data
+    extra_keys = set(data.keys()) - set(pc.PatternComponent.__annotations__.keys())
+    for k in extra_keys:
+        del data[k]
+
+    return pc.PatternComponent(**data)
+
+
+def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:
+
+    constraints = []
+    # size
+    # location
+    for k in ('size', 'location', ):
+        if k in data:
+            sc_data = data[k]
+            # Note: remove used key from data!
+            del data[k]
+            cls_sc = BoolExprRegistry.get_class_by_kind(k)
+            if cls_sc:
+                sc = cls_sc(sc_data)
+                constraints.append(sc)
+
+    return constraints

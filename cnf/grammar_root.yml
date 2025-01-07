@@ -1,7 +1,7 @@
 
 #grammar: ~
 
-cell_types_filepath: '../cnf/cell_types.yml'
+cell_types_filepath: 'cnf/cell_types.yml'
 
 
 patterns:
@@ -24,8 +24,10 @@ patterns:
     count: 1
 
     inner:  # содержимое
-      title: schedule_title
-      table: schedule_table
+      title:
+        pattern: schedule_title
+      table:
+        pattern: schedule_table
 
 
 
@@ -34,8 +36,9 @@ patterns:
     kind: cell
     size: 8+ x 1  # размер в ячейках Excel
     count: 1
-    borders: none  # границ быть не должно
-    type: schedule_title  # тип контента ячейки из файла cell_types.yml
+    style:
+      borders: none  # границ быть не должно
+    content_type: schedule_title  # тип контента ячейки из файла cell_types.yml
 
 
 
@@ -49,15 +52,15 @@ patterns:
       # Ключом (groups, datetime) является имя поля, по которому можно будет обращаться к внутреннему объекту
 
       groups:  # << имя поля
-        type: groups_header  # ссылка на другой элемент грамматики
+        pattern: groups_header  # ссылка на другой элемент грамматики
         location: top, right  # строго прилегает к верхнему правому углу, другие углы не определены
 
       datetime:
-        type: weeks_calendar
+        pattern: weeks_calendar
         location: left, top, bottom
 
       grid:
-        type: timetable_grid  # TODO ...
+        pattern: timetable_grid  # TODO ...
         location: right, bottom
 
 
@@ -67,7 +70,8 @@ patterns:
     kind: area
 
     size: 4+ x 1..2  # размер в ячейках Excel
-    borders: all  #  должны быть все границы с линиями
+    style:
+      borders: all  #  должны быть все границы с линиями
 
     outer: ~   # контекст
       # (нет.) within: schedule  # целиком включается в область schedule.
@@ -80,7 +84,7 @@ patterns:
       groups:
         kind: array  # массив или ряд элементов, выровненных друг относительно друга
         direction: row  #  по горизонтали (если не указать, то в любом направлении)
-        element: group_in_header
+        item_pattern: group_in_header
         count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
@@ -90,7 +94,7 @@ patterns:
     description: группа в заголовке
     kind: cell  # cell: одна (возможно объединённая) ячейка
     size: 4+ x 1..2
-    type: group  # тип контента ячейки из файла cell_types.yml
+    content_type: group  # тип контента ячейки из файла cell_types.yml
 
 
 
@@ -100,13 +104,14 @@ patterns:
     kind: array  # массив (или ряд) элементов одинакового типа, выровненных друг относительно друга
 
     size: 5+ x 59+  # размер в ячейках Excel
-    borders: left, top, bottom  # должны быть указанные границы с линиями
+    style:
+      borders: left, top, bottom  # должны быть указанные границы с линиями
 
     inner:  # содержимое
       month_names:
         kind: array  # массив (ряд)
         direction: row
-        element: month_name  # определено ниже
+        item_pattern: month_name  # определено ниже
         count: 3..5
         location:
           - top          # примыкает кверху,
@@ -116,7 +121,7 @@ patterns:
       weeks:
         kind: array  # массив (ряд) элементов,
         direction: column  #  выровненных по вертикали
-        element: week_datetime  # ... TODO
+        item_pattern: week_datetime  # ... TODO
         count: 2
         gap: 1  # 1 ячейка между неделями
         location: left, right,  bottom
@@ -127,7 +132,7 @@ patterns:
     description: название месяца
     kind: cell
     size: 1 x 1
-    type: month_name  # тип контента ячейки из файла cell_types.yml
+    content_type: month_name  # тип контента ячейки из файла cell_types.yml
 
 
 
@@ -136,13 +141,14 @@ patterns:
     kind: array
 
     size: 5+ x 28+  # размер в ячейках Excel
-    borders: all
+    style:
+      borders: all
 
     inner:  # содержимое
       days:
         kind: array  # массив (ряд)
         direction: column
-        element: day_datetime
+        item_pattern: day_datetime
         count: 5..6
         location:
           - top          # примыкает кверху,
@@ -156,32 +162,35 @@ patterns:
     kind: area
 
     size: 5+ x 4+  # размер в ячейках Excel
-    borders: all
+    style:
+      borders: all
 
     inner:  # содержимое
       week_day:
-        type: week_day  # ПН, ВТ, ...
+        kind: cell
+        content_type: week_day  # ПН, ВТ, ...
         location: top, bottom
 
-      month_days: month_days
+      month_days:
+        pattern: month_days
 
       hours:
         kind: array
         direction: column
-        element: hour_range  # ... TODO
+        item_pattern: hour_range  # ... TODO
         count: 2..6
-        location:
-          location: top, bottom
+        location: top, bottom
 
 
   hour_range:
     description: академические часы дня (пара)
     kind: cell
     size: 1 x 2+
-    type: hour_range
+    content_type: hour_range
 
     outer:  # ограничения на контекст (!!)
       week_day:
+        pattern: week_day
         location: left  # слева находится день недели
 
 
@@ -189,10 +198,11 @@ patterns:
     description: все даты доступных месяцев за один день недели
     kind: array
     direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить
-    element: month_day
+    item_pattern: month_day
 
     outer:  # ограничения на контекст (!!)
       week_day:
+        pattern: week_day
         location: right  # справа находится день недели
 
 
@@ -200,12 +210,14 @@ patterns:
     description: число месяца в один из дней недели
     kind: cell
     size: 1 x 2+
-    type: month_day
+    content_type: month_day
 
     outer:  # ограничения на контекст (!!)
       week_day:
+        pattern: week_day
         location: right  # справа находится день недели
       month_name:
+        pattern: month_name
         location: top  # сверху написано название месяца
 
 

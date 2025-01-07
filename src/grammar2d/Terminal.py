@@ -8,10 +8,10 @@ from string_matching import CellType
 GRAMMAR: 'ns.Grammar'
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Terminal(Pattern2d):
     """Просто ячейка"""
-    cell_type_name: str = '<unknown cell_type!>'
+    content_type: str = '<unknown cell_type!>'
     _cell_type: CellType = None
 
     @classmethod
@@ -21,7 +21,7 @@ class Terminal(Pattern2d):
     @property
     def cell_type(self) -> CellType:
         if not self._cell_type:
-            self._cell_type = GRAMMAR.cell_types[self.cell_type_name]
+            self._cell_type = GRAMMAR.cell_types[self.content_type]
         return self._cell_type
 
     def dependencies(self, recursive=False) -> list['Pattern2d']:

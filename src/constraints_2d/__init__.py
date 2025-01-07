@@ -1,6 +1,7 @@
 # constraints_2d
 
 from constraints_2d.AlgebraicExpr import AlgebraicExpr
+from constraints_2d.BoolExpr import BoolExprRegistry
 from constraints_2d.SizeConstraint import SizeConstraint
 from constraints_2d.SpatialConstraint import SpatialConstraint
 

@@ -4,7 +4,8 @@ from functools import reduce
 
 from constraints_2d import SpatialConstraint
 import grammar2d.Grammar as ns
-from grammar2d.Pattern2d import Pattern2d
+# from grammar2d.Pattern2d import Pattern2d
+import grammar2d.Pattern2d as pt
 from utils import WithCache
 
 GRAMMAR: 'ns.Grammar'
@@ -21,20 +22,17 @@ class PatternComponent(WithCache):
     """
     name: str  # имя компонента по отношению к родителю.
 
-    subpattern_name: str  # имя дочернего элемента, включаемого в родительский как компонент.
+    pattern: str  # имя дочернего элемента, включаемого в родительский как компонент.
 
-    _subpattern: 'Pattern2d' = None  # дочерний элемент грамматики
-
+    # "Локальные" ограничения, накладываемые на расположение этого компонента по отношению к родителю.
+        # Используются координаты текущего дочернего элемента и родительского элемента.
+        # Также могут использоваться координаты других компонентов родителя, которые были определены по списку компонентов выше этого компонента.
+        # "Локальные" означает, то для записи координат может быть использована сокращёная форма:
+        # 'x' — свой 'x', '_x' — 'x' родителя, и т.п.
     constraints: list[
-        SpatialConstraint] = ()  # "Локальные" ограничения, накладываемые на расположение этого компонента по отношению к родителю. Используются координаты текущего дочернего элемента и родительского элемента. Также могут использоваться координаты других компонентов родителя, которые были определены по списку компонентов выше этого компонента. "Локальные" означает, то для записи координат может быть использована сокращёная форма: 'x' — свой 'x', '_x' — 'x' родителя, и т.п.
+        SpatialConstraint] = ()
 
-    @property
-    def subpattern(self) -> 'Pattern2d':
-        """Дочерний элемент грамматики"""
-        if not self._subpattern:
-            self._subpattern = GRAMMAR[self.subpattern_name]
-
-        return self._subpattern
+    count: range = range(0, 999)  # кратность элемента в родителе
 
     weight: float = 1  # (-∞, ∞) вес компонента для регулирования вклада в точность опредления родителя. >0: наличие желательно, 0: безразлично (компонент может быть опущен без потери точности), <0: наличие нежелательно.
 
@@ -42,11 +40,21 @@ class PatternComponent(WithCache):
 
     precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого компонент считается не найденным.
 
+    _subpattern: 'pt.Pattern2d' = None  # дочерний элемент грамматики
+
+    @property
+    def subpattern(self) -> 'pt.Pattern2d':
+        """Дочерний элемент грамматики"""
+        if not self._subpattern:
+            self._subpattern = GRAMMAR[self.pattern]
+
+        return self._subpattern
+
     # @property
     # def max_score(self) -> float:
     #     return self.weight * max(0, self.importance)
 
-    def dependencies(self, recursive=False) -> list['Pattern2d']:
+    def dependencies(self, recursive=False) -> list['pt.Pattern2d']:
         if not recursive:
             return [self.subpattern]
 
@@ -64,7 +72,7 @@ class PatternComponent(WithCache):
             self._cache.constraints_with_full_names = [
                 ex.clone().replace_components({
                     'this': self.name,
-                    'parent': Pattern2d.name_for_constraints,  # 'element'
+                    'parent': pt.Pattern2d.name_for_constraints,  # 'element'
                 })
                 for ex in self.constraints
             ]
@@ -75,14 +83,14 @@ class PatternComponent(WithCache):
             self._cache.constraints_conjunction = reduce(and_, self.global_constraints)
         return self._cache.constraints_conjunction
 
-    def checks_components(self) -> set[str]:
+    def checks_components(self) -> frozenset[str]:
         """ Find which components are checked within constraints.
         This method usually returns 'element' as parent, and `self.name` as well. """
         if self._cache.components_in_constraints is None:
             self._cache.components_in_constraints = frozenset(self.constraints_conjunction().referenced_components())
         return self._cache.components_in_constraints
 
-    def checks_other_components(self) -> set[str]:
+    def checks_other_components(self) -> frozenset[str]:
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
-        return self.checks_components() - {Pattern2d.name_for_constraints, self.name}
+        return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}

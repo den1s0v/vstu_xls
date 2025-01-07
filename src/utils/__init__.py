@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from pathlib import Path
 from timeit import default_timer as timer
 
 from adict import adict
@@ -97,3 +98,22 @@ class WithCache:
         if not hasattr(self, '_cache_d'):
             self._cache_d = safe_adict()
         return self._cache_d
+
+
+def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=3) -> Path | None:
+    if not directories:
+        # use current dir
+        directories = (Path('.'), )
+
+    for up_dirs in range(0, search_up_steps):
+        for directory in directories:
+            base = Path(directory).resolve()
+            for _ in range(up_dirs):
+                base = base.parent
+            p = Path(base, rel_path)
+            if p.exists():
+                return p.resolve()
+
+    return None
+
+

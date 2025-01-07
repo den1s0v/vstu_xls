@@ -20,7 +20,7 @@ class Grammar(WithCache):
 
     def __init__(self, cell_types: dict[str, CellType], patterns: list[Pattern2d]):
         self.cell_types = cell_types
-
+        # init patterns
         self.patterns = {}
         for pt in patterns:
             self.register_pattern(pt)
@@ -32,7 +32,7 @@ class Grammar(WithCache):
         # check root
         if pattern.root:
             if self.root_name:
-                assert self.root_name == pattern.name,\
+                assert self.root_name == pattern.name, \
                     f"Grammar pattern `{pattern.name}` is declared as root, but grammar itself declares `{self.root_name}` as root."
             else:
                 self.root_name = pattern.name
@@ -94,7 +94,8 @@ class Grammar(WithCache):
 
                 if not current_wave:
                     raise ValueError(
-                        f"Grammar defined improperly: some patterns cannot be matched due to circular dependencies ({unmatched_patterns}). Elements could be matched correctly: {matched_patterns}.")
+                        f"Grammar defined improperly: some patterns cannot be matched due to circular dependencies ({ \
+                            unmatched_patterns}). Elements could be matched correctly: {matched_patterns}.")
 
                 waves.append(current_wave)
                 unmatched_patterns -= current_wave
@@ -153,3 +154,33 @@ class Grammar(WithCache):
     def can_extend(self, base_pattern: str | Pattern2d, extension_pattern: str | Pattern2d) -> bool:
         children = self.extension_map.get(self[base_pattern], None)
         return children and extension_pattern in children
+
+
+def read_grammar(
+        config_file: str = '../cnf/grammar_root.yml',
+        data: dict = None) -> Grammar | None:
+    if not data:
+        assert config_file
+        with open(config_file, encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+
+    assert isinstance(data, dict), data
+
+    cell_types = read_cell_types(data=data)
+
+    if 'patterns' in data:
+        patterns_dict = data['patterns']
+    else:
+        raise ValueError(
+            f'Format error: `patterns` key expected in given file: `{config_file}`.')
+
+    assert isinstance(patterns_dict, dict), patterns_dict
+
+    parsed_patterns = []
+    for name, fields in patterns_dict.items():
+        fields['name'] = name
+        p = read_pattern(fields)
+        if p:
+            parsed_patterns.append(p)
+
+    return Grammar(cell_types, parsed_patterns)

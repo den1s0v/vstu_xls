@@ -1,7 +1,10 @@
+from dataclasses import dataclass
+
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 from grammar2d.PatternComponent import PatternComponent
 
 
+@dataclass(kw_only=True)
 class NonTerminal(Pattern2d):
     """Структура или Коллекция"""
     components: list[PatternComponent]
