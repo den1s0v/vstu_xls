@@ -4,6 +4,8 @@ cell_types:
           # Перечень "preprocess: ..." при паттерне  позволяет указать преобразования, которые будут произведены над текстовым значением ячейки перед проверкой (регулярным выражением). На момент написания доступны преобразования: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' (подробнее см. класс ConfidentPattern).
           # "update_content: ..."
 
+          # anchors: ('start' and / or 'end' or 'both' or 'none') — добавляет якоря (^…$) к заданному паттерну регулярного выражения. По умолчанию всегда используется 'start'.
+
   - teacher:
       description: преподаватель
       patterns:
@@ -35,8 +37,9 @@ cell_types:
 
         - confidence: 0.40
             # Содержится слово (Фамилия) с Большой буквы
-          pattern: '.*[А-ЯЁ][а-яё]+.*'
+          pattern: '[А-ЯЁ][а-яё]+'
           pattern_syntax: re
+          anchors: none
           pattern_flags: 0
 
         - confidence: 0.20
@@ -66,7 +69,7 @@ cell_types:
           preprocess: remove_spaces_around_hypen
 
         - confidence: 0.98
-          pattern: 'кафедра'
+          pattern: 'кафедра .*'
           pattern_syntax: re-spaces
           pattern_flags: I
           preprocess: remove_spaces_around_hypen
@@ -111,32 +114,36 @@ cell_types:
       patterns:
         - confidence: 1.00
             # заглавные буквы, дефисы, скобки и точки - хотя бы два слова.
-          pattern: '[А-ЯЁA-Z]{2,}[\s.,()/:-]+[А-ЯЁA-Z.,()/:\s-]{1,}$'
+          pattern: '[А-ЯЁA-Z]{2,}[\s.,()/:-]+[А-ЯЁA-Z.,()/:\s-]{1,}'
           pattern_syntax: re
+          anchors: both
           preprocess: fix_sparse_words
 
         - confidence: 0.90
             # заглавные буквы, дефисы, скобки и точки, ....
-          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}$'
+          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}'
           pattern_syntax: re
+          anchors: both
           preprocess: fix_sparse_words
 
         - confidence: 0.75
             # заглавные буквы, дефисы, скобки и точки, ....
-          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}[А-ЯЁA-Zа-яёa-z.,()\s/:-]+$'
+          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}[А-ЯЁA-Zа-яёa-z.,()\s/:-]+'
           pattern_syntax: re
+          anchors: both
           preprocess: fix_sparse_words
 
 #        - confidence: 0.93
 #            # Разреженные пробелами слова: 'М А Т Е М А Т И К А', 'И   С   Т   О   Р   И   Я            Р   О   С   С   И   И'
-#          # pattern: '(?:\b[А-ЯЁA-Z-][.]?(?:\s+|$)){5,}$'
-#          pattern: '[А-ЯЁA-Z.() -]{2,}$'  # такой же, как для 0.90
+#          # pattern: '(?:\b[А-ЯЁA-Z-][.]?(?:\s+|$)){5,}'
+#          pattern: '[А-ЯЁA-Z.() -]{2,}'  # такой же, как для 0.90
 #          pattern_syntax: re
 #          preprocess: fix_sparse_words
 
         - confidence: 0.30
             # хотя бы две заглавные буквы подряд
-          pattern: '.*[А-ЯЁA-Z]{2,}.*'
+          pattern: '[А-ЯЁA-Z]{2,}'
+          anchors: none
           pattern_syntax: re
 
         - confidence: 0.05
@@ -150,15 +157,17 @@ cell_types:
         - confidence: 1.00
             # одно-буквенные группы в ВолгГТУ имеют только буквы: И М Ф Э (на 2023), дефис и цифры.
             # для остальных: заглавная буква, буквы, дефис и цифры
-          pattern: '(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-[\d.-]+[^,]*$'
+          pattern: '(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-[\d.-]+[^,]*'
           pattern_syntax: re
+          anchors: both
           preprocess: remove_all_spaces
 
         - confidence: 0.80
             # заглавная буква, буквы, дефис и цифры
             # (<100%, Потому что большое пересечение с названиями аудиторий)
-          pattern: '[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]*-[\d.-]+[^,]*$'
+          pattern: '[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]*-[\d.-]+[^,]*'
           pattern_syntax: re
+          anchors: both
           preprocess: remove_all_spaces
 
         - confidence: 0.05
@@ -195,8 +204,9 @@ cell_types:
           # Учебные занятия   1    курса   ФЭВТ на  1 семестр   2023 — 2024 учебного года
           # Учебные   занятия   1  курса   ФАТ    на  1  семестр   2023 - 2024  учебного  года
             #
-          pattern: ' Учебные  занятия  .+$'
+          pattern: ' Учебные  занятия  .+'
           pattern_syntax: re-spaces
+          anchors: both
 
 
   - month_day:
@@ -204,8 +214,9 @@ cell_types:
       patterns:
         - confidence: 1.00
             # 1 или 2 цифры от 1 до 31
-          pattern: '(?:[1-9]|[12]\d|3[01])$'
+          pattern: '[1-9]|[12]\d|3[01]'
           pattern_syntax: re
+          anchors: both
 
   - fake_month_day:  # ложный день месяца (скрытый, ненужный нам) # TODO: mark as ignored
       description: ЛОЖНЫЙ день месяца
@@ -213,27 +224,31 @@ cell_types:
       patterns:
         - confidence: 1.00
             # 0 или отрицательные
-          pattern: '(?:0|-1?\d)$'
+          pattern: '0|-1?\d'
           pattern_syntax: re
+          anchors: both
 
   - week_day:  # имя одного из 6 дней недели ПН, ВТ, ..., СБ (ВС не ожидаем)
       description: день недели
       patterns:
         - confidence: 1.00
           # полные названия
-          pattern: '(?:Понедельник|вторник|среда|четверг|пятница|суббота)$'
+          pattern: 'Понедельник|вторник|среда|четверг|пятница|суббота'
           pattern_syntax: re
+          anchors: both
           pattern_flags: I
 
         - confidence: 1.00
             # ПН, ВТ, СР, ЧТ, ПТ, СБ  (ВС не ожидаем)
-          pattern: '(?:ПН|ВТ|СР|ЧТ|ПТ|СБ)$'
+          pattern: 'ПН|ВТ|СР|ЧТ|ПТ|СБ'
           pattern_syntax: re
+          anchors: both
 
         - confidence: 0.97
             # сокращённые названия
-          pattern: '(?:Пон[едельник]*|втор[ник]*|сре[да]*|четв[ерг]*|пятн[ица]*|суб[бота]*)\.?$'
+          pattern: '(?:Пон[едельник]*|втор[ник]*|сре[да]*|четв[ерг]*|пятн[ица]*|суб[бота]*)\.?'
           pattern_syntax: re
+          anchors: both
           pattern_flags: I
 
   - month_name:  # имя одного из 10 месяцев года (июль, август не ожидаем)
@@ -241,14 +256,16 @@ cell_types:
       patterns:
         - confidence: 1.00
           # полные названия
-          pattern: '(?:январь|февраль|март|апрель|май|июнь|сентябрь|октябрь|ноябрь|декабрь)$'
+          pattern: 'январь|февраль|март|апрель|май|июнь|сентябрь|октябрь|ноябрь|декабрь'
           pattern_syntax: re
+          anchors: both
           pattern_flags: I
 
         - confidence: 0.97
             # сокращённые названия
-          pattern: '(?:янв[арь]*|фев[раль]*|март?|апр[ель]*|май|июнь?|сен[тябрь]*|окт[ябрь]*|ноя[брь]*|дек[абрь]*)\.?$'
+          pattern: '(?:янв[арь]*|фев[раль]*|март?|апр[ель]*|май|июнь?|сен[тябрь]*|окт[ябрь]*|ноя[брь]*|дек[абрь]*)\.?'
           pattern_syntax: re
+          anchors: both
           pattern_flags: I
 
   - hour_range:
@@ -256,8 +273,9 @@ cell_types:
       patterns:
         - confidence: 1.00
           # `1- 2`, '1-2', '15-16'
-          pattern: '1?\d - 1?\d$'
+          pattern: '1?\d - 1?\d'
           pattern_syntax: re-spaces
+          anchors: both
           preprocess: remove_all_spaces
 
 
@@ -269,8 +287,9 @@ cell_types:
           # `10.11, 08.12`
           # `11.11,09.11`
           # `14.10.,28.10.,11.11.`
-          pattern: '(?:[0-3]?\d\.[01]\d\.? [,\W]* )+$'
+          pattern: '(?:[0-3]?\d\.[01]\d\.? [,\W]* )+'
           pattern_syntax: re-spaces
+          anchors: both
           preprocess: remove_all_spaces
 
 
@@ -279,7 +298,8 @@ cell_types:
       patterns:
         - confidence: 1.00
           # `5-6 часы`
-          pattern: '1?\d - 1?\d час.?$'
+          pattern: '1?\d - 1?\d час.?'
+          anchors: both
           pattern_syntax: re-spaces
 
 
@@ -292,14 +312,16 @@ cell_types:
           # `лекция 4 часа`
           # `лаб. 4 час.`
           # `пр.` , `лаб.`
-          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:\d час[.а]?)?$'
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:\d час[.а]?)?'
           pattern_syntax: re-spaces
+          anchors: both
           pattern_flags: I
 
         - confidence: 0.97
           # `4 часа`
-          pattern: '\d час[.а]?$'
+          pattern: '\d час[.а]?'
           pattern_syntax: re-spaces
+          anchors: both
           pattern_flags: I
 
 
@@ -309,8 +331,9 @@ cell_types:
       patterns:
         - confidence: 1.00
           # `дисциплина по выбору`
-          pattern: 'дисципл[ина.]* по выбору$'
+          pattern: 'дисципл[ина.]* по выбору'
           pattern_syntax: re-spaces
+          anchors: both
           pattern_flags: I
 
 
@@ -321,8 +344,9 @@ cell_types:
         - confidence: 1.00
           # `нем.яз.`
           # `нем.`
-          pattern: '(?:нем|англ|фр[анц]*)\.? (?:яз[.ык]*)?$'
+          pattern: '(?:нем|англ|фр[анц]*)\.? (?:яз[.ык]*)?'
           pattern_syntax: re-spaces
+          anchors: both
           pattern_flags: I
 
 
@@ -336,14 +360,16 @@ cell_types:
           # `с 11.00`
           # `с 13.40`
           # `с 15.00`
-          pattern: '[сc] [01]?\d[.:][0-5]0$'
+          pattern: '[сc] [01]?\d[.:][0-5]0'
           pattern_syntax: re-spaces
+          anchors: both
         - confidence: 0.80
           # `8.30`   — не `08.30`
           # `с 19.58`
           # `с 11:00`
-          pattern: '[сc]? [01]?\d[.:][0-5]\d$'
+          pattern: '[сc]? [01]?\d[.:][0-5]\d'
           pattern_syntax: re-spaces
+          anchors: both
 
 
   - exams_begin_time:
@@ -351,9 +377,11 @@ cell_types:
       patterns:
         - confidence: 1.00
           # `Начало экзаменов в 8:30`
-          pattern: '.*?Начал[оа]  экзаменов  в [01]?\d[.:][0-5]0$'
+          pattern: '\bНачал[оа]  экзаменов  в ([01]?\d[.:][0-5]0)'
           pattern_syntax: re-spaces
+          anchors: end
           pattern_flags: I
+          captures: ['time']
 
 
   - single_date:
@@ -364,6 +392,8 @@ cell_types:
           # `09.11`
           # `11.11`
           # `30.09.`
-          pattern: '[0-3]?\d\.[01]\d$'
+          pattern: '([0-3]?\d\.[01]\d)\.?'
           pattern_syntax: re-spaces
+          anchors: both
           preprocess: remove_all_spaces
+          captures: ['day_month']

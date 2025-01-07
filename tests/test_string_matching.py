@@ -108,7 +108,7 @@ class StringPatternTestCase(unittest.TestCase):
         self.assertDictEqual({'left': 'a', 'right': 'b'}, m.groupdict())
 
     def test_capture5_names_reversed(self):
-        p = StringPattern(r'=(?P<left>\w+)\+(?P<right>\w+)=', captures=('right', 'left', ))
+        p = StringPattern(r'=(?P<left>\w+)\+(?P<right>\w+)=', captures=('right', 'left',))
 
         s = '=a+b='
         m = p.match(s)
@@ -160,7 +160,7 @@ class StringPatternTestCase(unittest.TestCase):
         p = StringPattern(
             # Note: left group in not named
             r'=(\w+)\+(?P<middle>\w+)\+(?P<right>\w+)=',
-            captures=('left', 'middle', 'right', )
+            captures=('left', 'middle', 'right',)
         )
 
         s = '=a+b+f=='
@@ -189,8 +189,7 @@ class StringPatternTestCase(unittest.TestCase):
 
         p.confidence = 1
         # last char of 8 is not included
-        self.assertEqual(7/8, m.precision)
-
+        self.assertEqual(7 / 8, m.precision)
 
     def test_preprocess0(self):
         p = StringPattern(
@@ -208,7 +207,7 @@ class StringPatternTestCase(unittest.TestCase):
     def test_preprocess1(self):
         p = StringPattern(
             pattern=r'абвгдеёжз',
-            preprocess=('remove_all_spaces', )
+            preprocess=('remove_all_spaces',)
         )
 
         self.assertIsNotNone(p.match('абвгдеёжз'))
@@ -220,7 +219,7 @@ class StringPatternTestCase(unittest.TestCase):
     def test_preprocess2(self):
         p = StringPattern(
             pattern=r'что-нибудь',
-            preprocess=('remove_spaces_around_hypen', )
+            preprocess=('remove_spaces_around_hypen',)
         )
 
         self.assertIsNotNone(p.match('что-нибудь'))
@@ -236,7 +235,7 @@ class StringPatternTestCase(unittest.TestCase):
     def test_preprocess21(self):
         p = StringPattern(
             pattern=r'кое-что когда-нибудь',
-            preprocess=('remove_spaces_around_hypen', )
+            preprocess=('remove_spaces_around_hypen',)
         )
 
         self.assertIsNotNone(p.match('кое-что когда-нибудь'))
@@ -250,13 +249,81 @@ class StringPatternTestCase(unittest.TestCase):
     def test_preprocess3(self):
         p = StringPattern(
             pattern=r'антимонии анти-мониалэ',
-            preprocess=('fix_sparse_words', 'remove_spaces_around_hypen', )
+            preprocess=('fix_sparse_words', 'remove_spaces_around_hypen',)
         )
 
         self.assertIsNotNone(p.match('антимонии анти-мониалэ'))
         self.assertIsNotNone(p.match('а н т и м о н и и  а н т и - м о н и а л э'))
         self.assertIsNotNone(p.match('а  н  т  и  м  о  н  и  и    а  н  т  и -  м  о  н  и  а  л  э'))
         self.assertIsNotNone(p.match('а  н  т  и  м  о  н  и  и    а  н  т  и  -м  о  н  и  а  л  э'))
+
+    def test_anchors1(self):
+        p = StringPattern(
+            pattern=r'XYZ',
+            anchors='start'  # the default
+        )
+
+        self.assertIsNotNone(p.match('XYZ'))
+        self.assertIsNotNone(p.match('XYZ+more'))
+
+        self.assertIsNone(p.match('prepended+XYZ'))
+
+        p = StringPattern(
+            pattern=r'XYZ',
+            # anchors='start'  # the default
+        )
+
+        self.assertIsNotNone(p.match('XYZ'))
+        self.assertIsNotNone(p.match('XYZ+more'))
+
+        self.assertIsNone(p.match('prepended+XYZ'))
+
+    def test_anchors2(self):
+        p = StringPattern(
+            pattern=r'XYZ',
+            anchors=None
+        )
+
+        self.assertIsNotNone(p.match('XYZ'))
+        self.assertIsNotNone(p.match('XYZ+more'))
+        self.assertIsNotNone(p.match('prepended+XYZ'))
+
+    def test_anchors3(self):
+        p = StringPattern(
+            pattern=r'XYZ',
+            anchors='both'
+        )
+
+        self.assertIsNotNone(p.match('XYZ'))
+
+        self.assertIsNone(p.match('XYZ+more'))
+        self.assertIsNone(p.match('prepended+XYZ'))
+
+    def test_anchors4(self):
+        p = StringPattern(
+            pattern=r'XYZ',
+            anchors='$'  # end
+        )
+
+        self.assertIsNotNone(p.match('XYZ'))
+        self.assertIsNotNone(p.match('prepended+XYZ'))
+
+        self.assertIsNone(p.match('XYZ+more'))
+
+    def test_anchors5_grouping_alt(self):
+        p = StringPattern(
+            pattern=r'XYZ|DIY',
+            anchors='both'
+        )
+
+        self.assertIsNotNone(p.match('XYZ'))
+        self.assertIsNotNone(p.match('DIY'))
+
+        self.assertIsNone(p.match('XYZ+more'))
+        self.assertIsNone(p.match('DIY+more'))
+        self.assertIsNone(p.match('prepended+XYZ'))
+        self.assertIsNone(p.match('prepended+DIY'))
+
 
 class CellTypeTestCase(unittest.TestCase):
     def test_init1(self):

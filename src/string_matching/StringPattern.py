@@ -5,10 +5,8 @@ import string_matching.CellType as ns
 from string_matching.StringMatch import StringMatch
 from string_matching.StringTransformer import StringTransformer
 
-
 # A comma or a mandatory space with optional spaces around.
 RE_COMMON_SEPARATOR = re.compile(r'\s*[,\s]\s*')
-
 
 VALID_pattern_syntax = {'re', 're-spaces', 'plain'}
 VALID_preprocess = {'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen'}
@@ -47,6 +45,14 @@ class StringPattern:
     content_class: 'ns.CellType' = '<Unspecified content_class>'
     preprocess: list[str] = None
 
+    # anchors: 'start' and / or 'end' or 'both' or 'none' —
+    # controls regex anchors (^…$) and .match / .search / .fullmatch method to apply.
+    anchors: tuple | str = ('start',)
+
+    # inner data
+    _compiled_re: re.Pattern = None
+    _re_match_method: callable = None
+
     def __init__(self, *args, **kwargs):
         """Valid calls:
         StringPattern(pattern='abc+', confidence=0.9);
@@ -84,12 +90,31 @@ class StringPattern:
             self.preprocess = RE_COMMON_SEPARATOR.split(self.preprocess)
 
         # check input values to match enums
-        assert (self.pattern_syntax in VALID_pattern_syntax), f"StringPattern.pattern_syntax must be one of {VALID_pattern_syntax}, got: `{self.pattern_syntax}`."
+        assert (self.pattern_syntax in VALID_pattern_syntax), \
+            f"StringPattern.pattern_syntax must be one of {VALID_pattern_syntax}, got: `{self.pattern_syntax}`."
 
-        assert not (set(self.preprocess or ()) - VALID_preprocess), f"StringPattern.preprocess must contain one or more of {VALID_preprocess}, got: `{self.preprocess}`."
+        assert not (set(self.preprocess or ()) - VALID_preprocess), \
+            f"StringPattern.preprocess must contain one or more of {VALID_preprocess}, got: `{self.preprocess}`."
 
         assert (0 <= self.confidence <= 1), f"StringPattern.confidence must be within [0..1], got: `{self.confidence}`."
 
+        self.prepare_anchors()
+        self.prepare_pattern()
+
+    def match(self, string: str) -> Union['StringMatch', None]:
+        string = self.preprocess_string(string)
+
+        if self.pattern_syntax == 'plain':
+            if string == self.pattern:
+                re_match_imitation = [string]  # list has `0` index
+                return StringMatch(re_match_imitation, self, string)
+        else:
+            m = self._re_match_method(string)
+            if m:
+                return StringMatch(m, self, string)
+        return None
+
+    def prepare_pattern(self):
         if self.pattern_syntax == 're-spaces':
             # convert regex in 're-spaces' to ordinary 're'
             self.pattern = StringTransformer.apply('decode_re_spaces', self.pattern)
@@ -99,21 +124,37 @@ class StringPattern:
             self.pattern_flags = re_flags_to_int(self.pattern_flags)
 
         if self.pattern_syntax != 'plain':
+            # determine how to
+            match self.anchors:
+                case('start', ):
+                    match_method = 'match'
+                case('start', 'end'):
+                    match_method = 'fullmatch'
+                case():
+                    match_method = 'search'
+                case('end', ):
+                    match_method = 'search'
+                    # add anchor at the end
+                    self.pattern = rf"(?:{self.pattern})\Z"
+                case _:
+                    raise RuntimeError('coding error')
+
             self._compiled_re = re.compile(self.pattern, self.pattern_flags)
 
-    def match(self, string: str) -> Union['StringMatch', None]:
-        string = self.preprocess_string(string)
+            self._re_match_method = getattr(self._compiled_re, match_method)
 
-        if self.pattern_syntax == 'plain':
-            if string == self.pattern:
-                re_match_imitation = [string]  # list has `0` index
-                return StringMatch(re_match_imitation, self, string)
+    def prepare_anchors(self):
+        """ validate & re-create `anchors` """
+        # anchors: tuple | str = ('start',)
+        raw = self.anchors or ''
+        new_anchors = []
+        # Note: the following checks work both for strings & for collections
+        if 'start' in raw or '^' in raw or 'both' in raw:
+            new_anchors.append('start')
+        if 'end' in raw or '$' in raw or 'both' in raw:
+            new_anchors.append('end')
 
-        else:
-            m = self._compiled_re.match(string)
-            if m:
-                return StringMatch(m, self, string)
-        return None
+        self.anchors = tuple(new_anchors)
 
     def preprocess_string(self, string: str) -> str:
         transformations = []
@@ -146,7 +187,9 @@ class StringPattern:
             return index_or_name
 
         try:
-            if self.captures and isinstance(re_match, re.Match) and set(re_match.groupdict().keys()) == set(self.captures):
+            if (self.captures
+                    and isinstance(re_match, re.Match)
+                    and set(re_match.groupdict().keys()) == set(self.captures)):
                 # string expected, as regex is fully defined: all named groups set.
                 if isinstance(index_or_name, int):
                     return self.captures[index_or_name - 1]
@@ -197,4 +240,3 @@ def re_flags_to_int(re_flags: str = '') -> int:
     if 'X' in re_flags:
         bit_flags |= re.X
     return bit_flags
-
