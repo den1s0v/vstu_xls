@@ -8,7 +8,7 @@ from string_matching import CellType
 GRAMMAR: 'ns.Grammar'
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=True)
 class Terminal(Pattern2d):
     """Просто ячейка"""
     content_type: str = '<unknown cell_type!>'

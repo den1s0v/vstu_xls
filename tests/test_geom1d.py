@@ -2,6 +2,7 @@ import math
 import unittest
 
 from tests_bootstrapper import init_testing_environment
+
 init_testing_environment()
 
 from geom1d import LinearSegment, LinearRelation
@@ -174,7 +175,6 @@ class LinearSegmentTestCase(unittest.TestCase):
         self.assertIn(10, s)
         self.assertNotIn(11, s)
         self.assertNotIn(15, s)
-
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ from utils import WithCache
 GRAMMAR: 'ns.Grammar'
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=True)
 class Pattern2d(WithCache):
     """Элемент грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
