@@ -324,6 +324,36 @@ class StringPatternTestCase(unittest.TestCase):
         self.assertIsNone(p.match('prepended+XYZ'))
         self.assertIsNone(p.match('prepended+DIY'))
 
+    def test_variable_name(self):
+        p = StringPattern(
+            pattern=r'(?!\d)\w+'
+        )
+
+        s = 'a'
+        self.assertIsNotNone(p.match(s))
+        self.assertEqual(s, p.match(s)[0])
+
+        s = '_'
+        self.assertIsNotNone(p.match(s))
+        self.assertEqual(s, p.match(s)[0])
+
+        s = 'a1'
+        self.assertIsNotNone(p.match(s))
+        self.assertEqual(s, p.match(s)[0])
+
+        s = '_1'
+        self.assertIsNotNone(p.match(s))
+        self.assertEqual(s, p.match(s)[0])
+
+        s = 'b_x'
+        self.assertIsNotNone(p.match(s))
+        self.assertEqual(s, p.match(s)[0])
+
+        self.assertIsNone(p.match('0'))
+        self.assertIsNone(p.match('000'))
+        self.assertIsNone(p.match('6x'))
+        self.assertIsNone(p.match('9_x'))
+
 
 class CellTypeTestCase(unittest.TestCase):
     def test_init1(self):

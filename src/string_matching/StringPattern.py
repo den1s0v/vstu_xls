@@ -124,7 +124,7 @@ class StringPattern:
             self.pattern_flags = re_flags_to_int(self.pattern_flags)
 
         if self.pattern_syntax != 'plain':
-            # determine how to
+            # determine how to match anchors
             match self.anchors:
                 case('start', ):
                     match_method = 'match'
