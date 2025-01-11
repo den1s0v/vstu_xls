@@ -226,7 +226,9 @@ class RangeTestCase(unittest.TestCase):
         self.assertIn(4, open_range(None, None))
         self.assertIn(-999, open_range(None, None))
 
+    def test_open_range_parsed(self):
         self.assertEqual(range(1, 1 + 1), open_range(1, 1))
+        self.assertEqual(range(1, 1 + 1), open_range.parse('1, 1'))
 
     def test_range(self):
 

@@ -1,9 +1,9 @@
 import re
 
-from geom2d.open_range import open_range
+import geom2d.open_range as ns
 
 
-def parse_range(s: str) -> open_range:
+def parse_range(s: str) -> 'ns.open_range':
     """ Parse an integer range in form of the following (including upper bound)
     | `3`
     | `3+`
@@ -22,12 +22,11 @@ def parse_range(s: str) -> open_range:
     | `* .. 5`
     | `* .. *`
     |
-
     """
     s = s.strip()
 
     if s == '*':
-        return open_range(None, None)
+        return ns.open_range(None, None)
 
     number_pattern = r'([+-]?\d+)'
     single_range_pattern = f'{number_pattern}([+-]?)'
@@ -57,14 +56,12 @@ def parse_range(s: str) -> open_range:
             R = int(value_2_str) if value_2_str != '*' else None
 
     if m:
-        # if L > R:
-        #     raise ValueError(f"invalid empty range in parse_range({repr(s)}) -> ({L}, {R})")
-        return open_range(L, R)
+        return ns.open_range(L, R)
 
     raise ValueError("cannot parse_range(%s)" % repr(s))
 
 
-def parse_size_range(s: str) -> tuple[open_range, open_range]:
+def parse_size_range(s: str) -> tuple['ns.open_range', 'ns.open_range']:
     """ Parse a ranged size as a couple of integer ranges in form of the following (by default including upper bound)
     | `8+ x 1`
     | `4+ x 1..2`

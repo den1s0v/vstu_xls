@@ -1,21 +1,31 @@
 from dataclasses import dataclass
 
+import geom2d.ranges as ranges
+
 
 @dataclass(repr=True)
 class open_range:
     """Class that mimics behaviour of `range` object with step=1, but includes `stop` in the sequence.
     This extends `range` to allow infinite limits (just pass `None` as `start` and/or `stop`).
 
-    Constructor supports only full form: `open_range(start, stop)`.
-    Each limit is assumed to be infinity if set tO None or not passed .
-    Note: `range` cannot express true infinite bounds, so use practically reliable positive `inf_value`.
+    Constructor supports only full form: `open_range(start, stop)`,
+    or use convertion from a string: `open_range.parse( '1..5')`.
+    Each limit is assumed to be infinity if set to `None` or not passed.
+
+    Note: ordinary `range` cannot express true infinite bounds,
+    so use this class when checking whether a value is in an open range.
     """
 
     start: int | None
     stop: int | None
     _range: range | None  # None for infinite ranges
 
-    def __init__(self, start=None, stop=None):
+    @classmethod
+    def parse(cls, range_str: str):
+        """ See more in description of `parse_range()` """
+        return ranges.parse_range(str(range_str))
+
+    def __init__(self, start: int = None, stop=None):
         self.start = start
         self.stop = stop
 
@@ -55,3 +65,14 @@ class open_range:
             return self.start == other.start and self.stop == other.stop
         return False
 
+    def __str__(self) -> str:
+        """Get string representation
+        parseable back by `open_range.parse( '1..5')` """
+        if self._range:
+            return f"{self.start}..{self.stop}"
+
+        if self.start is not None:
+            return f"{self.start}+"
+        if self.stop is not None:
+            return f"{self.stop}-"
+        return '*'

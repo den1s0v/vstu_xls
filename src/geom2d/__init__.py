@@ -12,7 +12,7 @@ from geom2d.partial_box import PartialBox
 from geom2d.point import Point
 from geom2d.size import Size
 from geom2d.varibox import VariBox
-from geom2d.utils import parse_range, parse_size_range
+from geom2d.ranges import parse_range, parse_size_range
 from geom2d.open_range import open_range
 
 

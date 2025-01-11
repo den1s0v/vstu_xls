@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from functools import reduce
 
 from constraints_2d import SpatialConstraint
+from geom2d import open_range
 import grammar2d.Grammar as ns
-# from grammar2d.Pattern2d import Pattern2d
 import grammar2d.Pattern2d as pt
 from utils import WithCache
 
@@ -32,7 +32,7 @@ class PatternComponent(WithCache):
     constraints: list[
         SpatialConstraint] = ()
 
-    count: range = range(0, 999)  # кратность элемента в родителе
+    count: open_range = None  # кратность элемента в родителе
 
     weight: float = 1  # (-∞, ∞) вес компонента для регулирования вклада в точность опредления родителя. >0: наличие желательно, 0: безразлично (компонент может быть опущен без потери точности), <0: наличие нежелательно.
 
