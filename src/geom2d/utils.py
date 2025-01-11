@@ -1,8 +1,10 @@
 import re
 
+from geom2d.open_range import open_range
 
-def parse_range(s: str, incr_upper_bound=True, inf_value=999999) -> range:
-    """ Parse an integer range in form of the following (by default including upper bound)
+
+def parse_range(s: str) -> open_range:
+    """ Parse an integer range in form of the following (including upper bound)
     | `3`
     | `3+`
     | `3-`
@@ -20,12 +22,12 @@ def parse_range(s: str, incr_upper_bound=True, inf_value=999999) -> range:
     | `* .. 5`
     | `* .. *`
     |
-    Note: `range` cannot express true infinite bounds, so use practically reliable positive `inf_value`.
+
     """
     s = s.strip()
 
     if s == '*':
-        return range(-inf_value, +inf_value)
+        return open_range(None, None)
 
     number_pattern = r'([+-]?\d+)'
     single_range_pattern = f'{number_pattern}([+-]?)'
@@ -37,11 +39,11 @@ def parse_range(s: str, incr_upper_bound=True, inf_value=999999) -> range:
         post_sign_str = m[2]
         match post_sign_str:
             case '':
-                L, R = value, value + incr_upper_bound
+                L, R = value, value
             case '-':
-                L, R = -inf_value, value + incr_upper_bound
+                L, R = None, value
             case '+':
-                L, R = value, inf_value
+                L, R = value, None
 
     if not m:
         number_pattern = r'([+-]?\d+|\*)'  # '*' added.
@@ -50,19 +52,19 @@ def parse_range(s: str, incr_upper_bound=True, inf_value=999999) -> range:
 
         if m := re.fullmatch(double_range_pattern, s):
             value_1_str = m[1]
-            L = int(value_1_str) if value_1_str != '*' else -inf_value
+            L = int(value_1_str) if value_1_str != '*' else None
             value_2_str = m[2]
-            R = int(value_2_str) + incr_upper_bound if value_2_str != '*' else inf_value
+            R = int(value_2_str) if value_2_str != '*' else None
 
     if m:
-        if L > R - incr_upper_bound:
-            raise ValueError(f"invalid empty range in parse_range({repr(s)}) -> ({L}, {R})")
-        return range(L, R)
+        # if L > R:
+        #     raise ValueError(f"invalid empty range in parse_range({repr(s)}) -> ({L}, {R})")
+        return open_range(L, R)
 
     raise ValueError("cannot parse_range(%s)" % repr(s))
 
 
-def parse_size_range(s: str, incr_upper_bound=True, inf_value=999999) -> tuple[range, range]:
+def parse_size_range(s: str) -> tuple[open_range, open_range]:
     """ Parse a ranged size as a couple of integer ranges in form of the following (by default including upper bound)
     | `8+ x 1`
     | `4+ x 1..2`
@@ -71,19 +73,17 @@ def parse_size_range(s: str, incr_upper_bound=True, inf_value=999999) -> tuple[r
     | `5+ x 4`
     | `1..4 x 2+`
     |
-    Note: `range` cannot express true infinite bounds, so use practically reliable positive `inf_value`.
     """
+
     s = s.strip()
     range_pattern = r'(.+)'
     middle_chars = r'[xх]'  # latin 'x' & cyrillic 'х'
     size_range_pattern = rf'{range_pattern}\s*{middle_chars}\s*{range_pattern}'
 
     if m := re.fullmatch(size_range_pattern, s, re.IGNORECASE):
-        range_1_str = m[1]
-        range_2_str = m[2]
 
-        r1 = parse_range(range_1_str, incr_upper_bound, inf_value)
-        r2 = parse_range(range_2_str, incr_upper_bound, inf_value)
+        r1 = parse_range(m[1])
+        r2 = parse_range(m[2])
 
         return r1, r2
 

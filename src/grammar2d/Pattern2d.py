@@ -4,6 +4,7 @@ from constraints_2d import SpatialConstraint
 from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
 import grammar2d.PatternComponent as pc
+from geom2d import open_range
 from utils import WithCache
 
 GRAMMAR: 'ns.Grammar'
@@ -22,7 +23,7 @@ class Pattern2d(WithCache):
 
     description: str = None  # текстовое описание
     style: dict = None  # оформление области; пока только `borders`
-    count: range = range(0, 999)  # кратность элемента в документе (1 = уникален)
+    count: open_range = None  # open_range(0, 999)  # кратность элемента в документе (1 = уникален)
 
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
     extends: list['Pattern2d|str'] = ()

@@ -6,6 +6,7 @@ init_testing_environment()
 
 from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox
 from geom2d import parse_range, parse_size_range
+from geom2d import open_range
 
 
 class BoxTestCase(unittest.TestCase):
@@ -196,19 +197,41 @@ class PartialBoxTestCase(unittest.TestCase):
 
 class RangeTestCase(unittest.TestCase):
 
-    def test_range(self):
+    def test_open_range(self):
         self.assertNotIn(-1, range(0, 5))
         self.assertIn(0, range(0, 5))
         self.assertIn(4, range(0, 5))
         self.assertNotIn(5, range(0, 5))
 
-        inf = 999999  # See default value for `inf_value` arg of `parse_range()`
+        self.assertNotIn(-1, open_range(0, 5))
+        self.assertIn(0, open_range(0, 5))
+        self.assertIn(5, open_range(0, 5))
+        self.assertNotIn(6, open_range(0, 5))
+
+        self.assertNotIn(0, open_range(1, 1))
+        self.assertIn(1, open_range(1, 1))
+        self.assertNotIn(2, open_range(1, 1))
+
+        self.assertNotIn(-1, open_range(0, None))
+        self.assertIn(0, open_range(0, None))
+        self.assertIn(1, open_range(0, None))
+        self.assertIn(999, open_range(0, None))
+
+        self.assertNotIn(6, open_range(None, 5))
+        self.assertIn(5, open_range(None, 5))
+        self.assertIn(4, open_range(None, 5))
+        self.assertIn(-999, open_range(None, 5))
+
+        self.assertIn(999, open_range(None, None))
+        self.assertIn(4, open_range(None, None))
+        self.assertIn(-999, open_range(None, None))
+
+        self.assertEqual(range(1, 1 + 1), open_range(1, 1))
+
+    def test_range(self):
 
         expr = '1'
         self.assertEqual(range(1, 1 + 1), parse_range(expr))
-
-        expr = '1'
-        self.assertEqual(range(1, 1 + 0), parse_range(expr, incr_upper_bound=False))
 
         expr = '9'
         self.assertEqual(range(9, 9 + 1), parse_range(expr))
@@ -217,16 +240,10 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(range(194, 194 + 1), parse_range(expr))
 
         expr = '0+'
-        self.assertEqual(range(0, inf), parse_range(expr))
-
-        expr = '0+'
-        self.assertEqual(range(0, inf), parse_range(expr, incr_upper_bound=False))
+        self.assertEqual(open_range(0, None), parse_range(expr))
 
         expr = '0-'
-        self.assertEqual(range(-inf, 0 + 1), parse_range(expr))
-
-        expr = '0-'
-        self.assertEqual(range(-inf, 0 + 0), parse_range(expr, incr_upper_bound=False))
+        self.assertEqual(open_range(None, 0), parse_range(expr))
 
         expr = '3'
         self.assertEqual(range(3, 3 + 1), parse_range(expr))
@@ -235,16 +252,16 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(range(3, 3 + 1), parse_range(expr))
 
         expr = '3+'
-        self.assertEqual(range(3, inf), parse_range(expr))
+        self.assertEqual(open_range(3, None), parse_range(expr))
 
         expr = '+3+'
-        self.assertEqual(range(3, inf), parse_range(expr))
+        self.assertEqual(open_range(3, None), parse_range(expr))
 
         expr = '3-'
-        self.assertEqual(range(-inf, 3 + 1), parse_range(expr))
+        self.assertEqual(open_range(None, 3), parse_range(expr))
 
         expr = ' * '
-        self.assertEqual(range(-inf, inf), parse_range(expr))
+        self.assertEqual(open_range(None, None), parse_range(expr))
 
         expr = '3..5'
         self.assertEqual(range(3, 5 + 1), parse_range(expr))
@@ -256,10 +273,10 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(range(-3, -3 + 1), parse_range(expr))
 
         expr = '-3+'
-        self.assertEqual(range(-3, inf), parse_range(expr))
+        self.assertEqual(open_range(-3, None), parse_range(expr))
 
         expr = '-3-'
-        self.assertEqual(range(-inf, -3 + 1), parse_range(expr))
+        self.assertEqual(open_range(None, -3), parse_range(expr))
 
         expr = '-5..-3'
         self.assertEqual(range(-5, -3 + 1), parse_range(expr))
@@ -270,23 +287,19 @@ class RangeTestCase(unittest.TestCase):
         expr = '-5, -3'
         self.assertEqual(range(-5, -3 + 1), parse_range(expr))
 
-        expr = '-5, -3'
-        self.assertEqual(range(-5, -3 + 0), parse_range(expr, incr_upper_bound=False))
-
         expr = '-5, *'
-        self.assertEqual(range(-5, inf), parse_range(expr))
+        self.assertEqual(open_range(-5, None), parse_range(expr))
 
         expr = '-5 .. *'
-        self.assertEqual(range(-5, inf), parse_range(expr))
+        self.assertEqual(open_range(-5, None), parse_range(expr))
 
         expr = '* .. 5'
-        self.assertEqual(range(-inf, 5 + 1), parse_range(expr))
+        self.assertEqual(open_range(None, 5), parse_range(expr))
 
         expr = '* .. *'
-        self.assertEqual(range(-inf, inf), parse_range(expr))
+        self.assertEqual(open_range(None, None), parse_range(expr))
 
     def test_size_range(self):
-        inf = 999999
 
         expr = '1x0'
         self.assertEqual((
@@ -302,20 +315,20 @@ class RangeTestCase(unittest.TestCase):
 
         expr = '8+ x 1'
         self.assertEqual((
-            range(8, inf),
+            open_range(8, None),
             range(1, 1 + 1)),
             parse_size_range(expr))
 
         expr = '4+ x 1..2'
         self.assertEqual((
-            range(4, inf),
+            open_range(4, None),
             range(1, 2 + 1)),
             parse_size_range(expr))
 
         expr = '5- x 59+'
         self.assertEqual((
-            range(-inf, 5 + 1),
-            range(59, inf)),
+            open_range(None, 5),
+            open_range(59, None)),
             parse_size_range(expr))
 
         expr = '1 x 1'
@@ -326,14 +339,14 @@ class RangeTestCase(unittest.TestCase):
 
         expr = '5+ x 4'
         self.assertEqual((
-            range(5, inf),
+            open_range(5, None),
             range(4, 4 + 1)),
             parse_size_range(expr))
 
         expr = '1..4 x 2+'
         self.assertEqual((
             range(1, 4 + 1),
-            range(2, inf)),
+            open_range(2, None)),
             parse_size_range(expr))
 
     @unittest.expectedFailure
@@ -344,9 +357,9 @@ class RangeTestCase(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_size_range_empty_error2(self):
-        """ Too low inf_value """
-        expr = '-5000-'
-        parse_range(expr, inf_value=999)
+        """ Reversed range """
+        expr = '-5000, -5001'
+        parse_range(expr)
 
 
 if __name__ == '__main__':

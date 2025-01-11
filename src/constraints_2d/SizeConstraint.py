@@ -1,7 +1,7 @@
 from constraints_2d.CoordVar import CoordVar
 from constraints_2d.SpatialConstraint import SpatialConstraint
 from constraints_2d.BoolExpr import BoolExprRegistry
-from geom2d import parse_size_range
+from geom2d import parse_size_range, open_range
 
 
 class SizeConstraint(SpatialConstraint):
@@ -11,11 +11,11 @@ class SizeConstraint(SpatialConstraint):
     def get_kind(cls):
         return "size"
 
-    size_range_tuple: tuple[range, range]
+    size_range_tuple: tuple[open_range, open_range]
     _predicates: dict[str, callable]
 
-    def __init__(self, size_range_str: str = None, size_range_tuple: tuple[range, range] | list = None):
-        """ Pass either: `size_range_str='4+ x 1..2'` or `size_range_tuple=(range(4, 999), range(1, 3))` """
+    def __init__(self, size_range_str: str = None, size_range_tuple: tuple[open_range, open_range] | list = None):
+        """ Pass either: `size_range_str='4+ x 1..2'` or `size_range_tuple=(open_range(4, 999), open_range(1, 3))` """
         if size_range_str:
             size_range_tuple = parse_size_range(size_range_str)
         assert size_range_tuple, size_range_tuple
@@ -55,6 +55,15 @@ class SizeConstraint(SpatialConstraint):
 
     def clone(self) -> 'SizeConstraint':
         return type(self)(size_range_tuple=self.size_range_tuple)
+
+    def __str__(self) -> str:
+        s = 'SizeConstraint: %s x %s' % tuple(
+            f"[{rng.start}, {rng.stop})"
+            for rng in self.size_range_tuple
+        )
+        return s
+
+    __repr__ = __str__
 
 
 BoolExprRegistry.register(SizeConstraint)
