@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-import geom2d.ranges as ranges
+import geom2d.ranges as ns
 
 
-@dataclass(repr=True)
+@dataclass(repr=True, frozen=True)
 class open_range:
     """Class that mimics behaviour of `range` object with step=1, but includes `stop` in the sequence.
     This extends `range` to allow infinite limits (just pass `None` as `start` and/or `stop`).
@@ -23,7 +23,7 @@ class open_range:
     @classmethod
     def parse(cls, range_str: str):
         """ See more in description of `parse_range()` """
-        return ranges.parse_range(str(range_str))
+        return ns.parse_range(str(range_str))
 
     def __init__(self, start: int = None, stop=None):
         self.start = start
@@ -76,3 +76,10 @@ class open_range:
         if self.stop is not None:
             return f"{self.stop}-"
         return '*'
+
+    def intersect(self, *others: tuple['open_range']):
+        ranges = [self, *others]
+        return open_range(
+            start=max((x.start for x in ranges if x.start is not None), default=None),
+            stop=min((x.stop for x in ranges if x.stop is not None), default=None),
+        )
