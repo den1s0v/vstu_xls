@@ -5,7 +5,7 @@ init_testing_environment()
 
 from geom2d import Box
 
-from constraints_2d import AlgebraicExpr, SizeConstraint
+from constraints_2d import AlgebraicExpr, SizeConstraint, LocationConstraint
 from constraints_2d import SympyExpr
 from constraints_2d import constraints_for_box_inside_container, trivial_constraints_for_box
 
@@ -187,6 +187,332 @@ class SizeConstraintTestCase(unittest.TestCase):
 
         box = Box(1,2, 5,0)
         self.assertFalse(cs.eval_with_components({name: box}))
+
+
+class LocationConstraintTestCase(unittest.TestCase):
+
+    def test_inside(self):
+        cs = LocationConstraint(sides_str='bottom, right', check_implicit_sides=False)
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # matches itself
+        self.assertTrue(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        box = Box.from_2points(9,9, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative tests
+        box = Box.from_2points(1,2, 9,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 11,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 10,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 10,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # Note: no constraints on other sides!
+        box = Box.from_2points(-15,-15, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_inside_with_implicit_sides(self):
+        cs = LocationConstraint(
+            sides_str='bottom, right',
+            # check_implicit_sides=True
+        )
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # matches itself
+        self.assertTrue(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        box = Box.from_2points(9,9, 10,10)
+
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative tests
+        box = Box.from_2points(1,2, 9,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 11,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 10,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,2, 10,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # Note: constraints on other sides work to keep inner inside!
+        box = Box.from_2points(-15,-15, 10,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(0,-15, 10,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-15,0, 10,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_outside(self):
+        cs = LocationConstraint(sides_str='bottom', inside=False, check_implicit_sides=False)
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # Does not match itself
+        self.assertFalse(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # zero gap
+        box = Box.from_2points(0,10, 10,15)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,12, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # positive gap
+        box = Box.from_2points(1,11, 5,20)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,15, 5,20)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-1,150, 1,200)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(9,150, 11,200)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative gap
+        box = Box.from_2points(1,9, 10,20)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,-9, 10,0)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,-20, 10,-10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # shift out horizontally (OK when check_implicit_sides=False)
+        box = Box.from_2points(-10,10, 0,11)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-10,10, -5,11)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(10,10, 15,11)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(20,10, 50,11)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_outside_with_implicit_sides(self):
+        cs = LocationConstraint(
+            sides_str='bottom',
+            inside=False,
+            # check_implicit_sides=True
+        )
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # Does not match itself
+        self.assertFalse(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # zero gap
+        box = Box.from_2points(0,10, 10,15)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,12, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # positive gap
+        box = Box.from_2points(1,11, 5,20)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,15, 5,20)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-1,150, 1,200)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(9,150, 11,200)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative gap
+        box = Box.from_2points(1,9, 10,20)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,-9, 10,0)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(1,-20, 10,-10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # shift out horizontally (FAIL when check_implicit_sides=True)
+        box = Box.from_2points(-10,10, 0,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-10,10, -5,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(10,10, 15,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(20,10, 50,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_outside_with_two_sides(self):
+        cs = LocationConstraint(
+            # "looks" at bottom left corner:
+            sides_str='bottom left',
+            inside=False,
+            # check_implicit_sides=True
+        )
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # Does not match itself
+        self.assertFalse(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # zero gap (both or one side)
+        box = Box.from_2points(-10,20, 0,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-10,20, -1,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-10,20, 0,11)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # positive gap
+        box = Box.from_2points(-10,20, -1,11)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-100,200, -150, 150)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative gap
+        box = Box.from_2points(-10,20, 1,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-10,20, 0,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-10,20, 1,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # shift right horizontally
+        box = Box.from_2points(-5,20, 5,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(5,20, 15,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(10,20, 15,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(100,20, 150,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_inside_with_range_gaps(self):
+        cs = LocationConstraint(side_to_gap=dict(
+            left='2..4',
+            top ='2..4',
+            right ='1..3',
+            bottom='1..3',
+        ))
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # cannot match itself
+        self.assertFalse(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # smallest
+        box = Box.from_2points(4,4, 7,7)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # largest
+        box = Box.from_2points(2,2, 9,9)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative tests
+        # smaller than smallest
+        box = Box.from_2points(5,4, 7,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,5, 7,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,4, 6,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,4, 7,6)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # larger than largest
+        box = Box.from_2points(1,2, 9,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(2,1, 9,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(2,2, 10,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(2,2, 9,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_inside_with_constant_gap(self):
+        cs = LocationConstraint(side_to_gap=dict(
+            left='4',
+            top ='4',
+            right ='3',
+            bottom='3',
+        ))
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # cannot match itself
+        self.assertFalse(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # valid
+        box = Box.from_2points(4,4, 7,7)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative tests
+        # smaller
+        box = Box.from_2points(5,4, 7,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,5, 7,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,4, 6,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,4, 7,6)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # larger
+        box = Box.from_2points(3,4, 7,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,3, 7,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,4, 8,7)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(4,4, 7,8)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
 
 
 if __name__ == '__main__':
