@@ -1,22 +1,37 @@
+from collections.abc import Iterable
+
+
 class Direction:
     """ Direction in degrees.
     See constants below: 0 is Right, 90 is Up, 180 is Left, 270 is Down.
     Non-right angles not supported.
     """
-    _cache = dict()
     rotation: int
     dx: int
     dy: int
     prop_name: str  # name of property that a Box instance has in this direction.
+    _instances: dict[int, 'Direction'] = {}
 
     @classmethod
     def get(cls, rotation) -> 'Direction':
-        obj = cls._cache.get(rotation)
+        obj = cls._instances.get(rotation)
         if not obj:
-            cls._cache[rotation] = (obj := Direction(rotation))
+            cls._instances[rotation] = (obj := Direction(rotation))
         return obj
 
-    def __init__(self, rotation = 0) -> None:
+    @classmethod
+    def get_by_name(cls, prop_name) -> 'Direction | None':
+        # Note: this assumes that all instances have been already registered.
+        for d in cls.known_instances():
+            if d.prop_name == prop_name:
+                return d
+        return None
+
+    @classmethod
+    def known_instances(cls) -> Iterable['Direction']:
+        return cls._instances.values()
+
+    def __init__(self, rotation=0) -> None:
         self.rotation = rotation
         self.dx, self.dy, self.prop_name = {
               0: ( 1,  0, 'right'),

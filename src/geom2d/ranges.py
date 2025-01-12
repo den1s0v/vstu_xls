@@ -1,8 +1,10 @@
 import re
+from functools import lru_cache
 
 import geom2d.open_range as ns
 
 
+@lru_cache()
 def parse_range(s: str) -> 'ns.open_range':
     """ Parse an integer range in form of the following (including upper bound)
     | `3`

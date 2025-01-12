@@ -30,13 +30,13 @@ class SympyExpr(AlgebraicExpr):
         return self.vars
 
     def decidable(self) -> bool:
-        return self._expr != False
+        return self._expr != False  # not `is not False` since `==` checks internal value
 
     def to_callable(self) -> callable:
         expr_vars = self.referenced_variables()
         if not expr_vars:
             # not a SymPy expression
-            return lambda: self._expr
+            return lambda **_: self._expr
 
         if not self.lambdified:
             self.lambdified = lambdify(expr_vars, self._expr, docstring_limit=0)

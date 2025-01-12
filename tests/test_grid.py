@@ -72,7 +72,7 @@ class GridTestCase(unittest.TestCase):
 
         rect = gw.get_region(Box(3, 3, 3, 3))
         print('rect-view range:', rect)
-        for d in Direction._cache.values():
+        for d in Direction.known_instances():
             outer = rect.look_outside(d)
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
@@ -81,7 +81,7 @@ class GridTestCase(unittest.TestCase):
         print()
         rect = gw.get_region(Box(2, 2, 5, 5))
         print('rect-view range:', rect)
-        for d in Direction._cache.values():
+        for d in Direction.known_instances():
             outer = rect.look_outside(d, distance=2)
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
@@ -91,7 +91,7 @@ class GridTestCase(unittest.TestCase):
         print('# zero distance')
         rect = gw.get_region(Box(2, 2, 4, 4))
         print('rect-view range:', rect)
-        for d in Direction._cache.values():
+        for d in Direction.known_instances():
             outer = rect.look_outside(d, distance=0)
             # chars = (cell.cell.content for cell in outer.iterateCells())
             print('rect-view range, %s:' % d.prop_name, outer)
@@ -101,7 +101,7 @@ class GridTestCase(unittest.TestCase):
         print('# ignored distance')
         rect = gw.get_region(Box(2, 2, 4, 4))
         print('rect-view range:', rect)
-        for d in Direction._cache.values():
+        for d in Direction.known_instances():
             outer = rect.look_outside(d, distance=-10)  # ignored distance
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)
@@ -111,7 +111,7 @@ class GridTestCase(unittest.TestCase):
         print('# too large distance, clamp.')
         rect = gw.get_region(Box(2, 2, 4, 4))
         print('rect-view range:', rect)
-        for d in Direction._cache.values():
+        for d in Direction.known_instances():
             outer = rect.look_outside(d, distance=999)  # too large distance, clamp.
             chars = (cell.cell.content for cell in outer.iterate_cells())
             print('rect-view range, %s:' % d.prop_name, outer)

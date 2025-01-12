@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import geom2d.ranges as ns
 
 
-@dataclass(repr=True, frozen=True)
+@dataclass(repr=True, frozen=False)
 class open_range:
     """Class that mimics behaviour of `range` object with step=1, but includes `stop` in the sequence.
     This extends `range` to allow infinite limits (just pass `None` as `start` and/or `stop`).
@@ -12,13 +12,15 @@ class open_range:
     or use convertion from a string: `open_range.parse( '1..5')`.
     Each limit is assumed to be infinity if set to `None` or not passed.
 
+    Please use as immutable (although no error is thrown on setting to attributes).
+
     Note: ordinary `range` cannot express true infinite bounds,
     so use this class when checking whether a value is in an open range.
     """
 
     start: int | None
     stop: int | None
-    _range: range | None  # None for infinite ranges
+    # _range: range | None  # None for infinite ranges
 
     @classmethod
     def parse(cls, range_str: str):
