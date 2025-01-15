@@ -226,6 +226,34 @@ class RangeTestCase(unittest.TestCase):
         self.assertIn(4, open_range(None, None))
         self.assertIn(-999, open_range(None, None))
 
+        # neg
+        self.assertEqual(open_range(-10, -2), -open_range(2, 10))
+        self.assertEqual(open_range(None, -2), -open_range(2, None))
+        self.assertEqual(open_range(5, None), -open_range(None, -5))
+        self.assertEqual(open_range(None, None), -open_range(None, None))
+
+        # sum
+        self.assertEqual(open_range(None, None), 11 + open_range(None, None))
+        self.assertEqual(open_range(32, None), 11 + open_range(21, None))
+        self.assertEqual(open_range(None, 12), 11 + open_range(None, 1))
+        self.assertEqual(open_range(25, 32), 11 + open_range(14, 21))
+
+        # range + range
+        self.assertEqual(open_range(8, 12), open_range(4, 6) + open_range(4, 6))
+        self.assertEqual(open_range(8, None), open_range(4, 6) + open_range(4, None))
+
+        # sub
+        self.assertEqual(open_range(None, None), open_range(None, None) - 5)
+        self.assertEqual(open_range(10, None), open_range(15, None) - 5)
+        self.assertEqual(open_range(None, -10), open_range(None, -5) - 5)
+        self.assertEqual(open_range(3, 10), open_range(8, 15) - 5)
+
+        # range - range
+        self.assertEqual(open_range(-12, 0), open_range(0, 6) - open_range(6, 12))
+        self.assertEqual(open_range(16, 28), open_range(20, 30) - open_range(2, 4))
+        self.assertEqual(open_range(None, 28), open_range(20, 30) - open_range(2, None))
+
+
     def test_open_range_parsed(self):
         self.assertEqual(range(1, 1 + 1), open_range(1, 1))
         self.assertEqual(range(1, 1 + 1), open_range.parse('1, 1'))
