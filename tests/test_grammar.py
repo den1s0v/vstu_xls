@@ -44,4 +44,11 @@ class GrammarTestCase(unittest.TestCase):
         grammar = read_grammar()
         print(grammar)
 
+        from pprint import pprint
+        pprint(grammar.patterns)
+
+
+if __name__ == '__main__':
+    # unittest.main()
+    GrammarTestCase.test_1(...)
 

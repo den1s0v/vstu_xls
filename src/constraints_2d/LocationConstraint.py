@@ -35,6 +35,22 @@ class LocationConstraint(SpatialConstraint):
         self.side_to_gap = self._prepare_side_mapping(side_to_gap, check_implicit_sides, inside)
         self.inside = bool(inside)
 
+    @classmethod
+    def parse(cls, data, context: dict = None):
+        """ Parse from string or dict. """
+        inside = False
+        if 'inside' in context:
+            inside = bool(context['inside'])
+        elif 'role' in context:
+            inside = bool(context['role'].lower() == 'inner')
+
+        if isinstance(data, str):
+            return cls(sides_str=data, inside=inside)
+        if isinstance(data, dict):
+            return cls(side_to_gap=data, inside=inside)
+
+        raise TypeError(f"{cls.__name__}.parse(<data>): `str` or `dict` expected!")
+
     def eval(self, var2value: dict[str, int] = ()) -> bool:
         """ Evaluate the expr for given values of variables """
         for d, range_ in self.side_to_gap.items():

@@ -14,10 +14,14 @@ class BoolExpr:
     def clone(self) -> 'BoolExpr':
         raise NotImplementedError(type(self))
 
-
     @classmethod
     def get_kind(cls):
         return "Base BoolExpr"
+
+    @classmethod
+    def parse(cls, data, context: dict = None):
+        """ Parse from arbitrary data. Just pass `data` to constructor by default. """
+        return cls(data)
 
 
 class BoolExprRegistry:
@@ -35,4 +39,3 @@ class BoolExprRegistry:
         if not boolexpr_cls:
             print('WARN: no BoolExpr having kind = `%s`' % kind)
         return boolexpr_cls
-

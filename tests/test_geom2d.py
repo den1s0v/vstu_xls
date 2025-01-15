@@ -253,7 +253,6 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(open_range(16, 28), open_range(20, 30) - open_range(2, 4))
         self.assertEqual(open_range(None, 28), open_range(20, 30) - open_range(2, None))
 
-
     def test_open_range_parsed(self):
         self.assertEqual(range(1, 1 + 1), open_range(1, 1))
         self.assertEqual(range(1, 1 + 1), open_range.parse('1, 1'))

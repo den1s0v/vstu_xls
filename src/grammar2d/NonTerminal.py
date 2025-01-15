@@ -20,7 +20,8 @@ class NonTerminal(Pattern2d):
             for comp in self.components:
                 dependency_set |= comp.dependencies(recursive)
             # check circular dependencies
-            assert self not in dependency_set, 'Grammar element `{self.name}` has circular dependency on itself (via component `{comp.name}`) !'
+            assert self not in dependency_set, \
+                'Grammar element `{self.name}` has circular dependency on itself (via component `{comp.name}`) !'
             self._cache.dependencies = list(sorted(dependency_set))
         return self._cache.dependencies
 

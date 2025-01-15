@@ -152,21 +152,21 @@ def read_pattern_component(
         data: dict,
         role: str = 'outer',
         pattern_name: str = None) -> pc.PatternComponent | None:
+
     component_name = (pattern_name or '') + '.' + name
 
     assert isinstance(data, dict), data
 
-    if role:
-        if 'location' in data:
-            data['location'] += ', ' + role
-        else:
-            data['location'] = role
-        # location_list = data.get('location') or []
-        # location_list.append(role)
-        # data['location'] = location_list
+    if 'location' in data:
+        assert role in ('inner', 'outer'), role
+        # preparing data for LocationConstraint
+        data['role'] = role
+
 
     # Note: this removes keys related to constraints from data!
     constraints = extract_pattern_constraints(data, component_name, )
+    if 'role' in data:
+        del data['role']
 
     if 'pattern' not in data:
         # got inline pattern definition...
@@ -207,7 +207,7 @@ def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc
             del data[k]
             cls_sc = BoolExprRegistry.get_class_by_kind(k)
             if cls_sc:
-                sc = cls_sc(sc_data)
+                sc: SpatialConstraint = cls_sc.parse(data=sc_data, context=data)
                 constraints.append(sc)
 
     return constraints
