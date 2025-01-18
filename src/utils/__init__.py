@@ -109,8 +109,11 @@ class WithSafeCreate:
     @classmethod
     def filter_init_kwargs(cls, kwargs: dict) -> dict:
         valid_args = set(cls.__annotations__.keys())
-        for base in cls.__bases__:
-            valid_args |= set(base.__annotations__.keys())
+        for base in cls.mro():
+            try:
+                valid_args |= set(base.__annotations__.keys())
+            except AttributeError:
+                pass
 
         # print(cls, valid_args)
 

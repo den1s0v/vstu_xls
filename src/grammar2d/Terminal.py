@@ -25,7 +25,7 @@ class Terminal(Pattern2d):
         return self._cell_type
 
     def dependencies(self, recursive=False) -> list['Pattern2d']:
-        return ()
+        return []
 
     def max_score(self) -> float:
         return 1

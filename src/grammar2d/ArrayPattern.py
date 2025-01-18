@@ -12,7 +12,7 @@ VALID_ARRAY_DIRECTIONS = ('row', 'column', 'fill')
 class ArrayPattern(NonTerminal):
     """Массив или ряд однотипных элементов, выровненных друг относительно друга
 
-    direction:
+    `direction`:
         'row' — по горизонтали (если не указать direction, то в любом направлении)
         'column'
         'fill': заполнение области произвольной формы вместо прямой линии
@@ -34,7 +34,10 @@ class ArrayPattern(NonTerminal):
         if not self.item_pattern:
             return []
 
-        return [self.item_pattern, self.item_pattern.dependencies(recursive)]
+        if not recursive:
+            return [self.item_pattern]
+
+        return [self.item_pattern, *self.item_pattern.dependencies(recursive)]
 
     def max_score(self) -> float:
         """ precision = score / max_score """

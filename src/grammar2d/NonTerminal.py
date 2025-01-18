@@ -9,6 +9,7 @@ class NonTerminal(Pattern2d):
 
     @classmethod
     def get_kind(cls):
+        return "area or array"  # ???
 
 
     ...

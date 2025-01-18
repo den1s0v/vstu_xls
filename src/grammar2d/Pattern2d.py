@@ -10,7 +10,7 @@ from utils import WithCache, WithSafeCreate
 GRAMMAR: 'ns.Grammar'
 
 
-@dataclass(kw_only=True, repr=True)
+@dataclass(kw_only=True)
 class Pattern2d(WithCache, WithSafeCreate):
     """Элемент грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
@@ -68,6 +68,7 @@ class Pattern2d(WithCache, WithSafeCreate):
     #     return self.parent is None
 
     def max_score(self) -> float:
+        """ Ex. precision = score / max_score """
         raise NotImplementedError(type(self))
 
     def can_be_extended_by(self, child_element: 'Pattern2d') -> bool:
