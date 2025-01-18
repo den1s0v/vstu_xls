@@ -73,19 +73,18 @@ patterns:
     style:
       borders: all  #  должны быть все границы с линиями
 
-    outer: ~   # контекст
+    # outer: ~   # контекст
       # (нет.) within: schedule  # целиком включается в область schedule.
       #        ^^ Здесь контекст указывать не требуется, так как он не является обязательным для существования этого элемента.
       # Наоборот, этот элемент является основой для порождения  включающего schedule.
       # Здесь выплывает наружу последовательность формирования дерева в процессе парсинга (некоторые элементы могут быть созданы только после других).
-
 
     inner:  # содержимое
       groups:
         kind: array  # массив или ряд элементов, выровненных друг относительно друга
         direction: row  #  по горизонтали (если не указать, то в любом направлении)
         item_pattern: group_in_header
-        count: 1+
+        item_count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
@@ -101,7 +100,7 @@ patterns:
   # datetime_header:
   weeks_calendar:
     description: левый заголовок таблицы с днями и часами
-    kind: array  # массив (или ряд) элементов одинакового типа, выровненных друг относительно друга
+    kind: area  # массив (или ряд) элементов одинакового типа, выровненных друг относительно друга
 
     size: 5+ x 59+  # размер в ячейках Excel
     style:
@@ -112,7 +111,7 @@ patterns:
         kind: array  # массив (ряд)
         direction: row
         item_pattern: month_name  # определено ниже
-        count: 3..5
+        item_count: 3..5
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может
@@ -122,7 +121,7 @@ patterns:
         kind: array  # массив (ряд) элементов,
         direction: column  #  выровненных по вертикали
         item_pattern: week_datetime  # ... TODO
-        count: 2
+        item_count: 2
         gap: 1  # 1 ячейка между неделями
         location: left, right,  bottom
 
@@ -138,7 +137,7 @@ patterns:
 
   week_datetime:
     description: информация по дням и часам за одну неделю
-    kind: array
+    kind: area
 
     size: 5+ x 28+  # размер в ячейках Excel
     style:
@@ -149,7 +148,7 @@ patterns:
         kind: array  # массив (ряд)
         direction: column
         item_pattern: day_datetime
-        count: 5..6
+        item_count: 5..6
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может
@@ -178,7 +177,7 @@ patterns:
         kind: array
         direction: column
         item_pattern: hour_range  # ... TODO
-        count: 2..6
+        item_count: 2..6
         location: top, bottom
 
 
