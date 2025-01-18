@@ -57,10 +57,7 @@ class SizeConstraint(SpatialConstraint):
         return type(self)(size_range_tuple=self.size_range_tuple)
 
     def __str__(self) -> str:
-        s = 'SizeConstraint(%s x %s)' % tuple(
-            f"[{rng.start}, {rng.stop}]"
-            for rng in self.size_range_tuple
-        )
+        s = 'SizeConstraint(%s x %s)' % self.size_range_tuple
         return s
 
     __repr__ = __str__

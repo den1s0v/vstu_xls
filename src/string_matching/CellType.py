@@ -22,7 +22,7 @@ class CellType:
         Available so far: 'clear', 'replace_with_preprocessed'.
     """
     name: str  # id-like name
-    description: str  # comment for human
+    description: str  # comment for humans
     patterns: List[StringPattern]  # patterns with confidence level
     update_content: list[str] = ()  # optional names of transformations to apply to content
 
@@ -65,3 +65,7 @@ class CellType:
         """Set self as content_class for the pattern."""
         p.content_class = self
         return p
+
+    def __repr__(self):
+        return f'<{type(self).__name__} `{self.name}` ({self.description})>'
+

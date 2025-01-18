@@ -207,6 +207,9 @@ class StringPattern:
         """ Precision of `match` in range [0..1], by default defined as `pattern.confidence * match.coverage_ratio`. """
         return self.confidence * match.coverage_ratio
 
+    def __repr__(self):
+        return f'<{type(self).__name__}: content_class={self.content_class}>'
+
 
 def re_flags_to_int(re_flags: str = '') -> int:
     """Get int union of flags for re.* constants:
