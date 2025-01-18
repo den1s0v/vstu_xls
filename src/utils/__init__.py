@@ -100,6 +100,32 @@ class WithCache:
         return self._cache_d
 
 
+class WithSafeCreate:
+    """ Mixin that adds to a class `cls.safe_create` method
+     that filters incompatible kwargs, i.e. not defined as-level class attributes.
+     Also, `cls.filter_init_kwargs` method is added.
+     """
+
+    @classmethod
+    def filter_init_kwargs(cls, kwargs: dict) -> dict:
+        valid_args = set(cls.__annotations__.keys())
+        for base in cls.__bases__:
+            valid_args |= set(base.__annotations__.keys())
+
+        # print(cls, valid_args)
+
+        kwargs_filtered = {
+            k: val
+            for k, val in kwargs.items()
+            if k in valid_args
+        }
+        return kwargs_filtered
+
+    @classmethod
+    def safe_create(cls, **kwargs) -> 'new cls':
+        return cls(**cls.filter_init_kwargs(kwargs))
+
+
 def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=3) -> Path | None:
     if not directories:
         # use current dir
