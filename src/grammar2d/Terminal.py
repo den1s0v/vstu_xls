@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import override
 
 # from grammar2d import GRAMMAR
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
@@ -15,6 +16,7 @@ class Terminal(Pattern2d):
     _cell_type: CellType = None
 
     @classmethod
+    @override
     def get_kind(cls):
         return "cell"
 
@@ -24,9 +26,11 @@ class Terminal(Pattern2d):
             self._cell_type = GRAMMAR.cell_types[self.content_type]
         return self._cell_type
 
+    @override
     def dependencies(self, recursive=False) -> list['Pattern2d']:
         return []
 
+    @override
     def max_score(self) -> float:
         return 1
 

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import override
 
 from geom2d import open_range
 from grammar2d.NonTerminal import NonTerminal
@@ -26,10 +27,12 @@ class ArrayPattern(NonTerminal):
     gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
 
     @classmethod
+    @override
     def get_kind(cls):
         return "array"  # ???
 
     # dependencies: list[GrammarElement] = None
+    @override
     def dependencies(self, recursive=False) -> list[Pattern2d]:
         if not self.item_pattern:
             return []
@@ -39,6 +42,7 @@ class ArrayPattern(NonTerminal):
 
         return [self.item_pattern, *self.item_pattern.dependencies(recursive)]
 
+    @override
     def max_score(self) -> float:
         """ precision = score / max_score """
         return 1

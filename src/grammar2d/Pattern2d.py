@@ -30,10 +30,6 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     constraints: list[SpatialConstraint] = ()
 
-    @property
-    def name2component(self):
-        """ ??? """
-        return {}
 
     def __hash__(self) -> int:
         return hash(self.name)
