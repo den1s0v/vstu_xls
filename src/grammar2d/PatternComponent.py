@@ -6,13 +6,13 @@ from constraints_2d import SpatialConstraint
 from geom2d import open_range
 import grammar2d.Grammar as ns
 import grammar2d.Pattern2d as pt
-from utils import WithCache
+from utils import WithCache, WithSafeCreate
 
 GRAMMAR: 'ns.Grammar'
 
 
 @dataclass
-class PatternComponent(WithCache):
+class PatternComponent(WithCache, WithSafeCreate):
     """ Обёртка над элементом грамматики, которая позволяет задать его отношение к родительскому элементу
         (родитель — это контейнер для компонента).
         Точность определения этого компонента вносит вклад в точность определения родительского элемента

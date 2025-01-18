@@ -5,13 +5,13 @@ from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
 import grammar2d.PatternComponent as pc
 from geom2d import open_range
-from utils import WithCache
+from utils import WithCache, WithSafeCreate
 
 GRAMMAR: 'ns.Grammar'
 
 
 @dataclass(kw_only=True, repr=True)
-class Pattern2d(WithCache):
+class Pattern2d(WithCache, WithSafeCreate):
     """Элемент грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
 
@@ -87,7 +87,7 @@ class PatternRegistry:
         cls.registry[kind] = pattern_cls
 
     @classmethod
-    def get_pattern_class_by_kind(cls, kind: str) -> 'type|None':
+    def get_pattern_class_by_kind(cls, kind: str) -> 'type[Pattern2d]|None':
         pattern_cls = cls.registry.get(kind)
         if not pattern_cls:
             print('WARN: no pattern having kind = `%s`' % kind)
@@ -119,7 +119,7 @@ def read_pattern(data: dict) -> Pattern2d | None:
 
     # create new Pattern of specific subclass.
     try:
-        return pattern_cls(**data)
+        return pattern_cls.safe_create(**data)
     except TypeError as e:
         print(repr(e))
     return None
@@ -162,11 +162,8 @@ def read_pattern_component(
         # preparing data for LocationConstraint
         data['role'] = role
 
-
-    # Note: this removes keys related to constraints from data!
+    # Note: ↓ this removes keys related to constraints from data!
     constraints = extract_pattern_constraints(data, component_name, )
-    if 'role' in data:
-        del data['role']
 
     if 'pattern' not in data:
         # got inline pattern definition...
@@ -187,12 +184,8 @@ def read_pattern_component(
         data['constraints'] = constraints
     data['name'] = name
 
-    # remove all not supported keys from data
-    extra_keys = set(data.keys()) - set(pc.PatternComponent.__annotations__.keys())
-    for k in extra_keys:
-        del data[k]
 
-    return pc.PatternComponent(**data)
+    return pc.PatternComponent.safe_create(**data)
 
 
 def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:
