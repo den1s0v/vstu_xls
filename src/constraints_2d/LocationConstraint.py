@@ -48,8 +48,24 @@ class LocationConstraint(SpatialConstraint):
             return cls(sides_str=data, inside=inside)
         if isinstance(data, dict):
             return cls(side_to_gap=data, inside=inside)
+        if isinstance(data, list):
+            # transform to dict first
+            fixed_data = {}
+            for item in data:
+                if isinstance(item, str):
+                    # no range: treat as strict border
+                    fixed_data[item] = '0'
+                if isinstance(item, dict):
+                    # name to range
+                    fixed_data |= item
+                if isinstance(item, list):
+                    # name to range
+                    assert len(item) == 2, item
+                    fixed_data |= dict([item])
 
-        raise TypeError(f"{cls.__name__}.parse(<data>): `str` or `dict` expected!")
+            return cls(side_to_gap=fixed_data, inside=inside)
+
+        raise TypeError(f"{cls.__name__}.parse({data!r}): `str` or `dict` expected!")
 
     def eval(self, var2value: dict[str, int] = ()) -> bool:
         """ Evaluate the expr for given values of variables """
