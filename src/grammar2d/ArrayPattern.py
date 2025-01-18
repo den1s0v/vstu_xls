@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 from geom2d import open_range
+from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
 
@@ -8,7 +9,7 @@ VALID_ARRAY_DIRECTIONS = ('row', 'column', 'fill')
 
 
 @dataclass(kw_only=True, repr=True)
-class ArrayPattern(Pattern2d):
+class ArrayPattern(NonTerminal):
     """Массив или ряд однотипных элементов, выровненных друг относительно друга
 
     direction:

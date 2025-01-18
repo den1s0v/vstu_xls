@@ -6,6 +6,7 @@ from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.PatternComponent import PatternComponent
 from grammar2d.Terminal import Terminal
+from grammar2d.AreaPattern import AreaPattern
 from grammar2d.ArrayPattern import ArrayPattern
 
 
