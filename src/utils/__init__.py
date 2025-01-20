@@ -115,8 +115,6 @@ class WithSafeCreate:
             except AttributeError:
                 pass
 
-        # print(cls, valid_args)
-
         kwargs_filtered = {
             k: val
             for k, val in kwargs.items()
@@ -126,6 +124,9 @@ class WithSafeCreate:
 
     @classmethod
     def safe_create(cls, **kwargs) -> 'new cls':
+        """ Class method to be used with dataclasses
+        instead of direct instance creation
+        to avoid `Unknown/unsupported keyword argument` errors in a smart way. """
         return cls(**cls.filter_init_kwargs(kwargs))
 
 
