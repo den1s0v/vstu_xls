@@ -69,20 +69,22 @@ patterns:
     description: заголовок с группами
     kind: area
 
+    count: 1+   # минимум один на документ; если не найдено, то должна быть ошибка.
     size: 4+ x 1..2  # размер в ячейках Excel
     style:
       borders: all  #  должны быть все границы с линиями
 
-    # outer: ~   # контекст
-      # (нет.) within: schedule  # целиком включается в область schedule.
+    # outer: ~  # контекст
+      # (нет.) within: schedule # целиком включается в область schedule.
       #        ^^ Здесь контекст указывать не требуется, так как он не является обязательным для существования этого элемента.
-      # Наоборот, этот элемент является основой для порождения  включающего schedule.
+      # Наоборот, этот элемент является основой для порождения включающего schedule.
       # Здесь выплывает наружу последовательность формирования дерева в процессе парсинга (некоторые элементы могут быть созданы только после других).
 
     inner:  # содержимое
       groups:
         kind: array  # массив или ряд элементов, выровненных друг относительно друга
         direction: row  #  по горизонтали (если не указать, то в любом направлении)
+        description: учебная группа в заголовке
         item_pattern: group_in_header
         item_count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
@@ -157,7 +159,7 @@ patterns:
 
 
   day_datetime:
-    description: информация по часам и датам за один день
+    description: информация по часам и датам за один день недели
     kind: area
 
     size: 5+ x 4+  # размер в ячейках Excel
@@ -167,7 +169,8 @@ patterns:
     inner:  # содержимое
       week_day:
         kind: cell
-        content_type: week_day  # ПН, ВТ, ...
+        description: день недели (ПН, ВТ, ...)
+        content_type: week_day
         location: top, bottom
 
       month_days:
@@ -175,17 +178,22 @@ patterns:
 
       hours:
         kind: array
+        description: столбец с указанием пар (академ. часов)
         direction: column
-        item_pattern: hour_range  # ... TODO
+        item_pattern: hour_range
         item_count: 2..6
         location: top, bottom
 
 
   hour_range:
     description: академические часы дня (пара)
-    kind: cell
-    size: 1 x 2+
-    content_type: hour_range
+    kind: area
+
+    inner:  # содержимое
+      hour_range:
+        kind: cell
+        size: 1 x 2+
+        content_type: hour_range
 
     outer:  # ограничения на контекст (!!)
       week_day:
@@ -195,9 +203,13 @@ patterns:
 
   month_days:
     description: все даты доступных месяцев за один день недели
-    kind: array
-    direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить
-    item_pattern: month_day
+    kind: area
+
+    inner: # содержимое
+      month_days:
+        kind: array
+        item_pattern: month_day
+        direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить
 
     outer:  # ограничения на контекст (!!)
       week_day:
@@ -207,9 +219,13 @@ patterns:
 
   month_day:
     description: число месяца в один из дней недели
-    kind: cell
-    size: 1 x 2+
-    content_type: month_day
+    kind: area
+
+    inner:  # содержимое
+      month_day:
+        kind: cell
+        size: 1 x 2+
+        content_type: month_day
 
     outer:  # ограничения на контекст (!!)
       week_day:

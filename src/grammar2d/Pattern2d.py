@@ -30,6 +30,10 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     constraints: list[SpatialConstraint] = ()
 
+    # @property
+    # def name2component(self):
+    #     """ ??? """
+    #     return {}
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -159,8 +163,13 @@ def read_pattern_component(
         # preparing data for LocationConstraint
         data['role'] = role
 
-    # Note: ↓ this removes keys related to constraints from data!
+    # read constraints for component
     constraints = extract_pattern_constraints(data, component_name, )
+    if 'role' in data:
+        del data['role']
+
+    # collect info about keys could not be read...
+    keys_ignored = set(data.keys())
 
     if 'pattern' not in data:
         # got inline pattern definition...
@@ -173,16 +182,27 @@ def read_pattern_component(
         if not parsed_pattern:
             return None  # Fail too
 
+        keys_ignored &= set(parsed_pattern._kwargs_ignored)
+
         # data for component:
         data['_subpattern'] = parsed_pattern
         data['pattern'] = parsed_pattern.name
+
+    # Add role for component
+    data['inner'] = (role == 'inner')
 
     if constraints:
         data['constraints'] = constraints
     data['name'] = name
 
+    component = pc.PatternComponent.safe_create(**data)
+    keys_ignored &= set(component._kwargs_ignored)
 
-    return pc.PatternComponent.safe_create(**data)
+    if (keys_ignored):
+        print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has component `{name \
+        }` that defines unrecognized keys: {keys_ignored}.")
+
+    return component
 
 
 def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:

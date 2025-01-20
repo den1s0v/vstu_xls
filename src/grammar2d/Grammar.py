@@ -5,6 +5,7 @@ import yaml
 
 from grammar2d.Pattern2d import Pattern2d, read_pattern
 from grammar2d.NonTerminal import NonTerminal
+import grammar2d.PatternComponent as pc
 from grammar2d.Terminal import Terminal
 from string_matching import CellType, read_cell_types
 from utils import WithCache
@@ -18,14 +19,16 @@ class Grammar(WithCache):
     patterns: dict[str, Pattern2d]
     root_name: str = None
 
+    _root: Pattern2d = None
+
     def __init__(self, cell_types: dict[str, CellType], patterns: list[Pattern2d]):
         self.cell_types = cell_types
         # init patterns
         self.patterns = {}
         for pt in patterns:
-            self.register_pattern(pt)
+            self._register_pattern(pt)
 
-    def register_pattern(self, pattern: Pattern2d):
+    def _register_pattern(self, pattern: Pattern2d):
         assert pattern.name, f"Cannot register pattern without name: {pattern}"
         self.patterns[pattern.name] = pattern
 
@@ -41,7 +44,13 @@ class Grammar(WithCache):
             pattern.root = True  # update pattern
             self._root = pattern
 
-    _root: Pattern2d = None
+        # recurse into pattern's components to register their components as well.
+        if hasattr(pattern, 'components'):
+            component: pc.PatternComponent
+            # for all declared patterns, if not registered before.
+            for component in pattern.components:
+                if (p := component._subpattern) and p.name not in self.patterns:
+                    self._register_pattern(p)
 
     @property
     def root(self) -> Pattern2d:

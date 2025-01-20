@@ -105,9 +105,10 @@ class WithSafeCreate:
      that filters incompatible kwargs, i.e. not defined as-level class attributes.
      Also, `cls.filter_init_kwargs` method is added.
      """
+    _kwargs_ignored: dict
 
     @classmethod
-    def filter_init_kwargs(cls, kwargs: dict) -> dict:
+    def filter_init_kwargs(cls, kwargs: dict) -> tuple[dict, dict]:
         valid_args = set(cls.__annotations__.keys())
         for base in cls.mro():
             try:
@@ -115,19 +116,28 @@ class WithSafeCreate:
             except AttributeError:
                 pass
 
-        kwargs_filtered = {
-            k: val
-            for k, val in kwargs.items()
-            if k in valid_args
-        }
-        return kwargs_filtered
+        kwargs_filtered = {}
+        kwargs_ignored = {}
+
+        for k, val in kwargs.items():
+            if k in valid_args:
+                kwargs_filtered[k] = val
+            else:
+                kwargs_ignored[k] = val
+
+        return kwargs_filtered, kwargs_ignored
 
     @classmethod
     def safe_create(cls, **kwargs) -> 'new cls':
         """ Class method to be used with dataclasses
         instead of direct instance creation
-        to avoid `Unknown/unsupported keyword argument` errors in a smart way. """
-        return cls(**cls.filter_init_kwargs(kwargs))
+        to avoid `Unknown/unsupported keyword argument` errors in a smart way.
+        All ignored kwargs go to `_kwargs_ignored` attribute.
+        """
+        kwargs_filtered, kwargs_ignored = cls.filter_init_kwargs(kwargs)
+        obj = cls(**kwargs_filtered)
+        obj._kwargs_ignored = kwargs_ignored
+        return obj
 
 
 def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=3) -> Path | None:
