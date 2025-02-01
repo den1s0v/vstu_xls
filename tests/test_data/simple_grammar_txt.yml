@@ -1,0 +1,54 @@
+cell_types:
+
+  - ring:
+      description: кружок
+      patterns:
+        - confidence: 1.00
+          pattern: '[oо○]'  # latin, rus, Alt+9
+          pattern_syntax: re
+          pattern_flags: I
+
+  - star:
+      description: звёздочка
+      patterns:
+        - confidence: 1.00
+          pattern: '[*]'
+          pattern_syntax: re
+#          pattern_flags: I
+
+  - col_letter:
+      description: буква столбца
+      patterns:
+        - confidence: 1.00
+          pattern: '[A-H]'
+#          pattern_syntax: re
+
+  - row_number:
+      description: номер строки
+      patterns:
+        - confidence: 1.00
+          pattern: '\d'
+#          pattern_syntax: re
+
+
+patterns:
+  ring:
+    description: Кружок
+    kind: cell
+    content_type: ring
+
+  star:
+    description: Звёздочка
+    kind: cell
+    content_type: star
+
+  col_letter:
+    description: Буква столбца
+    kind: cell
+    content_type: col_letter
+
+  row_number:
+    description: Номер строки
+    kind: cell
+    content_type: row_number
+
