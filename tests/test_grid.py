@@ -8,22 +8,7 @@ init_testing_environment()
 
 
 from geom2d import Box, Point, Direction, LEFT, RIGHT, UP, DOWN
-from grid import Grid, Cell
-
-
-class TxtGrid(Grid):
-    def __init__(self, text: str, sep='\t') -> None:
-        super().__init__()
-        self.load_cells(text, sep)
-
-    def load_cells(self, text: str, sep='\t'):
-        lines = text.splitlines()
-        for y, line in enumerate(lines):
-            for x, content in enumerate(line.split(sep)):
-                if not content:
-                    continue
-                cell = Cell(self, Point(x, y), content=content)
-                self.register_cell(cell)
+from grid import Grid, Cell, TxtGrid
 
 
 class GridTestCase(unittest.TestCase):
