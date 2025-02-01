@@ -8,7 +8,6 @@ import grammar2d.Grammar as ns
 import grammar2d.Pattern2d as pt
 from utils import WithCache, WithSafeCreate
 
-GRAMMAR: 'ns.Grammar'
 
 
 @dataclass
@@ -45,13 +44,18 @@ class PatternComponent(WithCache, WithSafeCreate):
 
     _subpattern: 'pt.Pattern2d' = None  # дочерний элемент грамматики
 
+    _grammar: 'ns.Grammar' = None
+
     @property
     def subpattern(self) -> 'pt.Pattern2d':
         """Дочерний элемент грамматики"""
         if not self._subpattern:
-            self._subpattern = GRAMMAR[self.pattern]
+            self._subpattern = self._grammar[self.pattern]
 
         return self._subpattern
+
+    def set_grammar(self, grammar: 'ns.Grammar'):
+        self._grammar = grammar
 
     # @property
     # def max_score(self) -> float:

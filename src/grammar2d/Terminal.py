@@ -7,7 +7,6 @@ from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 import grammar2d.Grammar as ns
 from string_matching import CellType
 
-GRAMMAR: 'ns.Grammar'
 
 
 @dataclass(kw_only=True, repr=True)
@@ -24,7 +23,7 @@ class Terminal(Pattern2d):
     @property
     def cell_type(self) -> CellType:
         if not self._cell_type:
-            self._cell_type = GRAMMAR.cell_types[self.content_type]
+            self._cell_type = self._grammar.cell_types[self.content_type]
         return self._cell_type
 
     @override

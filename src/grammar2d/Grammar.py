@@ -31,6 +31,7 @@ class Grammar(WithCache):
     def _register_pattern(self, pattern: Pattern2d):
         assert pattern.name, f"Cannot register pattern without name: {pattern}"
         self.patterns[pattern.name] = pattern
+        pattern.set_grammar(self)
 
         # check root
         if pattern.root:

@@ -13,17 +13,23 @@ from utils import global_var
 class GrammarMatcher:
     grammar: Grammar
 
+    # projection of processed grid
     _grid_view: GridView = None
+
+    # matches starting at left top corner
     _matches_by_position: dict[Point, list[Match2d]] = None
+
+    # matches related to pattern
     _matches_by_element: dict[Pattern2d, list[Match2d]] = None
+
+    # scalar info about cells
     type_to_cells: dict[str, list[CellView]] = None
 
     def run_match(self, grid: Grid) -> Match2d:
         self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
 
-        with global_var(GRAMMAR=self):
-            ...
+        ...
 
     @property
     def matches_by_position(self) -> dict[Point, list[Match2d]]:

@@ -20,6 +20,7 @@ from typing import Dict, Optional, Union
 import yaml
 
 from adict import adict
+from string_matching.CellClassifier import CellClassifier
 from string_matching.CellType import CellType
 from string_matching.StringMatch import StringMatch
 from string_matching.StringPattern import StringPattern

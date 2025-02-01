@@ -7,7 +7,6 @@ import grammar2d.PatternComponent as pc
 from geom2d import open_range
 from utils import WithCache, WithSafeCreate
 
-GRAMMAR: 'ns.Grammar'
 
 
 @dataclass(kw_only=True)
@@ -29,6 +28,8 @@ class Pattern2d(WithCache, WithSafeCreate):
     extends: list['Pattern2d|str'] = ()
 
     constraints: list[SpatialConstraint] = ()
+
+    _grammar: 'ns.Grammar' = None
 
     # @property
     # def name2component(self):
@@ -63,6 +64,9 @@ class Pattern2d(WithCache, WithSafeCreate):
         """ Pattern2d must be known before this one can be matched. """
         raise NotImplementedError(type(self))
 
+    def set_grammar(self, grammar: 'ns.Grammar'):
+        self._grammar = grammar
+
     # @property
     # def is_root(self) -> bool:
     #     return self.parent is None
@@ -76,7 +80,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         raise NotImplementedError(type(self))
 
     def can_be_extended_by(self, child_element: 'Pattern2d') -> bool:
-        return GRAMMAR.can_extend(self, child_element)
+        return self._grammar.can_extend(self, child_element)
 
     def get_matcher(self, grammar_matcher):
         raise NotImplementedError()

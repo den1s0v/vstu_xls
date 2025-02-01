@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import override
 
 from geom2d import open_range
+import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
@@ -32,6 +33,12 @@ class AreaPattern(NonTerminal):
                 'Grammar pattern `{self.name}` has circular dependency on itself (via component `{comp.name}`) !'
             self._cache.dependencies = list(sorted(dependency_set))
         return self._cache.dependencies
+
+    @override
+    def set_grammar(self, grammar: 'ns.Grammar'):
+        super().set_grammar(grammar)
+        for comp in self.components:
+            comp.set_grammar(grammar)
 
     # component_by_name: dict[str, PatternComponent] = None
     @property

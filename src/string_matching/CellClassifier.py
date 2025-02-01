@@ -13,8 +13,6 @@ class CellClassifier:
     cell_types: List[CellType]
 
     def __init__(self, cell_types=None):
-        if not cell_types:
-            cell_types = ns.read_cell_types().values()
         self.cell_types = list(cell_types)
 
     def match(self, cell_text: str, limit=None) -> List[StringMatch]:
