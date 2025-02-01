@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import override
 
 # from grammar2d import GRAMMAR
+import grammar2d.Match2d as m2
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 import grammar2d.Grammar as ns
 from string_matching import CellType
@@ -33,6 +34,12 @@ class Terminal(Pattern2d):
     @override
     def max_score(self) -> float:
         return 1
+
+    def score_of_match(self, match: m2.Match2d) -> float:
+        """ Get score as precision for given match,
+            since if was initialized by TerminalMatcher.
+        """
+        return match.precision
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher

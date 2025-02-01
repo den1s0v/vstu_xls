@@ -71,6 +71,10 @@ class Pattern2d(WithCache, WithSafeCreate):
         """ Ex. precision = score / max_score """
         raise NotImplementedError(type(self))
 
+    def score_of_match(self, match: 'grammar2d.Match2d') -> float:
+        """ Calc score for given match """
+        raise NotImplementedError(type(self))
+
     def can_be_extended_by(self, child_element: 'Pattern2d') -> bool:
         return GRAMMAR.can_extend(self, child_element)
 

@@ -25,15 +25,12 @@ class Match2d:
     pattern: Pattern2d
     box: Box = None
     precision: float = None
-    component2match: dict[str, 'Match2d'] = None
+    component2match: dict[str|int, 'Match2d'] = None
     data: dict = None
 
     def calc_precision(self) -> float:
         if self.precision is None:
-            self.precision = sum(
-                comp_m.precision * self.pattern.component_by_name[name].weight
-                for name, comp_m in self.component2match.items()
-            ) / self.pattern.max_score()
+            self.precision = self.pattern.score_of_match(self) / self.pattern.max_score()
         return self.precision
 
     def clone(self):

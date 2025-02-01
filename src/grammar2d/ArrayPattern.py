@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import override
 
 from geom2d import open_range
+import grammar2d.Match2d as m2
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
@@ -46,6 +47,10 @@ class ArrayPattern(NonTerminal):
     def max_score(self) -> float:
         """ precision = score / max_score """
         return 1
+
+    def score_of_match(self, match: m2.Match2d) -> float:
+        """ Calc score for given match """
+        raise NotImplementedError(type(self))
 
     ...
 
