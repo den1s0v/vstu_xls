@@ -8,7 +8,7 @@ import grammar2d.Grammar as ns
 from string_matching import CellType
 
 
-
+@PatternRegistry.register
 @dataclass(kw_only=True, repr=True)
 class Terminal(Pattern2d):
     """Просто ячейка"""
@@ -43,6 +43,3 @@ class Terminal(Pattern2d):
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher
         return TerminalMatcher(self, grammar_matcher)
-
-
-PatternRegistry.register(Terminal)

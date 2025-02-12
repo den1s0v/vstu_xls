@@ -12,15 +12,18 @@ class TerminalMatcher(PatternMatcher):
     def find_all(self) -> list[Match2d]:
         # type_name = self.element.cell_type.name
         type_name = self.pattern.cell_type.name
+        gm = self.grammar_matcher  # short alias
         matches = []
-        if type_name in self.grammar_matcher.type_to_cells:
-            for cw in self.grammar_matcher.type_to_cells[type_name]:
-                precision = cw.data['cell_matches'][type_name].confidence
-                if precision < self.pattern.precision_threshold:
-                    continue
 
-                m = Match2d(self.pattern, precision=precision, box=cw, data=cw.data['cell_matches'][type_name])
-                self.grammar_matcher.register_match(m)
-                matches.append(m)
+        for cw in gm.type_to_cells.get(type_name) or ():
+            precision = cw.data['cell_matches'][type_name].confidence
+            if precision < self.pattern.precision_threshold:
+                continue
+
+            # make Match
+            m = Match2d(self.pattern, precision=precision, box=cw, data=cw.data['cell_matches'][type_name])
+            # register Match globally
+            gm.register_match(m)
+            matches.append(m)
 
         return matches

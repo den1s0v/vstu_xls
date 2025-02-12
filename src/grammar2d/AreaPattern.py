@@ -9,6 +9,7 @@ from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 from grammar2d.PatternComponent import PatternComponent
 
 
+@PatternRegistry.register
 @dataclass(kw_only=True, repr=True)
 class AreaPattern(NonTerminal):
     """Структура из элементов разного типа
@@ -71,5 +72,3 @@ class AreaPattern(NonTerminal):
     #     from grammar2d.AreaPatternMatcher import AreaPatternMatcher
     #     return AreaPatternMatcher(self, grammar_macher)
 
-
-PatternRegistry.register(AreaPattern)

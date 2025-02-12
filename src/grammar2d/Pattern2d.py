@@ -91,9 +91,11 @@ class PatternRegistry:
 
     @classmethod
     def register(cls, pattern_cls):
-        # Регистрация подкласса в реестре по его kind
+        """Регистрация подкласса в реестре по его kind.
+        Может использовано как аннотация."""
         kind = pattern_cls.get_kind()
         cls.registry[kind] = pattern_cls
+        return pattern_cls
 
     @classmethod
     def get_pattern_class_by_kind(cls, kind: str) -> 'type[Pattern2d]|None':

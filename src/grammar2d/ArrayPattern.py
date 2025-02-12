@@ -10,6 +10,7 @@ from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 VALID_ARRAY_DIRECTIONS = ('row', 'column', 'fill')
 
 
+@PatternRegistry.register
 @dataclass(kw_only=True, repr=True)
 class ArrayPattern(NonTerminal):
     """Массив или ряд однотипных элементов, выровненных друг относительно друга
@@ -57,6 +58,3 @@ class ArrayPattern(NonTerminal):
     # def get_matcher(self, grammar_macher):
     #     from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
     #     return ArrayPatternMatcher(self, grammar_macher)
-
-
-PatternRegistry.register(ArrayPattern)
