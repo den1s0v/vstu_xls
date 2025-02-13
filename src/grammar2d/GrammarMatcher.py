@@ -43,9 +43,13 @@ class GrammarMatcher:
             self._matches_by_element = defaultdict(list)
         return self._matches_by_element
 
-    def register_match(self, match: Match2d):
+    def register_match(self, match: Match2d, as_pattern: 'str|Pattern2d' = None, _seen_patterns: set = None):
         self.matches_by_position[match.box.position].append(match)
         self.matches_by_element[match.pattern].append(match)
+
+        # add patterns extended by this too!
+        for base_pattern in self.grammar.extension_map[match.pattern]:
+            self.matches_by_element[base_pattern].append(match)
 
     def _recognise_all_cells_content(self, max_hypotheses_per_cell=5):
 

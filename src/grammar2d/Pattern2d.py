@@ -25,7 +25,8 @@ class Pattern2d(WithCache, WithSafeCreate):
     count: open_range = None  # open_range(0, 999)  # кратность элемента в документе (1 = уникален)
 
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
-    extends: list['Pattern2d|str'] = ()
+    extends: list[str] = ()
+    _extends_patterns: list['Pattern2d'] = None
 
     constraints: list[SpatialConstraint] = ()
 
@@ -63,6 +64,29 @@ class Pattern2d(WithCache, WithSafeCreate):
     def dependencies(self, recursive=False) -> list['Pattern2d']:
         """ Pattern2d must be known before this one can be matched. """
         raise NotImplementedError(type(self))
+
+    def extends_patterns(self, recursive=False) -> list['Pattern2d']:
+        """ Instances of Pattern2d redefined by this one. """
+        if self._extends_patterns is None:
+            self._extends_patterns = [
+                self._grammar.patterns[base_name]
+                for base_name in self.extends
+            ]
+        if not recursive:
+            return self._extends_patterns
+        else:
+            seen_bases = {}  # using as ordered set, with meaningless values
+            for base in self._extends_patterns:
+                if seen_bases in seen_bases:
+                    continue
+                seen_bases[base] = base  # add
+                sub_bases = base.extends_patterns(recursive)
+                if self in sub_bases:
+                    print(f"SYNTAX WARN: grammar pattern `{self.name}` extends pattern(s) `{seen_bases
+                    }` some of which, in turn, indirectly extend this one.")
+                seen_bases += dict.fromkeys(sub_bases)
+
+            return list(seen_bases)
 
     def set_grammar(self, grammar: 'ns.Grammar'):
         self._grammar = grammar

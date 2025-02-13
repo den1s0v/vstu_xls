@@ -83,7 +83,7 @@ class Grammar(WithCache):
 
     # dependency_waves: list[set[Pattern2d]] = None
 
-    @property
+    # @property
     def dependency_waves(self) -> list[set[Pattern2d]]:
         """get list of sets `_dependency_waves`"""
         if not self._cache.dependency_waves:
@@ -135,28 +135,18 @@ class Grammar(WithCache):
 
     @property
     def extension_map(self) -> dict[Pattern2d, list[Pattern2d]]:
-        """get dict `can_be_extended_by`"""
+        """ Base Pattern to all its redefinitions (get dict `can_be_extended_by)`"""
         if not self._cache.can_be_extended_by:
             # build map
             can_be_extended_by = defaultdict(list)
 
             for pattern in self.patterns.values():
-                for base in pattern.extends:
-                    # direct extension
-                    bases = can_be_extended_by[self[base]]
+                for base in pattern.extends_patterns(recursive=True):
+                    # reverse extension
+                    bases = can_be_extended_by[base]
                     if pattern not in bases:
                         bases.append(pattern)
-
-                    # indirect extension
-                    for superbase in base.extends:
-                        superbases = can_be_extended_by[self[superbase]]
-                        if pattern not in superbases:
-                            superbases.append(pattern)
-                        # add superbase to pattern's bases for ршрук completeness
-                        if superbase not in pattern.extends:
-                            pattern.extends.append(superbase)
-
-                    # Note: infinite propagation is not implemented, only 2 levels. Please declare all bases in Element's specification, do not rely on automatic inference.
+                        # can_be_extended_by[base] = bases
 
             self._cache.can_be_extended_by = dict(can_be_extended_by)  # convert to ordinary dict
         return self._cache.can_be_extended_by

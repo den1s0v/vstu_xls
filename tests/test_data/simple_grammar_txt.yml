@@ -32,15 +32,23 @@ cell_types:
 
 
 patterns:
+  mark:
+    description: Mетка
+    kind: general
+    content_type: ring
+
   ring:
     description: Кружок
     kind: cell
     content_type: ring
+    extends: [mark]
 
   star:
     description: Звёздочка
     kind: cell
     content_type: star
+    extends: [mark]
+
 
   col_letter:
     description: Буква столбца
