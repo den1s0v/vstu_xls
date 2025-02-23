@@ -59,6 +59,9 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
         print('type_to_cells')
         pprint(gm.type_to_cells)
+        print()
+        pprint(gm._matches_by_position)
+        pprint(gm._matches_by_element)
         pprint(gm._grid_view)
 
 

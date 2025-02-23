@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from geom2d import Box
-from grammar2d.Pattern2d import Pattern2d
+import grammar2d.Pattern2d as pt
 
 
 def filter_best_matches(matches: list['Match2d'], precision_ratio_cutoff=0.9) -> list['Match2d']:
@@ -22,7 +22,7 @@ class Match2d:
     """
     Match of a `pattern` on a specific location expressed by `box`.
     """
-    pattern: Pattern2d
+    pattern: 'pt.Pattern2d'
     box: Box = None
     precision: float = None
     component2match: dict[str|int, 'Match2d'] = None

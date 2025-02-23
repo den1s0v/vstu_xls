@@ -15,6 +15,8 @@ class NonTerminal(Pattern2d):
     def get_kind(cls):
         return "general"  # ???
 
+    def dependencies(self, recursive=False) -> list[Pattern2d]:
+        return []
 
     ...
 

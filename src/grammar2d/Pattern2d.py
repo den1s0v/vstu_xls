@@ -4,18 +4,15 @@ from constraints_2d import SpatialConstraint
 from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
 import grammar2d.PatternComponent as pc
+import grammar2d.PatternMatcher as pm
 from geom2d import open_range
 from utils import WithCache, WithSafeCreate
 
 
-
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, )
 class Pattern2d(WithCache, WithSafeCreate):
     """Элемент грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
-
-    name_for_constraints = 'element'
-
     name: str  # имя узла грамматики (определяет тип содержимого)
     root: bool = False  # whether this element is the grammar's root.
     precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого элемент считается не найденным.
@@ -32,6 +29,8 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     _grammar: 'ns.Grammar' = None
 
+    name_for_constraints = 'element'
+
     # @property
     # def name2component(self):
     #     """ ??? """
@@ -39,6 +38,12 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __lt__(self, other):
+        return self.name < other.name
 
     @classmethod
     def get_kind(cls):
@@ -77,7 +82,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         else:
             seen_bases = {}  # using as ordered set, with meaningless values
             for base in self._extends_patterns:
-                if seen_bases in seen_bases:
+                if base in seen_bases:
                     continue
                 seen_bases[base] = base  # add
                 sub_bases = base.extends_patterns(recursive)
@@ -106,7 +111,7 @@ class Pattern2d(WithCache, WithSafeCreate):
     def can_be_extended_by(self, child_element: 'Pattern2d') -> bool:
         return self._grammar.can_extend(self, child_element)
 
-    def get_matcher(self, grammar_matcher):
+    def get_matcher(self, grammar_matcher) -> 'pm.PatternMatcher':
         raise NotImplementedError()
 
 
@@ -187,7 +192,6 @@ def read_pattern_component(
         data: dict,
         role: str = 'outer',
         pattern_name: str = None) -> pc.PatternComponent | None:
-
     component_name = (pattern_name or '') + '.' + name
 
     assert isinstance(data, dict), data
@@ -234,17 +238,16 @@ def read_pattern_component(
 
     if (keys_ignored):
         print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has component `{name \
-        }` that defines unrecognized keys: {keys_ignored}.")
+            }` that defines unrecognized keys: {keys_ignored}.")
 
     return component
 
 
 def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:
-
     constraints = []
     # size
     # location
-    for k in ('size', 'location', ):
+    for k in ('size', 'location',):
         if k in data:
             sc_data = data[k]
             # Note: remove used key from data!

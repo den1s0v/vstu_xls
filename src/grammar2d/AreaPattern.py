@@ -17,6 +17,9 @@ class AreaPattern(NonTerminal):
     """
     components: list[PatternComponent]
 
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     @classmethod
     @override
     def get_kind(cls):
@@ -28,7 +31,7 @@ class AreaPattern(NonTerminal):
         if not self._cache.dependencies:
             dependency_set = set()
             for comp in self.components:
-                dependency_set |= comp.dependencies(recursive)
+                dependency_set |= set(comp.dependencies(recursive))
             # check circular dependencies
             assert self not in dependency_set, \
                 'Grammar pattern `{self.name}` has circular dependency on itself (via component `{comp.name}`) !'

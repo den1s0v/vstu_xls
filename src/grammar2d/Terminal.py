@@ -20,6 +20,9 @@ class Terminal(Pattern2d):
     def get_kind(cls):
         return "cell"
 
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     @property
     def cell_type(self) -> CellType:
         if not self._cell_type:

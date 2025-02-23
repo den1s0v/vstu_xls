@@ -28,6 +28,7 @@ class GrammarMatcher:
     def run_match(self, grid: Grid) -> Match2d:
         self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
+        self._roll_matching_waves()
 
         ...
 
@@ -73,19 +74,25 @@ class GrammarMatcher:
                 for m in match_list
             }
 
-    def _roll_matching_waves(self):
+    def _roll_matching_waves(self, verbose=True):
         """ Find matches of all grammar elements per all matching waves defined by grammar,
             from terminals to the root. """
         for wave in self.grammar.dependency_waves():
+            if verbose:
+                print('WAVE:')
+                print([p.name for p in wave])
             if self.grammar.root in wave:
-                _res_ = self._find_matches_of_element(self.grammar.root)
+                _res_ = self._find_matches_of_pattern(self.grammar.root)
             else:
                 for elem in wave:
-                    self._find_matches_of_element(elem)
+                    self._find_matches_of_pattern(elem)
             ...
 
-    def _find_matches_of_element(self, element: Pattern2d):
+    def _find_matches_of_pattern(self, pattern: Pattern2d):
         """Try finding matches of element on all grid space"""
+        matcher = pattern.get_matcher(self)
+        matches = matcher.find_all()
+
+        ###
+        print(pattern.name, '::', matches)
         ...
-        # for wave in self.grammar.dependency_waves():
-        # if

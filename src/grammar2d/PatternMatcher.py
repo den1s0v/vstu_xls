@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from grammar2d import Pattern2d
+import grammar2d as pt
 from grammar2d.Match2d import Match2d
 import grammar2d.GrammarMatcher as ns
 from grid import Region
@@ -8,7 +8,7 @@ from grid import Region
 
 @dataclass
 class PatternMatcher:
-    pattern: Pattern2d
+    pattern: 'pt.Pattern2d'
     grammar_matcher: 'ns.GrammarMatcher'
 
     def find_all(self) -> list[Match2d]:

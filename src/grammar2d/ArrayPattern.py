@@ -23,26 +23,39 @@ class ArrayPattern(NonTerminal):
              спорный момент: может быть, стоит отдельный вид агрегации выделить.?
 
     """
-    item_pattern: Pattern2d  # повторяемый элемент
+    item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
     item_count: open_range = None  # кратность элемента в массиве
     gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
+
+    _subpattern: Pattern2d = None  # дочерний элемент грамматики
+
+
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     @classmethod
     @override
     def get_kind(cls):
         return "array"  # ???
 
-    # dependencies: list[GrammarElement] = None
+    @property
+    def subpattern(self) -> Pattern2d:
+        """Дочерний элемент грамматики"""
+        if not self._subpattern:
+            self._subpattern = self._grammar[self.item_pattern]
+        return self._subpattern
+
     @override
     def dependencies(self, recursive=False) -> list[Pattern2d]:
         if not self.item_pattern:
             return []
 
         if not recursive:
-            return [self.item_pattern]
+            return [self.subpattern]
 
-        return [self.item_pattern, *self.item_pattern.dependencies(recursive)]
+        return [self.subpattern, *self.subpattern.dependencies(recursive)]
 
     @override
     def max_score(self) -> float:
