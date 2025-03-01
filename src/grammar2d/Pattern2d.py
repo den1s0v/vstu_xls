@@ -89,7 +89,7 @@ class Pattern2d(WithCache, WithSafeCreate):
                 if self in sub_bases:
                     print(f"SYNTAX WARN: grammar pattern `{self.name}` extends pattern(s) `{seen_bases
                     }` some of which, in turn, indirectly extend this one.")
-                seen_bases += dict.fromkeys(sub_bases)
+                seen_bases |= dict.fromkeys(sub_bases)
 
             return list(seen_bases)
 

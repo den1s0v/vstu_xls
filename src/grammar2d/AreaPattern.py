@@ -71,7 +71,7 @@ class AreaPattern(NonTerminal):
 
     ...
 
-    # def get_matcher(self, grammar_macher):
+    # def get_matcher(self, grammar_matcher):
     #     from grammar2d.AreaPatternMatcher import AreaPatternMatcher
-    #     return AreaPatternMatcher(self, grammar_macher)
+    #     return AreaPatternMatcher(self, grammar_matcher)
 

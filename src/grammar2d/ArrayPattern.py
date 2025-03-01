@@ -68,6 +68,6 @@ class ArrayPattern(NonTerminal):
 
     ...
 
-    # def get_matcher(self, grammar_macher):
+    # def get_matcher(self, grammar_matcher):
     #     from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
-    #     return ArrayPatternMatcher(self, grammar_macher)
+    #     return ArrayPatternMatcher(self, grammar_matcher)

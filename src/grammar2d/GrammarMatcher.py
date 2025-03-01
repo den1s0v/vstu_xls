@@ -49,7 +49,7 @@ class GrammarMatcher:
         self.matches_by_element[match.pattern].append(match)
 
         # add patterns extended by this too!
-        for base_pattern in self.grammar.extension_map[match.pattern]:
+        for base_pattern in self.grammar.extension_map.get(match.pattern) or ():
             self.matches_by_element[base_pattern].append(match)
 
     def _recognise_all_cells_content(self, max_hypotheses_per_cell=5):
