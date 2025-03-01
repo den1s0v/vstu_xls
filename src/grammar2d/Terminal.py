@@ -46,3 +46,15 @@ class Terminal(Pattern2d):
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher
         return TerminalMatcher(self, grammar_matcher)
+
+    def __str__(self) -> str:
+        return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __dict__(self) -> dict:
+        return dict(
+            name=self.name,
+            description=self.description,
+        )

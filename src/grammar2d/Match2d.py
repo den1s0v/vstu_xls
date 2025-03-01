@@ -42,3 +42,18 @@ class Match2d:
             dict(self.component2match),
             dict(self.data),
         )
+
+    def __str__(self) -> str:
+        return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __dict__(self) -> dict:
+        return dict(
+            pattern=self.pattern.name,
+            box=self.box,
+            precision=self.precision,
+            component2match=self.component2match,
+            data=self.data,
+        )

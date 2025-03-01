@@ -39,6 +39,15 @@ class Pattern2d(WithCache, WithSafeCreate):
     def __hash__(self) -> int:
         return hash(self.name)
 
+    def __str__(self) -> str:
+        return "%s(name='%s')" % (type(self).__name__, self.name)
+
+    def __repr__(self) -> str:
+        return "%s(name='%s')" % (type(self).__name__, self.name)
+
+    def __dict__(self) -> dict:
+        return dict(name=self.name)
+
     def __eq__(self, other):
         return self.name == other.name
 

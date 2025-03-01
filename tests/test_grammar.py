@@ -51,18 +51,30 @@ class GrammarMatchingTestCase(unittest.TestCase):
         print(grammar)
 
         from pprint import pprint
+        print()
         pprint(grammar.cell_types)
-        pprint(grammar.patterns)
+        print()
+        # pprint(grammar.patterns)
 
         gm = GrammarMatcher(grammar=grammar)
         gm.run_match(g)
 
-        print('type_to_cells')
+        print()
+        print('type_to_cells ↓')
+        print()
         pprint(gm.type_to_cells)
         print()
+        print()
+        print('_matches_by_position ↓')
         pprint(gm._matches_by_position)
+        print()
+        print('_matches_by_element ↓')
         pprint(gm._matches_by_element)
+        print()
+        print('_grid_view ↓')
         pprint(gm._grid_view)
+        print()
+        # pprint(grammar.patterns)
 
 
 class GrammarTestCase(unittest.TestCase):
