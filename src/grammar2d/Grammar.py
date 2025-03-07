@@ -152,6 +152,7 @@ class Grammar(WithCache):
         return self._cache.can_be_extended_by
 
     def can_extend(self, base_pattern: str | Pattern2d, extension_pattern: str | Pattern2d) -> bool:
+        """ Check if a base pattern be extended by another pattern considered as a "child". """
         children = self.extension_map.get(self[base_pattern], None)
         return children and extension_pattern in children
 

@@ -22,8 +22,6 @@ class TerminalMatcher(PatternMatcher):
 
             # make Match
             m = Match2d(self.pattern, precision=precision, box=cw, data=cw.data['cell_matches'][type_name])
-            # register Match globally
-            gm.register_match(m)
             matches.append(m)
 
         return matches
