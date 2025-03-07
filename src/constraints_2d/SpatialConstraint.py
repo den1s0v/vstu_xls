@@ -23,6 +23,7 @@ class SpatialConstraint(BoolExpr):
         raise NotImplementedError(type(self))
 
     def eval_with_components(self, component2box: dict[str, Box]) -> bool:
+        """"Main function to test constraint against relative placement of components."""
         var_name2value = self._map_vars_to_component_coordinates(component2box)
         return self.eval(var_name2value)
 

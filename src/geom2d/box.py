@@ -15,6 +15,7 @@ class Box:
     # Dev note: i'm avoiding subclassing namedtuple to allow usual inheritance via __init__, not __new__.
 
     __slots__ = ('_tuple')
+
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
@@ -98,9 +99,9 @@ class Box:
 
     def __str__(self) -> str:
         return f'[({self.x},{self.y})→{self.w}x{self.h}]'
+
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}{str(self)}'
-
 
     def __contains__(self, other: 'Box | Point'):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
@@ -120,8 +121,8 @@ class Box:
     def overlaps(self, other):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return any(p in self for p in other.iterate_corners()) or \
-                   other in self or \
-                   self in other
+                other in self or \
+                self in other
 
         if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
             return other in self
@@ -200,7 +201,6 @@ class Box:
             return ManhattanDistance(dx, dy) if per_axis else dx + dy
         return None
 
-
     def iterate_corners(self):
         yield Point(self.x, self.y)
         yield Point(self.right, self.top)
@@ -222,7 +222,7 @@ class Box:
 
                 yield Point(*point)
 
-    def iterate_points(self, directions = (RIGHT, DOWN), exclude_top_left=False):
+    def iterate_points(self, directions=(RIGHT, DOWN), exclude_top_left=False):
         """ Traverse all points within this rectangle.
 
         Args:
@@ -235,7 +235,7 @@ class Box:
         if not directions:
             directions = (RIGHT, DOWN)
         if isinstance(directions, Direction):
-            directions = (directions, )
+            directions = (directions,)
         if len(directions) == 1 or (directions[0].is_horizontal == directions[1].is_horizontal):
             d0 = directions[0]
             # add/set default/valid second direction
@@ -245,11 +245,11 @@ class Box:
         # first direction to think about is inner loop indeed!
         level2, level1 = [
             adict(range=(
-                    # Границы для обратного и прямого направлений
-                    self.get_side_dy_direction(-abs(d)),
-                    self.get_side_dy_direction( abs(d)),
-                    # 1 # d.coordinate_sign,
-                ),
+                # Границы для обратного и прямого направлений
+                self.get_side_dy_direction(-abs(d)),
+                self.get_side_dy_direction(abs(d)),
+                # 1 # d.coordinate_sign,
+            ),
                 flip=(d.coordinate_sign < 0),
                 index=(0 if d.is_horizontal else 1),
             )

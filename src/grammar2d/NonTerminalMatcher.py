@@ -1,12 +1,8 @@
-from operator import and_
-from functools import reduce
-
-from adict import adict
-
 from constraints_2d import SpatialConstraint
 from grammar2d import NonTerminal, PatternComponent
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d, filter_best_matches
+from grid import Region
 
 
 class NonTerminalMatcher(PatternMatcher):
@@ -22,3 +18,5 @@ class NonTerminalMatcher(PatternMatcher):
         but rather group its extensions under the same name. """
         return []
 
+    def match_exact_region(self, region: Region) -> list[Match2d]:
+        return []
