@@ -60,7 +60,10 @@ class ArrayPatternMatcher(PatternMatcher):
                 # т.е. автоматический выбор из 'row' или 'column', — что оптимальнее (даёт меньше разрывных областей).
                 matches_as_rows = self._find_lines(occurrences, 'row')
                 matches_as_columns = self._find_lines(occurrences, 'column')
-                return min(matches_as_rows, matches_as_columns, key=len)
+                # exclude any empty variant
+                variants: list[list[Match2d]] = filter(None, [matches_as_rows, matches_as_columns])
+                # get the variant having less clusters
+                return min(variants, key=len, default=[])
 
             if self.pattern.direction == 'fill':
 
@@ -95,7 +98,12 @@ class ArrayPatternMatcher(PatternMatcher):
             if not cluster or len(cluster) not in item_count:
                 # Count is not satisfiable
                 # TODO: handle the case of "TOO MANY"
-                continue
+                if item_count.stop is not None and len(cluster) > item_count.stop:
+                    # get first N elements, drop the remaining.
+                    cluster = cluster[:item_count.stop]
+                    print(f':WARN: pattern {self.pattern.name} expects up to {item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
+                else:
+                    continue
 
             bbox = Box.union(*cluster)  # bounding box: union of group's boxes
 
