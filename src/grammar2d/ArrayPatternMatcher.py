@@ -67,25 +67,20 @@ class ArrayPatternMatcher(PatternMatcher):
                 # get the variant having less clusters
                 return min(variants, key=len, default=[])
 
-            if self.pattern.direction == 'fill':
-
-                ###
-                logger.critical("TODO: 'fill' array type is not yet supported.")
-                # raise NotImplementedError("TODO: 'fill' array type")
-                ###
-                return []
-
             pattern_direction = self.pattern.direction
-
-        # Направление просмотра
-        direction = {
-            'row': RIGHT,
-            'column': DOWN,
-        }[pattern_direction]
 
         # Подготовка областей
         all_boxes = [m.box for m in occurrences]
-        linear_clusters = self._find_groups_along_lines(all_boxes, direction)
+
+        if self.pattern.direction == 'fill':
+            clusters = self._find_fill_groups(all_boxes)
+        else:
+            # Направление просмотра
+            direction = {
+                'row': RIGHT,
+                'column': DOWN,
+            }[pattern_direction]
+            clusters = self._find_groups_along_lines(all_boxes, direction)
 
         def matches_from_boxes(boxes):
             """ "Backward" mapping keeping order """
@@ -97,7 +92,7 @@ class ArrayPatternMatcher(PatternMatcher):
         item_count = self.pattern.item_count
         matches = []
 
-        for cluster in linear_clusters:
+        for cluster in clusters:
             if not cluster or len(cluster) not in item_count:
                 # Size of the cluster is not satisfiable for the pattern.
                 # Handle the case of "TOO MANY"
@@ -126,7 +121,42 @@ class ArrayPatternMatcher(PatternMatcher):
                 matches.append(m)
         return matches
 
+    def _find_fill_groups(self, boxes: list[Box]) -> list[list[Box]]:
+        """ Find  connected clusters of arbitrary form without restriction on direction
+        (a cluster may look like an oval or a snake, for instance).
+        Pattern's `gap` determines a valid manhattan's distance between cluster's members. """
+
+        all_boxes = boxes[:]  # Обновляемый перечень (элементы уходят по мере формирования кластеров)
+        gap = self.pattern.gap
+        clusters = []
+
+        while all_boxes:
+            # init cluster
+            current_cluster = [all_boxes.pop(0)]
+
+            # Find more items for this cluster (complete search) ...
+            while all_boxes:
+                added_anything = False
+                # For each of candidates (remaining unused boxes)
+                for candidate in all_boxes[:]:
+                    # For each of current cluster members
+                    for member in reversed(current_cluster):
+                        # If candidate is close enough to a member
+                        if member.manhattan_distance_to_touch(candidate) in gap:
+                            current_cluster.append(candidate)
+                            all_boxes.remove(candidate)
+                            added_anything = True
+                            break
+
+                if not added_anything:
+                    break
+
+            clusters.append(current_cluster)
+
+        return clusters
+
     def _find_groups_along_lines(self, boxes: list[Box], direction: Direction) -> list[list[Box]]:
+        """ Find clusters within lines along `direction`"""
 
         sides_primary = [direction - 90, direction + 90]
         sides_secondary = [direction - 180, direction]
