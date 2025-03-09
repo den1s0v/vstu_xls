@@ -19,7 +19,7 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     description: str = None  # текстовое описание
     style: dict = None  # оформление области; пока только `borders`
-    count: open_range = None  # open_range(0, 999)  # кратность элемента в документе (1 = уникален)
+    count: open_range = None  # open_range(0, None)  # кратность элемента в документе (1 = уникален)
 
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
     extends: list[str] = ()
@@ -31,10 +31,10 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     name_for_constraints = 'element'
 
-    # @property
-    # def name2component(self):
-    #     """ ??? """
-    #     return {}
+    def __post_init__(self):
+        # convert attributes to usable types
+        if not isinstance(self.count, open_range):
+            self.count = open_range.parse(str(self.count)) if self.count else open_range(0, None)
 
     def __hash__(self) -> int:
         return hash(self.name)

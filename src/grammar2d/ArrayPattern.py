@@ -27,18 +27,20 @@ class ArrayPattern(NonTerminal):
     """
     item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
-    item_count: open_range | str = None  # кратность элемента в массиве
-    gap: open_range | str = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
+    item_count: open_range = None  # кратность элемента в массиве
+    gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
 
     def __post_init__(self):
+        super().__post_init__()
+
         # convert attributes to usable types
         if not isinstance(self.gap, open_range):
-            self.gap = open_range.parse(self.gap)
+            self.gap = open_range.parse(str(self.gap))
 
         if not isinstance(self.item_count, open_range):
-            self.item_count = open_range.parse(self.item_count) if self.item_count is not None else open_range(1, None)
+            self.item_count = open_range.parse(str(self.item_count)) if self.item_count is not None else open_range(1, None)
 
     def __hash__(self) -> int:
         return hash(self.name)
