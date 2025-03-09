@@ -76,16 +76,17 @@ patterns:
     kind: array  # массив или ряд элементов, выровненных друг относительно друга
   #  direction: row  #  по горизонтали (если не указать, то в любом направлении)
     item_pattern: row_number
-    item_count: 2+
+    item_count: 2..6
   #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
   field:
     description: метки на поле
     kind: array  # массив или ряд элементов, выровненных друг относительно друга
-    #  direction: row  #  по горизонтали (если не указать, то в любом направлении)
+    direction: fill  #  по горизонтали (если не указать, то в любом направлении)
     item_pattern: mark
     item_count: 2+
+    gap: 2-
     #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
   root:
