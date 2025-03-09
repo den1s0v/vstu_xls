@@ -27,11 +27,18 @@ class ArrayPattern(NonTerminal):
     """
     item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
-    item_count: str = None  # кратность элемента в массиве
-    gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
+    item_count: open_range | str = None  # кратность элемента в массиве
+    gap: open_range | str = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
-    _item_count_range: open_range = None
+
+    def __post_init__(self):
+        # convert attributes to usable types
+        if not isinstance(self.gap, open_range):
+            self.gap = open_range.parse(self.gap)
+
+        if not isinstance(self.item_count, open_range):
+            self.item_count = open_range.parse(self.item_count) if self.item_count is not None else open_range(1, None)
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -43,17 +50,13 @@ class ArrayPattern(NonTerminal):
 
     @property
     def subpattern(self) -> Pattern2d:
-        """Дочерний элемент грамматики"""
+        """Дочерний элемент грамматики.
+        This method is intended to be called after the grammar has fully initialized.
+        """
         if not self._subpattern:
             self._subpattern = self._grammar[self.item_pattern]
         return self._subpattern
 
-    @property
-    def item_count_range(self) -> open_range:
-        """Дочерний элемент грамматики"""
-        if self._item_count_range is None:
-            self._item_count_range = open_range.parse(self.item_count) if self.item_count is not None else open_range(1, None)
-        return self._item_count_range
 
     @override
     def dependencies(self, recursive=False) -> list[Pattern2d]:
