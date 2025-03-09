@@ -57,7 +57,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         # pprint(grammar.patterns)
 
         gm = GrammarMatcher(grammar=grammar)
-        gm.run_match(g)
+        matched_documents = gm.run_match(g)
 
         print()
         print('type_to_cells ↓')
@@ -73,6 +73,9 @@ class GrammarMatchingTestCase(unittest.TestCase):
         print()
         print('_grid_view ↓')
         pprint(gm._grid_view)
+        print()
+        print('matched root documents ↓')
+        pprint(matched_documents)
         print()
         # pprint(grammar.patterns)
 

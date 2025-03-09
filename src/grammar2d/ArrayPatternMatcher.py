@@ -22,7 +22,7 @@ class ArrayPatternMatcher(PatternMatcher):
         if _region:
             # filter by region
             item_occurrences = filter(
-                lambda m: m in _region,
+                lambda m: m.box in _region,
                 item_occurrences)
 
         if not item_occurrences:
@@ -96,7 +96,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         for cluster in linear_clusters:
             if not cluster or len(cluster) not in item_count:
-                # Count is not satisfiable
+                # Size of the cluster is not satisfiable for the pattern.
                 # TODO: handle the case of "TOO MANY"
                 if item_count.stop is not None and len(cluster) > item_count.stop:
                     # get first N elements, drop the remaining.

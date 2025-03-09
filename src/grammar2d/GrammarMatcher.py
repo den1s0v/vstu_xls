@@ -1,6 +1,8 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
+from typing import Optional
+
 from geom2d import Point
 from grammar2d import Grammar, Pattern2d
 from grammar2d.Match2d import Match2d
@@ -25,12 +27,15 @@ class GrammarMatcher:
     # scalar info about cells
     type_to_cells: dict[str, list[CellView]] = None
 
-    def run_match(self, grid: Grid) -> Match2d:
+    def run_match(self, grid: Grid) -> list[Match2d]:
         self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
         self._roll_matching_waves()
 
-        ...
+        root = self.grammar.root
+        # assert root in self._matches_by_element, set(self._matches_by_element.keys())
+        root_matches = self._matches_by_element.get(root) or []
+        return root_matches
 
     @property
     def matches_by_position(self) -> dict[Point, list[Match2d]]:
