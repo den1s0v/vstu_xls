@@ -48,6 +48,7 @@ patterns:
     kind: cell
     content_type: star
     extends: [mark]
+    count_in_document: 10
 
 
   col_letter:
