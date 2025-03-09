@@ -1,7 +1,8 @@
 from collections import defaultdict
 from dataclasses import dataclass
-
 from typing import Optional
+
+from loguru import logger
 
 from geom2d import Point
 from grammar2d import Grammar, Pattern2d
@@ -84,8 +85,8 @@ class GrammarMatcher:
             from terminals to the root. """
         for wave in self.grammar.dependency_waves():
             if verbose:
-                print('WAVE:')
-                print([p.name for p in wave])
+                logger.debug('WAVE:')
+                logger.debug([p.name for p in wave])
             if self.grammar.root in wave:
                 _res_ = self._find_matches_of_pattern(self.grammar.root)
             else:
@@ -103,5 +104,7 @@ class GrammarMatcher:
             self.register_match(m)
 
         ###
-        print(pattern.name, '::', matches)
+        print()
+        logger.debug(f':: matches of pattern `{pattern.name}` ↓')
+        logger.debug(matches)
         ...

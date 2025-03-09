@@ -1,6 +1,8 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
+from loguru import logger
+
 from geom2d import Box, RIGHT, DOWN, Direction
 from grammar2d import ArrayPattern
 from grammar2d.PatternMatcher import PatternMatcher
@@ -68,7 +70,8 @@ class ArrayPatternMatcher(PatternMatcher):
             if self.pattern.direction == 'fill':
 
                 ###
-                raise NotImplementedError("TODO: 'fill' array type")
+                logger.critical("TODO: 'fill' array type is not yet supported.")
+                # raise NotImplementedError("TODO: 'fill' array type")
                 ###
                 return []
 
@@ -97,11 +100,12 @@ class ArrayPatternMatcher(PatternMatcher):
         for cluster in linear_clusters:
             if not cluster or len(cluster) not in item_count:
                 # Size of the cluster is not satisfiable for the pattern.
-                # TODO: handle the case of "TOO MANY"
+                # Handle the case of "TOO MANY"
                 if item_count.stop is not None and len(cluster) > item_count.stop:
-                    # get first N elements, drop the remaining.
+                    logger.warning(f'GRAMMAR WARN: pattern `{self.pattern.name}` expects up to {
+                        item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
+                    # Get first N elements, drop the remaining.
                     cluster = cluster[:item_count.stop]
-                    print(f':WARN: pattern {self.pattern.name} expects up to {item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
                 else:
                     continue
 
