@@ -48,18 +48,6 @@ class ArrayPatternMatcher(PatternMatcher):
         # найти ряды элементов, одинаково выровненных вдоль заданного направления
         matches = self._find_lines(item_occurrences)
 
-        # # type_name = self.element.cell_type.name
-        # type_name = self.pattern.cell_type.name
-        #
-        # for cw in gm.type_to_cells.get(type_name) or ():
-        #     precision = cw.data['cell_matches'][type_name].confidence
-        #     if precision < self.pattern.precision_threshold:
-        #         continue
-        #
-        #     # make a Match
-        #     m = Match2d(self.pattern, precision=precision, box=cw, data=cw.data['cell_matches'][type_name])
-        #     matches.append(m)
-
         return matches
 
     def match_exact_region(self, region: Region) -> list[Match2d]:
@@ -135,7 +123,7 @@ class ArrayPatternMatcher(PatternMatcher):
         sides_primary.sort(key=lambda d: d.coordinate_sign)
         sides_secondary.sort(key=lambda d: d.coordinate_sign)
 
-        # groups_of_aligned
+        # groups of aligned boxes
         boxes_on_lines: dict[tuple[int, int], list[Box]] = defaultdict(list)
 
         # Группировка совпадений по линиям
@@ -150,7 +138,6 @@ class ArrayPatternMatcher(PatternMatcher):
             line.sort(key=lambda box: box.get_side_dy_direction(secondary_side))
 
         gap = self.pattern.gap
-
         groups: list[list[Box]] = []
 
         for line in boxes_on_lines.values():

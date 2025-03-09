@@ -32,25 +32,45 @@ class Box:
         }
 
     # staff that mimics behavior of `tuple`:
-    def __len__(self): return 4
-    def __getitem__(self, key): return self._tuple[key]
-    def __iter__(self): return iter(self._tuple)
-    def __hash__(self): return hash(self._tuple)
-    def __eq__(self, other): return hasattr(other, '_tuple') and self._tuple.__eq__(other)
-    def __ne__(self, other): return not self == other
+    def __len__(self):
+        return 4
+
+    def __getitem__(self, key):
+        return self._tuple[key]
+
+    def __iter__(self):
+        return iter(self._tuple)
+
+    def __hash__(self):
+        return hash(self._tuple)
+
+    def __eq__(self, other: 'Box'):
+
+        return hasattr(other, '_tuple') and self._tuple.__eq__(other._tuple)
+
+    def __ne__(self, other):
+        return not self == other
+
     # def __lt__(self, other): return self._tuple.__lt__(other)
     # def __le__(self, other): return self._tuple.__le__(other)
     # def __gt__(self, other): return self._tuple.__gt__(other)
     # def __ge__(self, other): return self._tuple.__ge__(other)
 
     @property
-    def x(self): return self._tuple[0]
+    def x(self):
+        return self._tuple[0]
+
     @property
-    def y(self): return self._tuple[1]
+    def y(self):
+        return self._tuple[1]
+
     @property
-    def w(self): return self._tuple[2]
+    def w(self):
+        return self._tuple[2]
+
     @property
-    def h(self): return self._tuple[3]
+    def h(self):
+        return self._tuple[3]
 
     # other stuff.
     @classmethod
@@ -82,16 +102,20 @@ class Box:
         return Size(self.w, self.h)
 
     @property
-    def left(self): return self.x
+    def left(self):
+        return self.x
 
     @property
-    def right(self): return self.x + self.w
+    def right(self):
+        return self.x + self.w
 
     @property
-    def top(self): return self.y
+    def top(self):
+        return self.y
 
     @property
-    def bottom(self): return self.y + self.h
+    def bottom(self):
+        return self.y + self.h
 
     def get_side_dy_direction(self, direction):
         return getattr(self, direction.prop_name)
@@ -127,8 +151,6 @@ class Box:
             return other in self
         return False
 
-    def relates_to(self, other):
-        ...
 
     def manhattan_distance_to(self, other: Union['Point', 'Box'], per_axis=False) -> int:
         """ Расстояние городских кварталов, или манхеттенское расстояние между двумя точками на плоскости.
