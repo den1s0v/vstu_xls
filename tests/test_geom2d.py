@@ -104,6 +104,53 @@ class BoxTestCase(unittest.TestCase):
         self.assertEqual(b.manhattan_distance_to_touch(a, True), 2 * 7 - 2)
         self.assertEqual(b.manhattan_distance_to_touch(a, True), ManhattanDistance(7, 5))
 
+    def test_intersect_overlap(self):
+        a = Box.from_2points(0, 0, 10, 10)
+        b = Box.from_2points(5, 5, 15, 15)
+        r = Box.from_2points(5, 5, 10, 10)
+
+        self.assertEqual(r, a.intersect(b))
+        self.assertEqual(r, b.intersect(a))
+
+    def test_intersect_inside(self):
+        a = Box.from_2points(0, 0, 15, 15)
+        b = Box.from_2points(5, 5, 10, 10)
+        r = Box.from_2points(5, 5, 10, 10)
+
+        self.assertEqual(r, a.intersect(b))
+        self.assertEqual(r, b.intersect(a))
+
+    def test_intersect_none(self):
+        a = Box.from_2points(0, 0, 5, 5)
+        b = Box.from_2points(10, 10, 15, 15)
+
+        self.assertEqual(None, a.intersect(b))
+        self.assertEqual(None, b.intersect(a))
+
+    def test_unite_overlap(self):
+        a = Box.from_2points(0, 0, 10, 10)
+        b = Box.from_2points(5, 5, 15, 15)
+        r = Box.from_2points(0, 0, 15, 15)
+
+        self.assertEqual(r, a.unite(b))
+        self.assertEqual(r, b.unite(a))
+
+    def test_unite_inside(self):
+        a = Box.from_2points(0, 0, 15, 15)
+        b = Box.from_2points(5, 5, 10, 10)
+        r = Box.from_2points(0, 0, 15, 15)
+
+        self.assertEqual(r, a.unite(b))
+        self.assertEqual(r, b.unite(a))
+
+    def test_unite_sparse(self):
+        a = Box.from_2points(0, 0, 5, 5)
+        b = Box.from_2points(10, 10, 15, 15)
+        r = Box.from_2points(0, 0, 15, 15)
+
+        self.assertEqual(r, a.unite(b))
+        self.assertEqual(r, b.unite(a))
+
 
 class VariBoxTestCase(unittest.TestCase):
     def test_in_1(self):

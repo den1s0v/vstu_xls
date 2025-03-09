@@ -283,8 +283,22 @@ class Box:
             or None if no intersection exists. """
         if (h := self.project('h').intersect(other.project('h'))) and \
                 (v := self.project('v').intersect(other.project('v'))):
-            return Box(h.a, h.b, v.a, v.b)
+            return type(self)(h.a, h.size, v.a, v.size)
         return None
+
+    def unite(self, *others: 'Box') -> 'Box':
+        return type(self).union(self, *others)
+
+    @classmethod
+    def union(cls, *boxes: 'Box') -> 'Box':
+        """ Returns union of given boxes,
+            i.e. minimal box that contains all of them. """
+        return cls.from_2points(
+            min(b.x for b in boxes),
+            min(b.y for b in boxes),
+            max(b.right for b in boxes),
+            max(b.bottom for b in boxes),
+        )
 
     def perimeter(self) -> int:
         return (self.w + self.h) * 2
