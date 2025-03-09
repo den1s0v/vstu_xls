@@ -74,6 +74,12 @@ class Direction:
             return self.opposite()
         return self
 
+    def __str__(self) -> str:
+        return f'[{self.rotation}:{self.prop_name}]'
+
+    def __repr__(self) -> str:
+        return f'Direction(rotation={self.rotation}, prop_name={self.prop_name})'
+
 
 # define constants
 RIGHT= Direction.get(0)
