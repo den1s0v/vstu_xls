@@ -88,7 +88,7 @@ class ArrayPatternMatcher(PatternMatcher):
                     for m in occurrences
                     if m.box == b]
 
-        item_count = self.pattern.item_count
+        item_count = self.pattern.item_count_range
         matches = []
 
         for cluster in linear_clusters:

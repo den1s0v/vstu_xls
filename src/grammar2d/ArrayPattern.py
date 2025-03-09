@@ -27,10 +27,11 @@ class ArrayPattern(NonTerminal):
     """
     item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
-    item_count: open_range = field(default_factory=lambda: open_range(1, None))  # кратность элемента в массиве
+    item_count: str = None  # кратность элемента в массиве
     gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
+    _item_count_range: open_range = None
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -46,6 +47,13 @@ class ArrayPattern(NonTerminal):
         if not self._subpattern:
             self._subpattern = self._grammar[self.item_pattern]
         return self._subpattern
+
+    @property
+    def item_count_range(self) -> open_range:
+        """Дочерний элемент грамматики"""
+        if self._item_count_range is None:
+            self._item_count_range = open_range.parse(self.item_count) if self.item_count is not None else open_range(1, None)
+        return self._item_count_range
 
     @override
     def dependencies(self, recursive=False) -> list[Pattern2d]:
