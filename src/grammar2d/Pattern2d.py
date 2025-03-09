@@ -11,7 +11,7 @@ from utils import WithCache, WithSafeCreate
 
 @dataclass(kw_only=True, )
 class Pattern2d(WithCache, WithSafeCreate):
-    """Элемент грамматики:
+    """Паттерн — элемент 2D-грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
     name: str  # имя узла грамматики (определяет тип содержимого)
     root: bool = False  # whether this element is the grammar's root.
