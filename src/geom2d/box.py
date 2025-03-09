@@ -31,7 +31,6 @@ class Box:
             for k in ('left', 'top', 'w', 'h', 'right', 'bottom')
         }
 
-
     # staff that mimics behavior of `tuple`:
     def __len__(self): return 4
     def __getitem__(self, key): return self._tuple[key]

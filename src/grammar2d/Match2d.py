@@ -25,7 +25,7 @@ class Match2d:
     pattern: 'pt.Pattern2d'
     box: Box = None
     precision: float = None
-    component2match: dict[str|int, 'Match2d'] = None
+    component2match: dict['str|int', 'Match2d'] = None
     data: dict = None
 
     def calc_precision(self) -> float:

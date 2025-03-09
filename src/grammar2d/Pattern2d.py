@@ -5,7 +5,7 @@ from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
 import grammar2d.PatternComponent as pc
 import grammar2d.PatternMatcher as pm
-from geom2d import open_range
+from geom2d import open_range, Box
 from utils import WithCache, WithSafeCreate
 
 
@@ -74,6 +74,14 @@ class Pattern2d(WithCache, WithSafeCreate):
                 for ex in self.constraints
             ]
         return self._cache.constraints_with_full_names
+
+    def check_constraints_for_bbox(self, box: Box) -> bool:
+        """ Check if bounding box satisfies this pattern's constraints. """
+        component2box = {'element': box}
+        for ct in self.global_constraints:
+            if not ct.eval_with_components(component2box):
+                return False
+        return True
 
     def dependencies(self, recursive=False) -> list['Pattern2d']:
         """ Pattern2d must be known before this one can be matched. """

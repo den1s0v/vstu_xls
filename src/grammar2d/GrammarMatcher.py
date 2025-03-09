@@ -93,7 +93,7 @@ class GrammarMatcher:
         matcher = pattern.get_matcher(self)
         matches = matcher.find_all()
 
-        for m in matches:
+        for m in matches or ():
             # register Match globally
             self.register_match(m)
 

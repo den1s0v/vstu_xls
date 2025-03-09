@@ -27,7 +27,7 @@ class ArrayPattern(NonTerminal):
     """
     item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
-    item_count: open_range = None  # кратность элемента в массиве
+    item_count: open_range = field(default_factory=lambda: open_range(1, None))  # кратность элемента в массиве
     gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
@@ -68,6 +68,6 @@ class ArrayPattern(NonTerminal):
 
     ...
 
-    # def get_matcher(self, grammar_matcher):
-    #     from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
-    #     return ArrayPatternMatcher(self, grammar_matcher)
+    def get_matcher(self, grammar_matcher):
+        from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
+        return ArrayPatternMatcher(self, grammar_matcher)
