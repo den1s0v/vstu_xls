@@ -21,7 +21,7 @@ patterns:
     description:  заголовок с указанием факультета и вся таблица с расписанием
     kind: area
     root: true
-    count: 1
+    count_in_document: 1
 
     inner:  # содержимое
       title:
@@ -35,7 +35,7 @@ patterns:
     description: заголовок с указанием факультета, курса и года
     kind: cell
     size: 8+ x 1  # размер в ячейках Excel
-    count: 1
+    count_in_document: 1
     style:
       borders: none  # границ быть не должно
     content_type: schedule_title  # тип контента ячейки из файла cell_types.yml
@@ -45,7 +45,7 @@ patterns:
   schedule_table:
     description: вся таблица с расписанием
     kind: area  # area: область, которая может покрывать несколько ячеек
-    count: 1
+    count_in_document: 1
 
     inner:  # содержимое
       # На этом уровне перечисляются все внутренние данные области schedule_table.
@@ -69,7 +69,7 @@ patterns:
     description: заголовок с группами
     kind: area
 
-    count: 1+   # минимум один на документ; если не найдено, то должна быть ошибка.
+    count_in_document: 1+   # минимум один на документ; если не найдено, то должна быть ошибка.
     size: 4+ x 1..2  # размер в ячейках Excel
     style:
       borders: all  #  должны быть все границы с линиями

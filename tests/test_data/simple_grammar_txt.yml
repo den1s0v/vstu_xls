@@ -93,7 +93,7 @@ patterns:
     description: всё поле
     kind: area
     root: true
-    count: 1
+    count_in_document: 1
 
     inner:  # содержимое
       field:
