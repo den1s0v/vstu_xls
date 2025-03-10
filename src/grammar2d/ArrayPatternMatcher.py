@@ -124,7 +124,10 @@ class ArrayPatternMatcher(PatternMatcher):
     def _find_fill_groups(self, boxes: list[Box]) -> list[list[Box]]:
         """ Find  connected clusters of arbitrary form without restriction on direction
         (a cluster may look like an oval or a snake, for instance).
-        Pattern's `gap` determines a valid manhattan's distance between cluster's members. """
+        Pattern's `gap` determines a valid manhattan's distance between cluster's members.
+        Note that current implementation does not check if the members are aligned with each other or not;
+            the gap (distance) is the only criteria.
+        """
 
         all_boxes = boxes[:]  # Обновляемый перечень (элементы уходят по мере формирования кластеров)
         gap = self.pattern.gap
