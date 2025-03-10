@@ -99,6 +99,16 @@ class GrammarMatcher:
         matcher = pattern.get_matcher(self)
         matches = matcher.find_all()
 
+        if len(matches) not in pattern.count_in_document:
+            logger.warning(f'Found {len(matches)} match(es) of pattern `{pattern.name
+                }` but expected {pattern.count_in_document}.')
+
+            if pattern.count_in_document.stop is not None and len(matches) > pattern.count_in_document.stop:
+                limit = pattern.count_in_document.stop
+                # Drop unexpected matches.
+                matches = matches[:limit]
+                logger.warning(f' ... limited result to {limit} match(es) of this pattern.')
+
         for m in matches or ():
             # register Match globally
             self.register_match(m)
