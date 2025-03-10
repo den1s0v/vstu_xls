@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field
 from typing import override
 
+from loguru import logger
+
 from geom2d import open_range
 import grammar2d.Match2d as m2
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
 
-VALID_ARRAY_DIRECTIONS = ('row', 'column', 'fill')
+VALID_ARRAY_DIRECTIONS = ('row', 'column', 'auto', 'fill')
 
 
 @PatternRegistry.register
@@ -18,7 +20,7 @@ class ArrayPattern(NonTerminal):
     `direction`:
         'row' — по горизонтали.
         'column' — по горизонтали.
-        None — ряд в любом направлении,
+        'auto' or None — ряд в любом направлении,
             т.е. автоматический выбор из 'row' или 'column', — что оптимальнее (даёт меньше разрывных областей).
         'fill' — заполнение области произвольной формы вместо прямой линии
             (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <--
@@ -41,6 +43,14 @@ class ArrayPattern(NonTerminal):
 
         if not isinstance(self.item_count, open_range):
             self.item_count = open_range.parse(str(self.item_count)) if self.item_count is not None else open_range(1, None)
+
+        if not isinstance(self.direction, str):
+            self.direction = 'auto'
+            logger.info(f'Assuming the default value `{self.direction}` for direction of ArrayPattern with name `{self.name}`.')
+        elif self.direction not in VALID_ARRAY_DIRECTIONS:
+            msg = f'ArrayPattern with name `{self.name}` has direction set to `{self.direction}`, but expected one of `{VALID_ARRAY_DIRECTIONS}`.'
+            logger.critical(msg)
+            raise ValueError(msg)
 
     def __hash__(self) -> int:
         return hash(self.name)

@@ -57,7 +57,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
     def _find_lines(self, occurrences: list[Match2d], pattern_direction: str = None) -> list[Match2d]:
         if not pattern_direction:
-            if self.pattern.direction is None:
+            if self.pattern.direction == 'auto':
                 # Ряд в любом направлении,
                 # т.е. автоматический выбор из 'row' или 'column', — что оптимальнее (даёт меньше разрывных областей).
                 matches_as_rows = self._find_lines(occurrences, 'row')
