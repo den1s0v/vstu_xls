@@ -2,7 +2,7 @@ from geom2d.box import Box
 from geom2d.point import Point
 from geom2d.size import Size
 
-
+# deprecated
 class PartialBox(Box):
     """ НЕизменяемый, но в общем случае не полностью определённый Прямоугольник на целочисленной координатной плоскости (2d).
         Изменение возможно только в части до-определения незаданных координат прямоугольника.

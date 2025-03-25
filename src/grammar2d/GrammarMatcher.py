@@ -88,7 +88,7 @@ class GrammarMatcher:
                 logger.debug('WAVE:')
                 logger.debug([p.name for p in wave])
             if self.grammar.root in wave:
-                _res_ = self._find_matches_of_pattern(self.grammar.root)
+                self._find_matches_of_pattern(self.grammar.root)
             else:
                 for elem in wave:
                     self._find_matches_of_pattern(elem)

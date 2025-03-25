@@ -3,6 +3,7 @@ from geom2d.point import Point
 from geom2d.size import Size
 
 
+# deprecated
 class VariBox(Box):
     """ Изменяемый Прямоугольник на целочисленной координатной плоскости (2d). `VariBox(x, y, w, h)`. """
     # Dev note: using updatable list here, not tuple as parent class does.
