@@ -20,6 +20,29 @@ class open_range:
     _range: range | None  # None for infinite ranges
 
     @classmethod
+    def make(cls, value: int | str | list[int] | tuple[int] | 'open_range' = None) -> 'open_range':
+        """ Universal single-value factory method.
+             If a number is given, returns a point range.
+             If a str is given, parses range from it.
+             If an iterable is given, extracts first 2 items from it for a new range.
+         """
+        if value is None or isinstance(value, (int, float)):
+            return cls(value, value)
+        if isinstance(value, str):
+            return cls.parse(value)
+        if isinstance(value, open_range):
+            return value  # no need to clone
+        try:
+            it = iter(value)
+            values = [t[0] for t in zip(it, range(2))]  # take up to 2 items
+            assert len(values) == 2, f"Expected an iterable of exactly 2 items in open_range.make(), got {values!r}"
+            assert all(isinstance(value, (int, float)) for value in values), \
+                f"Expected an iterable of numeric items in open_range.make(), got {values!r}"
+            return cls(*values)
+        except AttributeError:
+            pass
+
+    @classmethod
     def parse(cls, range_str: str):
         """ See more in description of `parse_range()` """
         return ns.parse_range(str(range_str))
@@ -135,11 +158,44 @@ class open_range:
         return 0 - self
 
     def __pos__(self):
-        """ Effectively, just the same """
+        """ Effectively, just the same object """
         return self
         # return 0 + other  # cloning does not make sense
 
-    def intersect(self, *others):
+    def __lt__(self, other):
+        """ Self is at left of the other range, no intersection """
+        other = self.make(other)
+        if self.stop is None or other.start is None:
+            return False
+        return self.stop < other.start
+
+    def __le__(self, other):
+        """ Self is at left of the other range or touches, no intersection """
+        other = self.make(other)
+        if self.stop is None or other.start is None:
+            return False
+        return self.stop <= other.start
+
+    def __gt__(self, other):
+        """ Self is at right of the other range, no intersection """
+        other = self.make(other)
+        if self.start is None or other.stop is None:
+            return False
+        return self.start > other.stop
+
+    def __ge__(self, other):
+        """ Self is at right of the other range or touches, no intersection """
+        other = self.make(other)
+        if self.start is None or other.stop is None:
+            return False
+        return self.start >= other.stop
+
+    def is_point(self) -> bool:
+        """ Check if the range is finite and has the length of 0 """
+        return self.start is not None and self.start == self.stop
+        # return 0 + other  # cloning does not make sense
+
+    def intersect(self, *others: 'open_range') -> 'open_range | None':
         ranges = [self, *others]
         try:
             return open_range(
@@ -149,3 +205,27 @@ class open_range:
         except ValueError:
             # Got invalid/empty range.
             return None
+
+    def trimmed_at_left(self, value: int | None) -> 'open_range | None':
+        if value is None:
+            return self
+        if value in self:
+            return open_range(value, self.stop)
+        else:
+            if value < self:
+                return self
+            else:
+                # Got invalid/empty range.
+                return None
+
+    def trimmed_at_right(self, value: int | None) -> 'open_range | None':
+        if value is None:
+            return self
+        if value in self:
+            return open_range(self.start, value)
+        else:
+            if value > self:
+                return self
+            else:
+                # Got invalid/empty range.
+                return None
