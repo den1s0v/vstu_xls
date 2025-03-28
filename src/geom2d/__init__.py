@@ -14,6 +14,7 @@ from geom2d.size import Size
 from geom2d.varibox import VariBox
 from geom2d.ranges import parse_range, parse_size_range
 from geom2d.open_range import open_range
+from geom2d.ranged_segment import RangedSegment
 
 
 # def sign(a):

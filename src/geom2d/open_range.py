@@ -20,7 +20,7 @@ class open_range:
     _range: range | None  # None for infinite ranges
 
     @classmethod
-    def make(cls, value: int | str | list[int] | tuple[int] | 'open_range' = None) -> 'open_range':
+    def make(cls, value: 'int | str | list[int] | tuple[int] | open_range' = None) -> 'open_range':
         """ Universal single-value factory method.
              If a number is given, returns a point range.
              If a str is given, parses range from it.
@@ -193,7 +193,13 @@ class open_range:
     def is_point(self) -> bool:
         """ Check if the range is finite and has the length of 0 """
         return self.start is not None and self.start == self.stop
-        # return 0 + other  # cloning does not make sense
+    
+    def point(self) -> int | None:
+        """ Get point coordinate if this range is really a point """
+        if self.start is not None and self.start == self.stop:
+            return self.start
+        else:
+            return None
 
     def intersect(self, *others: 'open_range') -> 'open_range | None':
         ranges = [self, *others]
