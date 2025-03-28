@@ -6,7 +6,7 @@ init_testing_environment()
 
 from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox
 from geom2d import parse_range, parse_size_range
-from geom2d import open_range
+from geom2d import open_range, RangedSegment
 
 
 class BoxTestCase(unittest.TestCase):
@@ -436,6 +436,46 @@ class RangeTestCase(unittest.TestCase):
         """ Reversed range """
         expr = '-5000, -5001'
         parse_range(expr)
+
+
+class RangedSegmentTestCase(unittest.TestCase):
+
+    def test_simplest_point(self):
+        rs = RangedSegment(5, 5)
+
+        self.assertTrue(rs.is_deterministic())
+        self.assertTrue(rs.a.is_point())
+        self.assertTrue(rs.b.is_point())
+        self.assertEqual(5, rs.a.point())
+        self.assertEqual(5, rs.b.point())
+
+        self.assertNotIn(4, rs.minimal_range())
+        self.assertIn(5, rs.minimal_range())
+        self.assertNotIn(6, rs.minimal_range())
+
+        self.assertNotIn(4, rs.maximal_range())
+        self.assertIn(5, rs.maximal_range())
+        self.assertNotIn(6, rs.maximal_range())
+
+    def test_2(self):
+        rs = RangedSegment((0, 5), (10, 15))
+
+        self.assertFalse(rs.is_deterministic())
+        self.assertFalse(rs.a.is_point())
+        self.assertFalse(rs.b.is_point())
+        self.assertIsNone(rs.a.point())
+        self.assertIsNone(rs.b.point())
+
+        self.assertNotIn(4, rs.minimal_range())
+        self.assertIn(5, rs.minimal_range())
+        self.assertIn(10, rs.minimal_range())
+        self.assertNotIn(11, rs.minimal_range())
+
+        self.assertNotIn(-1, rs.maximal_range())
+        self.assertIn(0, rs.maximal_range())
+        self.assertIn(15, rs.maximal_range())
+        self.assertNotIn(16, rs.maximal_range())
+
 
 
 if __name__ == '__main__':
