@@ -190,10 +190,14 @@ class open_range:
             return False
         return self.start >= other.stop
 
+    def is_open(self) -> bool:
+        """ Check if the range is infinite (i.e. at least one side is None) """
+        return not self._range
+
     def is_point(self) -> bool:
         """ Check if the range is finite and has the length of 0 """
         return self.start is not None and self.start == self.stop
-    
+
     def point(self) -> int | None:
         """ Get point coordinate if this range is really a point """
         if self.start is not None and self.start == self.stop:
@@ -211,6 +215,19 @@ class open_range:
         except ValueError:
             # Got invalid/empty range.
             return None
+
+    def union(self, *others: 'open_range') -> 'open_range':
+        ranges = [self, *others]
+        return open_range(
+            start=(None
+                   if any(x.start is None for x in ranges)
+                   else min((x.start for x in ranges))
+                   ),
+            stop=(None
+                  if any(x.stop is None for x in ranges)
+                  else max((x.stop for x in ranges))
+                  ),
+        )
 
     def trimmed_at_left(self, value: int | None) -> 'open_range | None':
         if value is None:

@@ -304,7 +304,7 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(range(1, 1 + 1), open_range(1, 1))
         self.assertEqual(range(1, 1 + 1), open_range.parse('1, 1'))
 
-    def test_range(self):
+    def test_parse_range(self):
 
         expr = '1'
         self.assertEqual(range(1, 1 + 1), parse_range(expr))
@@ -375,7 +375,7 @@ class RangeTestCase(unittest.TestCase):
         expr = '* .. *'
         self.assertEqual(open_range(None, None), parse_range(expr))
 
-    def test_size_range(self):
+    def test_parse_size_range(self):
 
         expr = '1x0'
         self.assertEqual((
@@ -436,6 +436,59 @@ class RangeTestCase(unittest.TestCase):
         """ Reversed range """
         expr = '-5000, -5001'
         parse_range(expr)
+
+    def test_point(self):
+        self.assertTrue(open_range(1, 1).is_point())
+
+        self.assertEqual(1, open_range(1, 1).point())
+        self.assertIsNone(open_range(1, 2).point())
+
+        self.assertFalse(open_range(1, 1).is_open())
+        self.assertTrue(open_range(None, 1).is_open())
+        self.assertTrue(open_range(1, None).is_open())
+        self.assertTrue(open_range(None, None).is_open())
+
+    def test_intersect(self):
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, 1).intersect(open_range(1, 1)))
+        self.assertEqual(open_range(1, 2),
+                         open_range(1, 2).intersect(open_range(1, 2)))
+
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, 2).intersect(open_range(0, 1)))
+        self.assertEqual(open_range(1, 1),
+                         open_range(0, 2).intersect(open_range(1, 1)))
+
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, None).intersect(open_range(0, 1)))
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, 2).intersect(open_range(None, 1)))
+        self.assertEqual(open_range(1, 1),
+                         open_range(None, None).intersect(open_range(1, 1)))
+
+        self.assertEqual(open_range(None, None),
+                         open_range(None, None).intersect(open_range(None, None)))
+
+    def test_union(self):
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, 1).union(open_range(1, 1)))
+        self.assertEqual(open_range(1, 2),
+                         open_range(1, 2).union(open_range(1, 2)))
+
+        self.assertEqual(open_range(0, 2),
+                         open_range(1, 2).union(open_range(0, 1)))
+        self.assertEqual(open_range(0, 2),
+                         open_range(0, 2).union(open_range(1, 1)))
+
+        self.assertEqual(open_range(0, None),
+                         open_range(1, None).union(open_range(0, 1)))
+        self.assertEqual(open_range(None, 2),
+                         open_range(1, 2).union(open_range(None, 1)))
+        self.assertEqual(open_range(None, None),
+                         open_range(None, None).union(open_range(1, 1)))
+
+        self.assertEqual(open_range(None, None),
+                         open_range(None, None).union(open_range(None, None)))
 
 
 class RangedSegmentTestCase(unittest.TestCase):
