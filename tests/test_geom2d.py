@@ -496,6 +496,7 @@ class RangedSegmentTestCase(unittest.TestCase):
     def test_simplest_point(self):
         rs = RangedSegment(5, 5)
 
+        self.assertFalse(rs.is_open())
         self.assertTrue(rs.is_deterministic())
         self.assertTrue(rs.a.is_point())
         self.assertTrue(rs.b.is_point())
@@ -513,6 +514,7 @@ class RangedSegmentTestCase(unittest.TestCase):
     def test_2(self):
         rs = RangedSegment((0, 5), (10, 15))
 
+        self.assertFalse(rs.is_open())
         self.assertFalse(rs.is_deterministic())
         self.assertFalse(rs.a.is_point())
         self.assertFalse(rs.b.is_point())

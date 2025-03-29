@@ -26,6 +26,9 @@ class RangedSegment:
     def is_deterministic(self) -> bool:
         return self.a.is_point() and self.b.is_point()
 
+    def is_open(self) -> bool:
+        return self.a.is_open() or self.b.is_open()
+
     @classmethod
     def make(cls, value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | RangedSegment' = None) -> 'RangedSegment':
         """ Universal single-value factory method.
