@@ -101,7 +101,7 @@ class open_range:
 
     def __repr__(self) -> str:
         """Get string representation
-        parseable back by `open_range.parse( '1..5')` """
+        parseable back by direct eval """
         return f"open_range({self.start!r}, {self.stop!r})"
 
     # Arithmetics.

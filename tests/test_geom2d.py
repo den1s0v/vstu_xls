@@ -465,6 +465,11 @@ class RangeTestCase(unittest.TestCase):
                          open_range(1, 2).intersect(open_range(None, 1)))
         self.assertEqual(open_range(1, 1),
                          open_range(None, None).intersect(open_range(1, 1)))
+        # →←
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, None).intersect(open_range(None, 1)))
+        self.assertEqual(open_range(1, 10),
+                         open_range(1, None).intersect(open_range(None, 10)))
 
         self.assertEqual(open_range(None, None),
                          open_range(None, None).intersect(open_range(None, None)))
@@ -486,6 +491,11 @@ class RangeTestCase(unittest.TestCase):
                          open_range(1, 2).union(open_range(None, 1)))
         self.assertEqual(open_range(None, None),
                          open_range(None, None).union(open_range(1, 1)))
+        # →←
+        self.assertEqual(open_range(None, None),
+                         open_range(1, None).union(open_range(None, 1)))
+        self.assertEqual(open_range(None, None),
+                         open_range(1, None).union(open_range(None, 10)))
 
         self.assertEqual(open_range(None, None),
                          open_range(None, None).union(open_range(None, None)))
@@ -493,7 +503,53 @@ class RangeTestCase(unittest.TestCase):
 
 class RangedSegmentTestCase(unittest.TestCase):
 
-    def test_simplest_point(self):
+    def test_init(self):
+        rs = RangedSegment((0, 5), (15, 20))
+        self.assertEqual(open_range(0, 5), rs.a)
+        self.assertEqual(open_range(15, 20), rs.b)
+
+        rs = RangedSegment((0, 5), (5, 10))
+        self.assertEqual(open_range(0, 5), rs.a)
+        self.assertEqual(open_range(5, 10), rs.b)
+
+        rs = RangedSegment((0, None), (5, 10))
+        self.assertEqual(open_range(0, 5), rs.a)
+        self.assertEqual(open_range(5, 10), rs.b)
+        rs.minimal_range()  # No exception.
+
+        rs = RangedSegment((0, 5), (None, 10))
+        self.assertEqual(open_range(0, 5), rs.a)
+        self.assertEqual(open_range(5, 10), rs.b)
+        rs.minimal_range()  # No exception.
+
+        rs = RangedSegment((0, 5), (None, None))
+        self.assertEqual(open_range(0, 5), rs.a)
+        self.assertEqual(open_range(5, None), rs.b)
+        rs.minimal_range()  # No exception.
+
+        rs = RangedSegment((None, 5), (None, None))
+        self.assertEqual(open_range(None, 5), rs.a)
+        self.assertEqual(open_range(5, None), rs.b)
+        rs.minimal_range()  # No exception.
+
+        # No clamping ↓
+        rs = RangedSegment((None, None), (None, None))
+        self.assertEqual(open_range(None, None), rs.a)
+        self.assertEqual(open_range(None, None), rs.b)
+        rs.minimal_range()  # No exception.
+
+        # xfail TODO
+
+    @unittest.expectedFailure
+    def test_detect_inalid_range_1(self):
+        rs = RangedSegment((20, 25), (5, 10))
+
+    @unittest.expectedFailure
+    def test_detect_inalid_range_2(self):
+        rs = RangedSegment((20, 20), (19, 19))
+
+
+    def test_point(self):
         rs = RangedSegment(5, 5)
 
         self.assertFalse(rs.is_open())
@@ -551,6 +607,62 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertIn(10, rs.maximal_range())
         self.assertIn(15, rs.maximal_range())
         self.assertIn(9999, rs.maximal_range())
+
+    def test_intersect_union(self):
+        r1 = RangedSegment((5, 5), (15, 15))
+        r2 = RangedSegment((10, 10), (20, 20))
+
+        self.assertEqual(RangedSegment((10, 10), (15, 15)), r1.intersect(r2))
+        self.assertEqual(RangedSegment((5, 5), (20, 20)), r1.union(r2))
+
+        r1 = RangedSegment((0, 5), (15, 20))
+        r2 = RangedSegment((5, 10), (20, 25))
+
+        self.assertEqual(RangedSegment((5, 10), (15, 20)), r1.intersect(r2))
+        self.assertEqual(RangedSegment((0, 5), (20, 25)), r1.union(r2))
+
+        r1 = RangedSegment((0, 0), (0, 0))
+        r2 = RangedSegment((0, 0), (0, 0))
+
+        self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.intersect(r2))
+        self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.union(r2))
+
+        r1 = RangedSegment((0, 0), (0, 0))
+        r2 = RangedSegment((None, None), (None, None))
+
+        self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.intersect(r2))
+        self.assertEqual(RangedSegment((None, None), (None, None)), r1.union(r2))
+
+        r1 = RangedSegment((0, 0), (0, 0))
+        r2 = RangedSegment((22, 22), (22, 22))
+
+        self.assertEqual(None, r1.intersect(r2))
+        self.assertEqual(RangedSegment((0, 0), (22, 22)), r1.union(r2))
+
+        r1 = RangedSegment((None, 0), (0, 0))
+        r2 = RangedSegment((22, 22), (22, None))
+
+        self.assertEqual(None, r1.intersect(r2))
+        self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
+
+        r1 = RangedSegment((None, None), (None, None))
+        r2 = RangedSegment((None, None), (None, None))
+
+        self.assertEqual(RangedSegment((None, None), (None, None)), r1.intersect(r2))
+        self.assertEqual(RangedSegment((None, None), (None, None)), r1.union(r2))
+
+    def test_intersect_union_2(self):
+        r1 = RangedSegment((0, 0), (0, None))
+        r2 = RangedSegment((None, 22), (22, 22))
+
+        self.assertEqual(None, r1.intersect(r2))
+        self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
+
+        r1 = RangedSegment((0, 0), (11, None))
+        r2 = RangedSegment((None, 11), (22, 22))
+
+        self.assertEqual(RangedSegment((0, 11), (11, 22)), r1.intersect(r2))
+        self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
 
 
 
