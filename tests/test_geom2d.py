@@ -511,7 +511,7 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertIn(5, rs.maximal_range())
         self.assertNotIn(6, rs.maximal_range())
 
-    def test_2(self):
+    def test_finite(self):
         rs = RangedSegment((0, 5), (10, 15))
 
         self.assertFalse(rs.is_open())
@@ -530,6 +530,27 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertIn(0, rs.maximal_range())
         self.assertIn(15, rs.maximal_range())
         self.assertNotIn(16, rs.maximal_range())
+
+    def test_infinite(self):
+        rs = RangedSegment((5, 5), (10, None))
+
+        self.assertTrue(rs.is_open())
+        self.assertFalse(rs.is_deterministic())
+        self.assertTrue(rs.a.is_point())
+        self.assertFalse(rs.b.is_point())
+        self.assertIsNotNone(rs.a.point())
+        self.assertIsNone(rs.b.point())
+
+        self.assertNotIn(4, rs.minimal_range())
+        self.assertIn(5, rs.minimal_range())
+        self.assertIn(10, rs.minimal_range())
+        self.assertNotIn(11, rs.minimal_range())
+
+        self.assertNotIn(4, rs.maximal_range())
+        self.assertIn(5, rs.maximal_range())
+        self.assertIn(10, rs.maximal_range())
+        self.assertIn(15, rs.maximal_range())
+        self.assertIn(9999, rs.maximal_range())
 
 
 

@@ -36,7 +36,7 @@ class open_range:
             it = iter(value)
             values = [t[0] for t in zip(it, range(2))]  # take up to 2 items
             assert len(values) == 2, f"Expected an iterable of exactly 2 items in open_range.make(), got {values!r}"
-            assert all(isinstance(value, (int, float)) for value in values), \
+            assert all(isinstance(value, (int, float, type(None))) for value in values), \
                 f"Expected an iterable of numeric items in open_range.make(), got {values!r}"
             return cls(*values)
         except AttributeError:
