@@ -4,12 +4,13 @@ from geom2d.open_range import open_range
 
 
 class RangedSegment:
+    """ 1D segment having open_range as each end, i.e. actual range may not be clearly determined. """
     a: open_range
     b: open_range
 
     def __init__(self,
-                 lower: 'open_range | int | list[int] | tuple[int, int]' = None,
-                 upper: 'open_range | int | list[int] | tuple[int, int]' = None):
+                 lower: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
+                 upper: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None):
         lower = open_range.make(lower)
         upper = open_range.make(upper)
 
@@ -26,7 +27,7 @@ class RangedSegment:
         return self.a.is_point() and self.b.is_point()
 
     @classmethod
-    def make(cls, value: 'int | list[int] | tuple[int, int] | open_range | RangedSegment' = None) -> 'RangedSegment':
+    def make(cls, value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | RangedSegment' = None) -> 'RangedSegment':
         """ Universal single-value factory method.
              If a number is given, returns a zero-length segment.
              If a range is given, returns a deterministic segment from it.
