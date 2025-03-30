@@ -4,7 +4,7 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox
+from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox, RangedBox
 from geom2d import parse_range, parse_size_range
 from geom2d import open_range, RangedSegment
 
@@ -663,6 +663,33 @@ class RangedSegmentTestCase(unittest.TestCase):
 
         self.assertEqual(RangedSegment((0, 11), (11, 22)), r1.intersect(r2))
         self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
+
+
+class RangedBoxTestCase(unittest.TestCase):
+    def test_1(self):
+        b = RangedBox((10, 20), (3, 5))
+        # r = RangedBox((10, 20), (3, 5))
+
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.to_box())
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.minimal_box())
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.maximal_box())
+
+        self.assertEqual(RangedSegment(10, 20), b.project('h'))
+        self.assertEqual(RangedSegment(3, 5), b.project('v'))
+
+    def test_intersect_union(self):
+        b = RangedBox((10, 20), (3, 5))
+        r = RangedBox((10, 20), (3, 5))
+
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.intersect(r).to_box())
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.union(r).to_box())
+
+        b = RangedBox((10, 20), (3, 15))
+        r = RangedBox((12, 22), (13, 25))
+
+         ### TODO!!!
+        self.assertEqual(Box.from_2points(12, 13, 20, 15), b.intersect(r).to_box())
+        self.assertEqual(Box.from_2points(10, 3, 22, 25), b.union(r).to_box())
 
 
 

@@ -10,7 +10,10 @@ class RangedBox:
 
     __slots__ = ("rx", "ry")
 
-    def __init__(self, rx: RangedSegment | int | tuple[int, int], ry: RangedSegment | int | tuple[int, int]):
+    def __init__(self,
+                 rx: RangedSegment | int | tuple[int | None, int | None] = None,
+                 ry: RangedSegment | int | tuple[int | None, int | None] = None
+                 ):
         self.rx = RangedSegment.make(rx)
         self.ry = RangedSegment.make(ry)
 
@@ -38,9 +41,9 @@ class RangedBox:
             raise ValueError("Cannot convert non-deterministic RangedBox to Box.")
         x = self.left.point()
         y = self.top.point()
-        w = self.width.point()
-        h = self.height.point()
-        return Box(x, y, w, h)
+        r = self.right.point()
+        b = self.bottom.point()
+        return Box.from_2points(x, y, r, b)
 
     def is_deterministic(self) -> bool:
         return self.rx.is_deterministic() and self.ry.is_deterministic()
@@ -79,30 +82,18 @@ class RangedBox:
     def union(self, other: 'RangedBox') -> 'RangedBox':
         ### TODO: check
         return RangedBox(
-            RangedSegment(
-                open_range(
-                    min(filter(None, [self.rx.a.start, other.rx.a.start])),
-                    max(filter(None, [self.rx.a.stop, other.rx.a.stop]))
-                ),
-                open_range(
-                    min(filter(None, [self.rx.b.start, other.rx.b.start])),
-                    max(filter(None, [self.rx.b.stop, other.rx.b.stop]))
-                )
-            ),
-            RangedSegment(
-                open_range(
-                    min(filter(None, [self.ry.a.start, other.ry.a.start])),
-                    max(filter(None, [self.ry.a.stop, other.ry.a.stop]))
-                ),
-                open_range(
-                    min(filter(None, [self.ry.b.start, other.ry.b.start])),
-                    max(filter(None, [self.ry.b.stop, other.ry.b.stop]))
-                )
-            )
+            RangedSegment(self.rx.a.union(other.rx.a), self.rx.b.union(other.rx.b)),
+            RangedSegment(self.ry.a.union(other.ry.a), self.ry.b.union(other.ry.b))
         )
 
-    def project(self) -> tuple[RangedSegment, RangedSegment]:
-        return self.rx, self.ry
+    def project(self, direction: str = 'h') -> RangedSegment:
+        """ direction: 'h' - horizontal or 'v' - vertical """
+        if direction.startswith('h'):
+            # horizontal
+            return self.rx
+        else:
+            # vertical
+            return self.ry
 
     # Свойства для совместимости с Box:
     @property
