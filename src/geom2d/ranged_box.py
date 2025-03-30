@@ -73,17 +73,15 @@ class RangedBox:
         )
 
     def intersect(self, other: 'RangedBox') -> 'RangedBox':
-        ### TODO: check
         return RangedBox(
-            RangedSegment(self.rx.a.intersect(other.rx.a), self.rx.b.intersect(other.rx.b)),
-            RangedSegment(self.ry.a.intersect(other.ry.a), self.ry.b.intersect(other.ry.b))
+            self.rx.intersect(other.rx),
+            self.ry.intersect(other.ry),
         )
 
     def union(self, other: 'RangedBox') -> 'RangedBox':
-        ### TODO: check
         return RangedBox(
-            RangedSegment(self.rx.a.union(other.rx.a), self.rx.b.union(other.rx.b)),
-            RangedSegment(self.ry.a.union(other.ry.a), self.ry.b.union(other.ry.b))
+            self.rx.union(other.rx),
+            self.ry.union(other.ry),
         )
 
     def project(self, direction: str = 'h') -> RangedSegment:
@@ -145,4 +143,4 @@ class RangedBox:
         return False
 
     def __repr__(self):
-        return f"RangedBox(x={self.left}, y={self.top}, w={self.width}, h={self.height})"
+        return f"RangedBox(rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}))"

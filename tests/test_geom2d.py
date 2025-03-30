@@ -684,12 +684,16 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.intersect(r).to_box())
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.union(r).to_box())
 
+    def test_intersect_union_2(self):
         b = RangedBox((10, 20), (3, 15))
         r = RangedBox((12, 22), (13, 25))
 
-         ### TODO!!!
-        self.assertEqual(Box.from_2points(12, 13, 20, 15), b.intersect(r).to_box())
-        self.assertEqual(Box.from_2points(10, 3, 22, 25), b.union(r).to_box())
+        self.assertEqual(RangedBox(
+            (12, 20), (13, 15)),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+            (10, 22), (3, 25)),
+            b.union(r))
 
 
 
