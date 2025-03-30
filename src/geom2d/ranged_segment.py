@@ -11,7 +11,7 @@ class RangedSegment:
     def __init__(self,
                  lower: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
                  upper: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
-                 validate=False):
+                 validate=True):
         lower = open_range.make(lower)
         upper = open_range.make(upper)
 
@@ -28,17 +28,24 @@ class RangedSegment:
          Raises ValueError or adjusts ranges as needed. """
 
         intersection = lower.intersect(upper)
-        if intersection is not None and not intersection.is_point():
+        if intersection is not None:
             # Есть пересечение (накладка) в середине. Нужно ограничить средние границы.
-            # Исключаем вариант, когда оба бесконечны (нечем ограничивать)
-            if lower.stop is not None and upper.start is None:
+            if lower.is_double_open() or upper.is_double_open():
+                # Исключаем вариант, когда оба бесконечны (нечем ограничивать)
+                pass
+            elif lower.stop is not None and upper.start is None:
+                # (_, N), (*, _)
                 upper = upper.trimmed_at_left(lower.stop)
             elif upper.start is not None and lower.stop is None:
+                # (_, *), (N, _)
                 lower = lower.trimmed_at_right(upper.start)
-            elif upper.start is not None and lower.stop is not None:
-                raise ValueError(f'RangedSegment cannot be created without valid range in the middle. Got: {lower!r}, {upper!r}.')
+            elif upper.start is not None and lower.stop is not None and not intersection.is_point():
+                # (_, N), (N, _)
+                raise ValueError(
+                    f'RangedSegment cannot be created without valid range in the middle. Got: {lower!r}, {upper!r}.')
         elif lower > upper:
             raise ValueError(f'RangedSegment cannot be created using inverse ranges. Got: {lower!r}, {upper!r}.')
+
         return lower, upper
 
     def __bool__(self):
@@ -78,7 +85,7 @@ class RangedSegment:
     @classmethod
     def make(cls,
              value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | RangedSegment' = None,
-             validate=False) -> 'RangedSegment':
+             validate=True) -> 'RangedSegment':
         """ Universal single-value factory method.
              If a number is given, returns a zero-length segment.
              If a range is given, returns a deterministic segment from it.
@@ -88,7 +95,7 @@ class RangedSegment:
             return cls(value, value)
         if isinstance(value, open_range):
             return cls(value.start, value.stop)
-        if isinstance(value, RangedSegment):
+        if isinstance(value, cls):
             return value  # no need to clone
         try:
             it = iter(value)
@@ -98,9 +105,25 @@ class RangedSegment:
         except AttributeError:
             pass
 
+    def with_materialized_ranges(self) -> 'RangedSegment':
+        """ Materialize inner infinite edges of ranges"""
+        lower, upper = self.a, self.b
+        changed = False
+        if lower.stop is None and lower.start is not None:
+            lower = open_range(lower.start, lower.start)
+            changed = True
+        if upper.start is None and upper.stop is not None:
+            upper = open_range(upper.stop, upper.stop)
+            changed = True
+
+        # make a new instance if changed
+        return type(self)(lower, upper, validate=False) if changed else self
+
     def intersect(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
         """Find intersection of both definite & probable areas.
         If nothing is found in common for definite area, `None` will be returned. """
+        # others = [rs.with_materialized_ranges() for rs in others if rs]  # ???
+
         minimal_ranges = [rs.minimal_range() for rs in others if rs]
         maximal_ranges = [rs.maximal_range() for rs in others if rs]
 
@@ -108,6 +131,13 @@ class RangedSegment:
         maximal_range = self.maximal_range().intersect(*maximal_ranges)
 
         if minimal_range is None or maximal_range is None:
+            # Empty intersection.
+            return None
+
+        # Adjust intersected minimal range, so it will not go beyond the maximal range.
+        minimal_range = minimal_range.intersect(maximal_range)
+
+        if not minimal_range:
             # Empty intersection.
             return None
 
@@ -119,11 +149,17 @@ class RangedSegment:
     def union(self, *others: 'RangedSegment | None') -> 'RangedSegment':
         """Find union of both definite & probable areas.
         If given segments do not overlap, the minimal segment covering all of them is returned. """
+        others = [rs.with_materialized_ranges() for rs in others if rs]
+
         minimal_ranges = [rs.minimal_range() for rs in others if rs]
         maximal_ranges = [rs.maximal_range() for rs in others if rs]
 
-        minimal_range = self.minimal_range().union(*minimal_ranges)
-        maximal_range = self.maximal_range().union(*maximal_ranges)
+        self_fixed = self.with_materialized_ranges()
+        minimal_range = self_fixed.minimal_range().union(*minimal_ranges)
+        maximal_range = self_fixed.maximal_range().union(*maximal_ranges)
+
+        # Adjust intersected minimal range, so it will not go beyond the maximal range.
+        minimal_range = minimal_range.intersect(maximal_range)
 
         lower = maximal_range.start, minimal_range.start
         upper = minimal_range.stop, maximal_range.stop
@@ -135,20 +171,27 @@ class RangedSegment:
           This will try to grow definite area but shrink probable area.
         If probable areas of given segments do not overlap, `None` will be returned.
         If definite areas of given segments do not overlap,
-        the definite area of resulting segment will cover all of them.
+        the definite area of resulting segment will try to cover all of them,
+         but the same time not to go beyond the edges of probable area.
         """
-        minimal_ranges = [rs.minimal_range() for rs in others if rs]
-        maximal_ranges = [rs.maximal_range() for rs in others if rs]
+        # others = [rs.with_materialized_ranges() for rs in others if rs]  # ???
+
+        minimal_ranges = [rs.minimal_range() for rs in others]
+        maximal_ranges = [rs.maximal_range() for rs in others]
 
         minimal_range = self.minimal_range().union_limited(*minimal_ranges)
         maximal_range = self.maximal_range().intersect(*maximal_ranges)
 
-        if minimal_range is None or maximal_range is None:
+        if not minimal_range or not maximal_range:
             # Empty intersection.
             return None
 
-        # Adjust intersected maximal range, so it will not fall inside the minimal one.
-        maximal_range = maximal_range.union(minimal_range)
+        # Adjust intersected minimal range, so it will not go beyond the maximal range.
+        minimal_range = minimal_range.intersect(maximal_range)
+
+        if not minimal_range:
+            # Empty intersection.
+            return None
 
         lower = maximal_range.start, minimal_range.start
         upper = minimal_range.stop, maximal_range.stop

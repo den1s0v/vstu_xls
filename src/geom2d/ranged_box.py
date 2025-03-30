@@ -72,17 +72,21 @@ class RangedBox:
             )
         )
 
-    def intersect(self, other: 'RangedBox') -> 'RangedBox':
-        return RangedBox(
-            self.rx.intersect(other.rx),
-            self.ry.intersect(other.ry),
-        )
+    def intersect(self, other: 'RangedBox') -> 'RangedBox | None':
+        rx = self.rx.intersect(other.rx)
+        ry = self.ry.intersect(other.ry)
+        return RangedBox(rx, ry) if rx and ry else None
 
     def union(self, other: 'RangedBox') -> 'RangedBox':
         return RangedBox(
             self.rx.union(other.rx),
             self.ry.union(other.ry),
         )
+
+    def combine(self, other: 'RangedBox') -> 'RangedBox | None':
+        rx = self.rx.combine(other.rx)
+        ry = self.ry.combine(other.ry)
+        return RangedBox(rx, ry) if rx and ry else None
 
     def project(self, direction: str = 'h') -> RangedSegment:
         """ direction: 'h' - horizontal or 'v' - vertical """

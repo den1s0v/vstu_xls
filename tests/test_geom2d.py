@@ -474,6 +474,9 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(open_range(None, None),
                          open_range(None, None).intersect(open_range(None, None)))
 
+        self.assertEqual(open_range(50, 60),
+                         open_range(40, 60).intersect(open_range(50, None)))
+
     def test_union(self):
         self.assertEqual(open_range(1, 1),
                          open_range(1, 1).union(open_range(1, 1)))
@@ -550,12 +553,12 @@ class RangedSegmentTestCase(unittest.TestCase):
 
         rs = RangedSegment((0, 5), (None, None), validate=True)
         self.assertEqual(open_range(0, 5), rs.a)
-        self.assertEqual(open_range(5, None), rs.b)
+        self.assertEqual(open_range(None, None), rs.b)
         rs.minimal_range()  # No exception.
 
         rs = RangedSegment((None, 5), (None, None), validate=True)
         self.assertEqual(open_range(None, 5), rs.a)
-        self.assertEqual(open_range(5, None), rs.b)
+        self.assertEqual(open_range(None, None), rs.b)
         rs.minimal_range()  # No exception.
 
         # No clamping ↓
@@ -637,7 +640,7 @@ class RangedSegmentTestCase(unittest.TestCase):
 
         self.assertEqual(RangedSegment((10, 10), (15, 15)), r1.intersect(r2))
         self.assertEqual(RangedSegment((5, 5), (20, 20)), r1.union(r2))
-        self.assertEqual(RangedSegment((5, 5), (20, 20)), r1.combine(r2))
+        self.assertEqual(RangedSegment((10, 10), (15, 15)), r1.combine(r2))
 
         r1 = RangedSegment((0, 5), (15, 20))
         r2 = RangedSegment((5, 10), (20, 25))
@@ -696,11 +699,27 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
         self.assertEqual(RangedSegment((0, 0), (22, 22)), r1.combine(r2))
 
+    def test_intersect_union_combine_3(self):
+        # TODO
+        r1 = RangedSegment((30, 40), (60, 70))
+        r2 = RangedSegment((50, 50), (None, None),
+                           # validate=False
+                           )
+
+        self.assertEqual(
+                RangedSegment((50, 50), (60, 70)),
+            r1.intersect(r2))
+        self.assertEqual(
+                RangedSegment((30, 40), (None, None)),
+            r1.union(r2))
+        self.assertEqual(
+                RangedSegment((50, 50), (60, 70)),
+            r1.combine(r2))
+
 
 class RangedBoxTestCase(unittest.TestCase):
-    def test_1(self):
+    def test_init(self):
         b = RangedBox((10, 20), (3, 5))
-        # r = RangedBox((10, 20), (3, 5))
 
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.to_box())
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.minimal_box())
@@ -709,14 +728,24 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(RangedSegment(10, 20), b.project('h'))
         self.assertEqual(RangedSegment(3, 5), b.project('v'))
 
-    def test_intersect_union(self):
+        b = RangedBox(
+            RangedSegment((0, 10), (20, 30)),
+            RangedSegment((1, 3), (5, 7)))
+
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.minimal_box())
+        self.assertEqual(Box.from_2points(0, 1, 30, 7), b.maximal_box())
+
+        self.assertEqual(RangedSegment((0, 10), (20, 30)), b.project('h'))
+        self.assertEqual(RangedSegment((1, 3), (5, 7)), b.project('v'))
+
+    def test_intersect_union_combine(self):
         b = RangedBox((10, 20), (3, 5))
         r = RangedBox((10, 20), (3, 5))
 
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.intersect(r).to_box())
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.union(r).to_box())
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.combine(r).to_box())
 
-    def test_intersect_union_2(self):
         b = RangedBox((10, 20), (3, 15))
         r = RangedBox((12, 22), (13, 25))
 
@@ -726,7 +755,263 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(RangedBox(
             (10, 22), (3, 25)),
             b.union(r))
+        self.assertEqual(RangedBox(
+            (12, 20), (13, 15)),
+            b.combine(r))
 
+        b = RangedBox((10, 20), (3, 15))
+        r = RangedBox((20, 22), (15, 25))
+
+        self.assertEqual(RangedBox(
+            (20, 20), (15, 15)),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+            (10, 22), (3, 25)),
+            b.union(r))
+        self.assertEqual(RangedBox(
+            (20, 20), (15, 15)),
+            b.combine(r))
+
+        b = RangedBox((10, 18), (3, 12))
+        r = RangedBox((20, 22), (15, 25))
+
+        self.assertEqual(None, b.intersect(r))
+        self.assertEqual(RangedBox(
+            (10, 22), (3, 25)),
+            b.union(r))
+        self.assertEqual(None, b.combine(r))
+
+    def test_intersect_union_combine_unrestricted(self):
+        # unrestricted maximal / outer / probable ranges...
+        # equal
+        b = RangedBox(
+            RangedSegment((None, 10), (20, None)),
+            RangedSegment((None, 3), (5, None)))
+        r = RangedBox(
+            RangedSegment((None, 10), (20, None)),
+            RangedSegment((None, 3), (5, None)))
+
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (20, None)),
+                RangedSegment((None, 3), (5, None))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (20, None)),
+                RangedSegment((None, 3), (5, None))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (20, None)),
+                RangedSegment((None, 3), (5, None))),
+            b.combine(r))
+
+        # overlap
+        b = RangedBox(
+            RangedSegment((None, 10), (20, None)),
+            RangedSegment((None, 3), (7, None)))
+        r = RangedBox(
+            RangedSegment((None, 15), (25, None)),
+            RangedSegment((None, 5), (9, None)))
+
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 15), (20, None)),
+                RangedSegment((None, 5), (7, None))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (25, None)),
+                RangedSegment((None, 3), (9, None))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (25, None)),
+                RangedSegment((None, 3), (9, None))),
+            b.combine(r))
+
+        # touch at a point
+        b = RangedBox(
+            RangedSegment((None, 10), (20, None)),
+            RangedSegment((None, 3), (7, None)))
+        r = RangedBox(
+            RangedSegment((None, 20), (25, None)),
+            RangedSegment((None, 7), (9, None)))
+
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 20), (20, None)),
+                RangedSegment((None, 7), (7, None))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (25, None)),
+                RangedSegment((None, 3), (9, None))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (25, None)),
+                RangedSegment((None, 3), (9, None))),
+            b.combine(r))
+
+        # not connected
+        b = RangedBox(
+            RangedSegment((None, 10), (12, None)),
+            RangedSegment((None, 3), (4, None)))
+        r = RangedBox(
+            RangedSegment((None, 20), (25, None)),
+            RangedSegment((None, 7), (9, None)))
+
+        self.assertEqual(None,
+                         b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (25, None)),
+                RangedSegment((None, 3), (9, None))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((None, 10), (25, None)),
+                RangedSegment((None, 3), (9, None))),
+            b.combine(r))
+
+    def test_intersect_union_combine_inner_unset(self):
+        # unrestricted minimal / inner / definite ranges...
+        # equal
+        b = RangedBox(
+            RangedSegment((10, None), (None, 20)),
+            RangedSegment((3, None), (None, 5)))
+        r = RangedBox(
+            RangedSegment((10, None), (None, 20)),
+            RangedSegment((3, None), (None, 5)))
+
+        # inner range was trimmed:
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 10), (20, 20)),
+                RangedSegment((3, 3), (5, 5))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 10), (20, 20)),
+                RangedSegment((3, 3), (5, 5))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 10), (20, 20)),
+                RangedSegment((3, 3), (5, 5))),
+            b.combine(r))
+
+        # overlap
+        b = RangedBox(
+            RangedSegment((10, None), (None, 20)),
+            RangedSegment((3, None), (None, 7)))
+        r = RangedBox(
+            RangedSegment((15, None), (None, 25)),
+            RangedSegment((5, None), (None, 9)))
+
+        # inner range was trimmed:
+        self.assertEqual(RangedBox(
+                RangedSegment((15, 15), (20, 20)),
+                RangedSegment((5, 5), (7, 7))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 10), (25, 25)),
+                RangedSegment((3, 3), (9, 9))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((15, 15), (20, 20)),
+                RangedSegment((5, 5), (7, 7))),
+            b.combine(r))
+
+        # touch at a point
+        b = RangedBox(
+            RangedSegment((10, None), (None, 15)),
+            RangedSegment((3, None), (None, 6)))
+        r = RangedBox(
+            RangedSegment((15, None), (None, 25)),
+            RangedSegment((6, None), (None, 9)))
+
+        # inner range was trimmed:
+        self.assertEqual(RangedBox(
+                RangedSegment((15, 15), (15, 15)),
+                RangedSegment((6, 6), (6, 6))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 10), (25, 25)),
+                RangedSegment((3, 3), (9, 9))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((15, 15), (15, 15)),
+                RangedSegment((6, 6), (6, 6))),
+            b.combine(r))
+
+        # not connected
+        b = RangedBox(
+            RangedSegment((10, None), (None, 14)),
+            RangedSegment((3, None), (None, 5)))
+        r = RangedBox(
+            RangedSegment((14, None), (None, 25)),
+            RangedSegment((6, None), (None, 9)))
+
+        self.assertEqual(None,
+                         b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 10), (25, 25)),
+                RangedSegment((3, 3), (9, 9))),
+            b.union(r))
+        self.assertEqual(None,
+                         b.combine(r))
+
+    def test_intersect_union_combine_outer_cross(self):
+        # two far areas look outside and their looks cross
+        # look down & right
+        b = RangedBox(
+            RangedSegment((30, 40), (60, 70)),
+            RangedSegment((0, None), (None, None)))
+        r = RangedBox(
+            RangedSegment((0, None), (None, None)),
+            RangedSegment((5, 10), (20, 25)))
+
+        self.assertEqual(RangedBox(
+                RangedSegment((30, 40), (60, 70)),
+                RangedSegment((5, 10), (20, 25))),
+            b.intersect(r))
+        # inner range was trimmed:
+        self.assertEqual(RangedBox(
+                RangedSegment((0, 0), (None, None)),
+                RangedSegment((0, 0), (None, None))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((30, 40), (60, 70)),
+                RangedSegment((5, 10), (20, 25))),
+                # RangedSegment((30, 30), (60, 70)),
+                # RangedSegment((5, 5), (20, 25))),
+            b.combine(r))
+
+    def test_intersect_union_combine_outer_cross_2(self):
+        # the look to right starts at 50, covering other area partially
+        b = RangedBox(
+            RangedSegment((30, 40), (60, 70)),
+            RangedSegment((0, None), (None, None)))
+        r = RangedBox(
+            RangedSegment((50, None), (None, None)),
+            RangedSegment((5, 10), (20, 25)))
+
+        self.assertEqual(RangedBox(
+                RangedSegment((50, 50), (60, 70)),
+                RangedSegment((5, 10), (20, 25))),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((30, 40), (None, None)),
+                RangedSegment((0, 0), (None, None))),
+            b.union(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((50, 50), (60, 70)),
+                RangedSegment((5, 10), (20, 25))),
+            b.combine(r))
+
+        # the look to right starts at 100, not covering other area at all
+        b = RangedBox(
+            RangedSegment((30, 40), (60, 70)),
+            RangedSegment((0, None), (None, None)))
+        r = RangedBox(
+            RangedSegment((100, None), (None, None)),
+            RangedSegment((5, 10), (20, 25)))
+
+        self.assertEqual(None, b.intersect(r))
+        self.assertEqual(RangedBox(
+                RangedSegment((30, 40), (None, None)),
+                RangedSegment((0, 0), (None, None))),
+            b.union(r))
+        self.assertEqual(None, b.combine(r))
 
 
 if __name__ == '__main__':

@@ -198,6 +198,10 @@ class open_range:
         """ Check if the range is infinite (i.e. at least one side is None) """
         return not self._range
 
+    def is_double_open(self) -> bool:
+        """ Check if the range is infinite in both directions """
+        return self.start is None and self.stop is None
+
     def is_point(self) -> bool:
         """ Check if the range is finite and has the length of 0 """
         return self.start is not None and self.start == self.stop
