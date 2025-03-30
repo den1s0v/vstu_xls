@@ -96,7 +96,7 @@ class RangedSegment:
 
     def intersect(self, *others: 'RangedSegment') -> 'RangedSegment | None':
         """Find intersection of both definite & probable areas.
-        If nothing is found in common for definite area, `None` is returned. """
+        If nothing is found in common for definite area, `None` will be returned. """
         minimal_ranges = [rs.minimal_range() for rs in others]
         maximal_ranges = [rs.maximal_range() for rs in others]
 
@@ -120,6 +120,31 @@ class RangedSegment:
 
         minimal_range = self.minimal_range().union(*minimal_ranges)
         maximal_range = self.maximal_range().union(*maximal_ranges)
+
+        lower = maximal_range.start, minimal_range.start
+        upper = minimal_range.stop, maximal_range.stop
+
+        return type(self)(lower, upper)
+
+    def combine(self, *others: 'RangedSegment') -> 'RangedSegment | None':
+        """Find combination to obtain a more well-defined segment.
+          This will try to grow definite area but shrink probable area.
+        If probable areas of given segments do not overlap, `None` will be returned.
+        If definite areas of given segments do not overlap,
+        the definite area of resulting segment will cover all of them.
+        """
+        minimal_ranges = [rs.minimal_range() for rs in others]
+        maximal_ranges = [rs.maximal_range() for rs in others]
+
+        minimal_range = self.minimal_range().union_limited(*minimal_ranges)
+        maximal_range = self.maximal_range().intersect(*maximal_ranges)
+
+        if minimal_range is None or maximal_range is None:
+            # Empty intersection.
+            return None
+
+        # Adjust intersected maximal range, so it will not fall inside the minimal one.
+        maximal_range = maximal_range.union(minimal_range)
 
         lower = maximal_range.start, minimal_range.start
         upper = minimal_range.stop, maximal_range.stop

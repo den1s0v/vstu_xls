@@ -229,6 +229,14 @@ class open_range:
                   ),
         )
 
+    def union_limited(self, *others: 'open_range') -> 'open_range':
+        """ This version of `union` does not grow the result for infinite (`None`) sides treating them as unknown. """
+        ranges = [self, *others]
+        return open_range(
+            start=min((x.start for x in ranges if x.start is not None), default=None),
+            stop=max((x.stop for x in ranges if x.stop is not None), default=None),
+        )
+
     def trimmed_at_left(self, value: int | None) -> 'open_range | None':
         if value is None:
             return self

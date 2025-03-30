@@ -500,6 +500,32 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(open_range(None, None),
                          open_range(None, None).union(open_range(None, None)))
 
+    def test_union_limited(self):
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, 1).union_limited(open_range(1, 1)))
+        self.assertEqual(open_range(1, 2),
+                         open_range(1, 2).union_limited(open_range(1, 2)))
+
+        self.assertEqual(open_range(0, 2),
+                         open_range(1, 2).union_limited(open_range(0, 1)))
+        self.assertEqual(open_range(0, 2),
+                         open_range(0, 2).union_limited(open_range(1, 1)))
+
+        self.assertEqual(open_range(0, 1),
+                         open_range(1, None).union_limited(open_range(0, 1)))
+        self.assertEqual(open_range(1, 2),
+                         open_range(1, 2).union_limited(open_range(None, 1)))
+        self.assertEqual(open_range(1, 1),
+                         open_range(None, None).union_limited(open_range(1, 1)))
+        # →←
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, None).union_limited(open_range(None, 1)))
+        self.assertEqual(open_range(1, 10),
+                         open_range(1, None).union_limited(open_range(None, 10)))
+
+        self.assertEqual(open_range(None, None),
+                         open_range(None, None).union_limited(open_range(None, None)))
+
 
 class RangedSegmentTestCase(unittest.TestCase):
 
@@ -605,61 +631,70 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertIn(15, rs.maximal_range())
         self.assertIn(9999, rs.maximal_range())
 
-    def test_intersect_union(self):
+    def test_intersect_union_combine(self):
         r1 = RangedSegment((5, 5), (15, 15))
         r2 = RangedSegment((10, 10), (20, 20))
 
         self.assertEqual(RangedSegment((10, 10), (15, 15)), r1.intersect(r2))
         self.assertEqual(RangedSegment((5, 5), (20, 20)), r1.union(r2))
+        self.assertEqual(RangedSegment((5, 5), (20, 20)), r1.combine(r2))
 
         r1 = RangedSegment((0, 5), (15, 20))
         r2 = RangedSegment((5, 10), (20, 25))
 
         self.assertEqual(RangedSegment((5, 10), (15, 20)), r1.intersect(r2))
         self.assertEqual(RangedSegment((0, 5), (20, 25)), r1.union(r2))
+        self.assertEqual(RangedSegment((5, 5), (20, 20)), r1.combine(r2))
 
         r1 = RangedSegment((0, 0), (0, 0))
         r2 = RangedSegment((0, 0), (0, 0))
 
         self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.intersect(r2))
         self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.union(r2))
+        self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.combine(r2))
 
         r1 = RangedSegment((0, 0), (0, 0))
         r2 = RangedSegment((None, None), (None, None))
 
         self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.intersect(r2))
         self.assertEqual(RangedSegment((None, None), (None, None)), r1.union(r2))
+        self.assertEqual(RangedSegment((0, 0), (0, 0)), r1.combine(r2))
 
         r1 = RangedSegment((0, 0), (0, 0))
         r2 = RangedSegment((22, 22), (22, 22))
 
         self.assertEqual(None, r1.intersect(r2))
         self.assertEqual(RangedSegment((0, 0), (22, 22)), r1.union(r2))
+        self.assertEqual(None, r1.combine(r2))
 
         r1 = RangedSegment((None, 0), (0, 0))
         r2 = RangedSegment((22, 22), (22, None))
 
         self.assertEqual(None, r1.intersect(r2))
         self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
+        self.assertEqual(None, r1.combine(r2))
 
         r1 = RangedSegment((None, None), (None, None))
         r2 = RangedSegment((None, None), (None, None))
 
         self.assertEqual(RangedSegment((None, None), (None, None)), r1.intersect(r2))
         self.assertEqual(RangedSegment((None, None), (None, None)), r1.union(r2))
+        self.assertEqual(RangedSegment((None, None), (None, None)), r1.combine(r2))
 
-    def test_intersect_union_2(self):
+    def test_intersect_union_combine_2(self):
         r1 = RangedSegment((0, 0), (0, None))
         r2 = RangedSegment((None, 22), (22, 22))
 
         self.assertEqual(None, r1.intersect(r2))
         self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
+        self.assertEqual(RangedSegment((0, 0), (22, 22)), r1.combine(r2))
 
         r1 = RangedSegment((0, 0), (11, None))
         r2 = RangedSegment((None, 11), (22, 22))
 
         self.assertEqual(RangedSegment((0, 11), (11, 22)), r1.intersect(r2))
         self.assertEqual(RangedSegment((None, 0), (22, None)), r1.union(r2))
+        self.assertEqual(RangedSegment((0, 0), (22, 22)), r1.combine(r2))
 
 
 class RangedBoxTestCase(unittest.TestCase):
