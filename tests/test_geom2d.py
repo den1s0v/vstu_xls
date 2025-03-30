@@ -1013,6 +1013,52 @@ class RangedBoxTestCase(unittest.TestCase):
             b.union(r))
         self.assertEqual(None, b.combine(r))
 
+    def test_combine_several_1(self):
+        # imitate combining of 4 elements into one match
+        #  each element is a corner
+        lt = RangedBox(
+            RangedSegment((10, 11), (12, None)),
+            RangedSegment((20, 21), (22, None)))
+        rt = RangedBox(
+            RangedSegment((None, 89), (90, 91)),
+            RangedSegment((20, 21), (22, None)))
+        lb = RangedBox(
+            RangedSegment((10, 11), (12, None)),
+            RangedSegment((None, 79), (80, 81)))
+        rb = RangedBox(
+            RangedSegment((None, 89), (90, 91)),
+            RangedSegment((None, 79), (80, 81)))
+
+        res = RangedBox.combine_many(lt, rt, lb, rb)
+
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 11), (90, 91)),
+                RangedSegment((20, 21), (80, 81))),
+            res)
+
+    def test_combine_several_2(self):
+        # imitate combining of 4 elements into one match
+        # each element defines only one side
+        L = RangedBox(
+            RangedSegment((10, 11), (12, None)),
+            RangedSegment())
+        t = RangedBox(
+            RangedSegment(),
+            RangedSegment((20, 21), (22, None)))
+        r = RangedBox(
+            RangedSegment((None, 89), (90, 91)),
+            RangedSegment())
+        b = RangedBox(
+            RangedSegment(),
+            RangedSegment((None, 79), (80, 81)))
+
+        res = RangedBox.combine_many(L, t, r, b)
+
+        self.assertEqual(RangedBox(
+                RangedSegment((10, 11), (90, 91)),
+                RangedSegment((20, 21), (80, 81))),
+            res)
+
 
 if __name__ == '__main__':
     unittest.main()

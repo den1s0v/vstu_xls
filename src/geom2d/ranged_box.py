@@ -1,4 +1,5 @@
 # ranged_box.py
+from functools import reduce
 
 from geom2d.ranged_segment import RangedSegment
 from geom2d.open_range import open_range
@@ -84,9 +85,16 @@ class RangedBox:
         )
 
     def combine(self, other: 'RangedBox') -> 'RangedBox | None':
+        if not other or not self:
+            return None
         rx = self.rx.combine(other.rx)
         ry = self.ry.combine(other.ry)
         return RangedBox(rx, ry) if rx and ry else None
+
+    def combine_many(self, *others: 'RangedBox') -> 'RangedBox | None':
+        # f = RangedBox.combine
+        f = type(self).combine
+        return reduce(f, others, self)
 
     def project(self, direction: str = 'h') -> RangedSegment:
         """ direction: 'h' - horizontal or 'v' - vertical """
@@ -148,3 +156,8 @@ class RangedBox:
 
     def __repr__(self):
         return f"RangedBox(rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}))"
+
+    def __bool__(self):
+        """ If the box exists it should be always treated as True. """
+        return True
+
