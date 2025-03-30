@@ -80,6 +80,10 @@ class open_range:
 
         raise ValueError(f'Cannot get length of infinite open_range')
 
+    def __bool__(self):
+        """ If range exists it should be always treated as True. """
+        return True
+
     def __eq__(self, other):
         if isinstance(other, range):
             return self.start == other.start and self.stop == other.stop - 1

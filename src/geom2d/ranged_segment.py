@@ -4,7 +4,7 @@ from geom2d.open_range import open_range
 
 
 class RangedSegment:
-    """ 1D segment having open_range as each end, i.e. actual range may not be clearly determined. """
+    """ Открытый отрезок. 1D segment having open_range as each end, i.e. actual range may be not clearly determined. """
     a: open_range
     b: open_range
 
@@ -40,6 +40,10 @@ class RangedSegment:
         elif lower > upper:
             raise ValueError(f'RangedSegment cannot be created using inverse ranges. Got: {lower!r}, {upper!r}.')
         return lower, upper
+
+    def __bool__(self):
+        """ If segment exists it should be always treated as True. """
+        return True
 
     def __str__(self) -> str:
         """Get human-readable representation """
@@ -94,11 +98,11 @@ class RangedSegment:
         except AttributeError:
             pass
 
-    def intersect(self, *others: 'RangedSegment') -> 'RangedSegment | None':
+    def intersect(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
         """Find intersection of both definite & probable areas.
         If nothing is found in common for definite area, `None` will be returned. """
-        minimal_ranges = [rs.minimal_range() for rs in others]
-        maximal_ranges = [rs.maximal_range() for rs in others]
+        minimal_ranges = [rs.minimal_range() for rs in others if rs]
+        maximal_ranges = [rs.maximal_range() for rs in others if rs]
 
         minimal_range = self.minimal_range().intersect(*minimal_ranges)
         maximal_range = self.maximal_range().intersect(*maximal_ranges)
@@ -112,11 +116,11 @@ class RangedSegment:
 
         return type(self)(lower, upper)
 
-    def union(self, *others: 'RangedSegment') -> 'RangedSegment':
+    def union(self, *others: 'RangedSegment | None') -> 'RangedSegment':
         """Find union of both definite & probable areas.
         If given segments do not overlap, the minimal segment covering all of them is returned. """
-        minimal_ranges = [rs.minimal_range() for rs in others]
-        maximal_ranges = [rs.maximal_range() for rs in others]
+        minimal_ranges = [rs.minimal_range() for rs in others if rs]
+        maximal_ranges = [rs.maximal_range() for rs in others if rs]
 
         minimal_range = self.minimal_range().union(*minimal_ranges)
         maximal_range = self.maximal_range().union(*maximal_ranges)
@@ -126,15 +130,15 @@ class RangedSegment:
 
         return type(self)(lower, upper)
 
-    def combine(self, *others: 'RangedSegment') -> 'RangedSegment | None':
+    def combine(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
         """Find combination to obtain a more well-defined segment.
           This will try to grow definite area but shrink probable area.
         If probable areas of given segments do not overlap, `None` will be returned.
         If definite areas of given segments do not overlap,
         the definite area of resulting segment will cover all of them.
         """
-        minimal_ranges = [rs.minimal_range() for rs in others]
-        maximal_ranges = [rs.maximal_range() for rs in others]
+        minimal_ranges = [rs.minimal_range() for rs in others if rs]
+        maximal_ranges = [rs.maximal_range() for rs in others if rs]
 
         minimal_range = self.minimal_range().union_limited(*minimal_ranges)
         maximal_range = self.maximal_range().intersect(*maximal_ranges)
