@@ -45,8 +45,9 @@ class Box:
         return hash(self._tuple)
 
     def __eq__(self, other: 'Box'):
-
-        return hasattr(other, '_tuple') and self._tuple.__eq__(other._tuple)
+        if hasattr(other, '_tuple'):
+            return self._tuple.__eq__(other._tuple)
+        return other == self
 
     def __ne__(self, other):
         return not self == other

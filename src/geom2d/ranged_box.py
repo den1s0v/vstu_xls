@@ -137,5 +137,12 @@ class RangedBox:
             'bottom': self.bottom,
         }
 
+    def __eq__(self, other):
+        if isinstance(other, Box):
+            other = self.from_box(other)
+        if isinstance(other, type(self)):
+            return self.rx == other.rx and self.ry == other.ry
+        return False
+
     def __repr__(self):
         return f"RangedBox(x={self.left}, y={self.top}, w={self.width}, h={self.height})"
