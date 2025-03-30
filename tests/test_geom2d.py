@@ -512,22 +512,22 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertEqual(open_range(0, 5), rs.a)
         self.assertEqual(open_range(5, 10), rs.b)
 
-        rs = RangedSegment((0, None), (5, 10))
+        rs = RangedSegment((0, None), (5, 10), validate=True)
         self.assertEqual(open_range(0, 5), rs.a)
         self.assertEqual(open_range(5, 10), rs.b)
         rs.minimal_range()  # No exception.
 
-        rs = RangedSegment((0, 5), (None, 10))
+        rs = RangedSegment((0, 5), (None, 10), validate=True)
         self.assertEqual(open_range(0, 5), rs.a)
         self.assertEqual(open_range(5, 10), rs.b)
         rs.minimal_range()  # No exception.
 
-        rs = RangedSegment((0, 5), (None, None))
+        rs = RangedSegment((0, 5), (None, None), validate=True)
         self.assertEqual(open_range(0, 5), rs.a)
         self.assertEqual(open_range(5, None), rs.b)
         rs.minimal_range()  # No exception.
 
-        rs = RangedSegment((None, 5), (None, None))
+        rs = RangedSegment((None, 5), (None, None), validate=True)
         self.assertEqual(open_range(None, 5), rs.a)
         self.assertEqual(open_range(5, None), rs.b)
         rs.minimal_range()  # No exception.
@@ -538,16 +538,13 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertEqual(open_range(None, None), rs.b)
         rs.minimal_range()  # No exception.
 
-        # xfail TODO
+    @unittest.expectedFailure
+    def test_detect_invalid_range_1(self):
+        rs = RangedSegment((20, 25), (5, 10), validate=True)
 
     @unittest.expectedFailure
-    def test_detect_inalid_range_1(self):
-        rs = RangedSegment((20, 25), (5, 10))
-
-    @unittest.expectedFailure
-    def test_detect_inalid_range_2(self):
-        rs = RangedSegment((20, 20), (19, 19))
-
+    def test_detect_invalid_range_2(self):
+        rs = RangedSegment((20, 20), (19, 19), validate=True)
 
     def test_point(self):
         rs = RangedSegment(5, 5)

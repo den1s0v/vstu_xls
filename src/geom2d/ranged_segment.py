@@ -10,9 +10,22 @@ class RangedSegment:
 
     def __init__(self,
                  lower: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
-                 upper: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None):
+                 upper: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
+                 validate=False):
         lower = open_range.make(lower)
         upper = open_range.make(upper)
+
+        assert isinstance(validate, bool), f"RangedSegment's `validate` param must be True or False, got: {validate!r}."
+        if validate:
+            lower, upper = self.validate_ranges(lower, upper)
+
+        self.a = lower
+        self.b = upper
+
+    @staticmethod
+    def validate_ranges(lower, upper) -> tuple[open_range, open_range]:
+        """ Validate input ranges on RangedSegment creation.
+         Raises ValueError or adjusts ranges as needed. """
 
         intersection = lower.intersect(upper)
         if intersection is not None and not intersection.is_point():
@@ -26,9 +39,7 @@ class RangedSegment:
                 raise ValueError(f'RangedSegment cannot be created without valid range in the middle. Got: {lower!r}, {upper!r}.')
         elif lower > upper:
             raise ValueError(f'RangedSegment cannot be created using inverse ranges. Got: {lower!r}, {upper!r}.')
-
-        self.a = lower
-        self.b = upper
+        return lower, upper
 
     def __str__(self) -> str:
         """Get human-readable representation """
@@ -61,7 +72,9 @@ class RangedSegment:
         return False
 
     @classmethod
-    def make(cls, value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | RangedSegment' = None) -> 'RangedSegment':
+    def make(cls,
+             value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | RangedSegment' = None,
+             validate=False) -> 'RangedSegment':
         """ Universal single-value factory method.
              If a number is given, returns a zero-length segment.
              If a range is given, returns a deterministic segment from it.
@@ -77,7 +90,7 @@ class RangedSegment:
             it = iter(value)
             values = [t[0] for t in zip(it, range(2))]  # take up to 2 items
             assert len(values) == 2, f"Expected an iterable of exactly 2 items in RangedSegment.make(), got {values!r}"
-            return cls(*values)
+            return cls(*values, validate=validate)
         except AttributeError:
             pass
 
