@@ -1059,6 +1059,48 @@ class RangedBoxTestCase(unittest.TestCase):
                 RangedSegment((20, 21), (80, 81))),
             res)
 
+    def test_combine_several_3(self):
+        # imitate combining of 4 elements into one match
+        # each element defines only one side
+        # BUT nothing should match as horizontal items do not overlap
+        L = RangedBox(
+            RangedSegment((100, 101), (102, None)),
+            RangedSegment())
+        t = RangedBox(
+            RangedSegment(),
+            RangedSegment((20, 21), (22, None)))
+        r = RangedBox(
+            RangedSegment((None, 89), (90, 91)),
+            RangedSegment())
+        b = RangedBox(
+            RangedSegment(),
+            RangedSegment((None, 79), (80, 81)))
+
+        res = RangedBox.combine_many(L, t, r, b)
+
+        self.assertIsNone(res)
+
+    def test_combine_several_4(self):
+        # imitate combining of 4 elements into one match
+        # each element defines only one side
+        # BUT nothing should match as vertical items do not overlap
+        L = RangedBox(
+            RangedSegment((10, 11), (12, None)),
+            RangedSegment())
+        t = RangedBox(
+            RangedSegment(),
+            RangedSegment((200, 201), (202, None)))
+        r = RangedBox(
+            RangedSegment((None, 89), (90, 91)),
+            RangedSegment())
+        b = RangedBox(
+            RangedSegment(),
+            RangedSegment((None, 79), (80, 81)))
+
+        res = RangedBox.combine_many(L, t, r, b)
+
+        self.assertIsNone(res)
+
 
 if __name__ == '__main__':
     unittest.main()
