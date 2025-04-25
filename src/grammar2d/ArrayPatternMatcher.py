@@ -63,7 +63,7 @@ class ArrayPatternMatcher(PatternMatcher):
                 matches_as_rows = self._find_lines(occurrences, 'row')
                 matches_as_columns = self._find_lines(occurrences, 'column')
                 # exclude any empty variant
-                variants: list[list[Match2d]] = filter(None, [matches_as_rows, matches_as_columns])
+                variants: list[list[Match2d]] = list(filter(None, [matches_as_rows, matches_as_columns]))
                 # get the variant having less clusters
                 return min(variants, key=len, default=[])
 
@@ -122,7 +122,7 @@ class ArrayPatternMatcher(PatternMatcher):
         return matches
 
     def _find_fill_groups(self, boxes: list[Box]) -> list[list[Box]]:
-        """ Find  connected clusters of arbitrary form without restriction on direction
+        """ Find connected clusters of arbitrary form without restriction on direction
         (a cluster may look like an oval or a snake, for instance).
         Pattern's `gap` determines a valid manhattan's distance between cluster's members.
         Note that current implementation does not check if the members are aligned with each other or not;

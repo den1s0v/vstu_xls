@@ -10,7 +10,7 @@ from grammar2d.PatternComponent import PatternComponent
 
 
 @PatternRegistry.register
-@dataclass(kw_only=True, repr=True)
+@dataclass(kw_only=True)
 class AreaPattern(NonTerminal):
     """Структура из элементов разного типа
 
