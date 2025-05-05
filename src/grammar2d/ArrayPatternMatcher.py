@@ -19,13 +19,7 @@ class ArrayPatternMatcher(PatternMatcher):
         item = self.pattern.subpattern
         gm = self.grammar_matcher
 
-        item_occurrences = gm.matches_by_element[item] or []
-
-        if _region:
-            # filter by region
-            item_occurrences = filter(
-                lambda m: m.box in _region,
-                item_occurrences)
+        item_occurrences = gm.get_pattern_matches(item)
 
         if not item_occurrences:
             return []
