@@ -2,9 +2,11 @@ from operator import and_
 from dataclasses import dataclass
 from functools import reduce
 
-from constraints_2d import SpatialConstraint
+from constraints_2d import SpatialConstraint, LocationConstraint
 from geom2d import open_range
+from geom2d.ranged_box import RangedBox
 import grammar2d.Grammar as ns
+import grammar2d.Match2d as m2
 import grammar2d.Pattern2d as pt
 from utils import WithCache, WithSafeCreate
 
@@ -17,7 +19,7 @@ class PatternComponent(WithCache, WithSafeCreate):
         Точность определения этого компонента вносит вклад в точность определения родительского элемента
         (объём вклада также зависит от `weight`).
         Компонент может быть опциональным и отсутствовать на практике, —
-            в этом случае он не вносит вклад в точность определения родительского элемента.
+            в последнем случае он не вносит вклад в точность определения родительского элемента.
     """
     name: str  # имя компонента по отношению к родителю.
 
@@ -35,9 +37,9 @@ class PatternComponent(WithCache, WithSafeCreate):
 
     count: open_range = None  # кратность элемента в родителе
 
-    weight: float = 1  # (-∞, ∞) вес компонента для регулирования вклада в точность опредления родителя. >0: наличие желательно, 0: безразлично (компонент может быть опущен без потери точности), <0: наличие нежелательно.
+    weight: float = 1  # (-∞, ∞) вес компонента для регулирования вклада в точность опредления родителя. >0: наличие желательно, 0: безразлично (компонент может быть опущен без потери точности), <0: наличие нежелательно (в этом случае должен быть опциональным!).
 
-    # optional = False  # Если True, компонент считается опциональным и может отсутствовать. Если False, то его наличие обязательно требуется для существования родительского элемента.
+    optional = False  # Если True, компонент считается опциональным и может отсутствовать. Если False, то его наличие обязательно требуется для существования родительского элемента.
 
     # TODO: add type to be recognized as annotation
     precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого компонент считается не найденным.
@@ -68,6 +70,10 @@ class PatternComponent(WithCache, WithSafeCreate):
         return [self.subpattern, *self.subpattern.dependencies(recursive=True)]
 
     # constraints_with_full_names: list[SpatialConstraint] = None
+
+    # @property
+    # def is_optional(self) -> bool:
+    #     return self.weight <= 0
 
     @property
     def global_constraints(self) -> list[SpatialConstraint]:
@@ -101,3 +107,44 @@ class PatternComponent(WithCache, WithSafeCreate):
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
+
+
+    def get_ranged_box_for_parent_location(self, component_match: 'm2.Match2d') -> RangedBox:
+        """Получить ограничения на позицию родителя по известной позиции компонента (ребёнка) и известным ограничениям на позицию ребёнка в родителе.
+
+        Реализовано пока только для LocationConstraint.
+
+        Примеры работы алгоритма.
+        Пусть координаты component_match.box: Box.from_2points(20, 1, 40, 5)
+        
+        {location: left} →
+            RangedBox(
+                rx=(20, '40+'),
+                ry=None
+            )
+
+        {location: right, bottom} →
+            RangedBox(
+                rx=('20-', 40),
+                ry=('1-' , 5),
+            )
+
+        {location:
+          top: 0,         # примыкает кверху,
+          left: '0..1',   # слева и справа может
+          right: '0..2',  # отстоять на 0..2 ячеек (внутрь)
+        } →
+            RangedBox(
+                rx=('19..20', '40..42'),
+                ry=(1, '5+'),
+            )
+
+        Args:
+            component_match (Match2d): позиция компонента (ребёнка). Паттерн этого компонента (`self.pattern`) должен совпадать или быть совместимым с паттерном переданного "матча" (`component_match.pattern`).
+        """
+
+        for constraint in self.constraints:
+            if isinstance(constraint, LocationConstraint):
+                ...
+        
+        ...

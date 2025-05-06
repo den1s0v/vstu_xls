@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from loguru import logger
 
-from geom2d import Box, RIGHT, DOWN, Direction
+from geom2d import Box, Direction, RIGHT, DOWN
 from grammar2d import ArrayPattern
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
@@ -15,6 +15,7 @@ class ArrayPatternMatcher(PatternMatcher):
     pattern: ArrayPattern
 
     def find_all(self, _region: Region = None) -> list[Match2d]:
+        """ Find all matches within whole document. """
         # short aliases
         item = self.pattern.subpattern
         gm = self.grammar_matcher
@@ -47,6 +48,7 @@ class ArrayPatternMatcher(PatternMatcher):
         return matches
 
     def match_exact_region(self, region: Region) -> list[Match2d]:
+        """ Find all matches within given region. """
         return self.find_all(region)
 
     def _find_lines(self, occurrences: list[Match2d], pattern_direction: str = None) -> list[Match2d]:

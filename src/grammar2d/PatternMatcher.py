@@ -17,6 +17,8 @@ class PatternMatcher:
         # raise TypeError(f"Unknown element type: {type(self.element)}")
 
     def match_exact_region(self, region: Region) -> list[Match2d]:
-        """ Find all matches within given region. """
+        """ Find all matches within given region. 
+        TODO: deprecate this, add optional param `region: Region = None` to find_all()
+        """
         pass
         # raise TypeError(f"Unknown element type: {type(self.element)}")

@@ -128,7 +128,7 @@ class WithSafeCreate:
         return kwargs_filtered, kwargs_ignored
 
     @classmethod
-    def safe_create(cls, **kwargs) -> 'new cls':
+    def safe_create(cls, **kwargs) -> type:
         """ Class method to be used with dataclasses
         instead of direct instance creation
         to avoid `Unknown/unsupported keyword argument` errors in a smart way.

@@ -67,8 +67,10 @@ class GrammarMatcher:
         self.matches_by_element[match.pattern].append(match)
 
         # add patterns extended by this too!
+        # for base_pattern in self.grammar.extension_map.get(match.pattern) or ():
         for base_pattern in match.pattern.extends_patterns(recursive=True):
             self.matches_by_element[base_pattern].append(match)
+            # ## print(f' + Registered match for {base_pattern} extended by {match.pattern}')
 
     def _recognise_all_cells_content(self, max_hypotheses_per_cell=5):
 
