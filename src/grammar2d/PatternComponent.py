@@ -128,8 +128,8 @@ class PatternComponent(WithCache, WithSafeCreate):
         Примеры работы алгоритма.
         Пусть координаты component_match.box: Box.from_2points(20, 1, 40, 5)
         
-        Для расположения inner:
-        -----------------------
+    Для расположения inner:
+    -----------------------
         
     1)  {location: left} →
             RangedBox(
@@ -189,12 +189,12 @@ class PatternComponent(WithCache, WithSafeCreate):
             )
 
 
-        Для расположения outer:
-        -----------------------
+    Для расположения outer:
+    -----------------------
 
     1)  {location: left} →
             RangedBox(
-                rx=('*' ,'20-'),
+                rx=('40+', '*'),
                 ry=('*' , '*'),
             )
 
@@ -206,11 +206,11 @@ class PatternComponent(WithCache, WithSafeCreate):
             )
 
     3)  {location:
-            left: 7,  # на строго заданном расстоянии
+            top: 7,  # на строго заданном расстоянии
         } →
             RangedBox(
-                rx=('*' ,'13),
-                ry=('*' , '*'),
+                rx=('*','*'),
+                ry=(12 ,'*'),
             )
 
     4)  {location:
@@ -220,7 +220,30 @@ class PatternComponent(WithCache, WithSafeCreate):
         } →
             RangedBox(
                 rx=('40-', '20+'),
-                ry=('*', '-1..1'),
+                ry=('5..7', '*'),
+            )
+
+    5)  {location: right} →
+            RangedBox(
+                rx=('*', '20-'),
+                ry=('*', '*'),
+            )
+
+    6)  {location:
+          right: '3..10',
+        } →
+            RangedBox(
+                rx=('*', '10..17'),
+                ry=('*', '*'),
+            )
+
+    7)  {location:
+            top: '1-',  # сверху и
+            bottom: '1-', # снизу есть "заступ" внутрь c обязательным пересечением
+        } →
+            RangedBox(
+                rx=('*', '*'),
+                ry=('4-', '2+'),
             )
 
         """
