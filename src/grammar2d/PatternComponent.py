@@ -231,4 +231,4 @@ class PatternComponent(WithCache, WithSafeCreate):
         
         ...  # TODO
 
-        return 123
+        return RangedBox()
