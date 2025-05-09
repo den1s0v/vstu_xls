@@ -131,20 +131,20 @@ class PatternComponent(WithCache, WithSafeCreate):
         Для расположения inner:
         -----------------------
         
-        {location: left} →
+    1)  {location: left} →
             RangedBox(
                 rx=(20  ,'40+'),
                 ry=('1-', '5+'),
             )
 
-        {location: {}  # пустое ограничение: просто внутри
+    2)  {location: {}  # пустое ограничение: просто внутри
         } →
             RangedBox(
                 rx=('20-', '40+'),
                 ry=('1-' , '5+'),
             )
 
-        {location: left, right, bottom
+    3)  {location: left, right, bottom
             # (кратко заданные внутренние стороны равняются 0)
         } →
             RangedBox(
@@ -152,13 +152,13 @@ class PatternComponent(WithCache, WithSafeCreate):
                 ry=('1-', 5),
             )
 
-        {location: right, bottom} →
+    4)  {location: right, bottom} →
             RangedBox(
                 rx=('20-', 40),
                 ry=('1-' , 5),
             )
 
-        {location:
+    5)  {location:
           top: 0,         # примыкает кверху,
           left: '0..1',   # слева и справа может
           right: '0..2',  # отстоять на 0..2 ячеек (внутрь)
@@ -168,7 +168,7 @@ class PatternComponent(WithCache, WithSafeCreate):
                 ry=(1, '5+'),
             )
 
-        {location:
+    6)  {location:
           top: -2,         # выступает ровно на 2 вверх
           right: '-3..3',  # может выступать до 3 наружу
         } →
@@ -177,7 +177,7 @@ class PatternComponent(WithCache, WithSafeCreate):
                 ry=(3, '5+'),
             )
 
-        {location:  # явно сняты все ограничения
+    7)  {location:  # явно сняты все ограничения
           top:    '*',
           left:   '*',
           right:  '*',
@@ -192,20 +192,20 @@ class PatternComponent(WithCache, WithSafeCreate):
         Для расположения outer:
         -----------------------
 
-        {location: left} →
+    1)  {location: left} →
             RangedBox(
                 rx=('*' ,'20-'),
                 ry=('*' , '*'),
             )
 
-        {location: {}  # пустое ограничение: просто внутри
+    2)  {location: {}  # пустое ограничение: просто внутри
         } →
             RangedBox(
                 rx=('*' , '*'),
                 ry=('*' , '*'),
             )
 
-        {location:
+    3)  {location:
             left: 7,  # на строго заданном расстоянии
         } →
             RangedBox(
@@ -213,14 +213,14 @@ class PatternComponent(WithCache, WithSafeCreate):
                 ry=('*' , '*'),
             )
 
-        {location:
-          top: 0,       # примыкает кверху,
+    4)  {location:
+          top: '0..2',  # примыкает сверху с возможным отступом до 2,
           left: '0-',   # слева есть "заступ" внутрь
           right: '0-',  # справа есть "заступ" внутрь
         } →
             RangedBox(
                 rx=('40-', '20+'),
-                ry=('*', 1),
+                ry=('*', '-1..1'),
             )
 
         """
