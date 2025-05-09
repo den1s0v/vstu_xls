@@ -110,17 +110,46 @@ class PatternComponent(WithCache, WithSafeCreate):
 
 
     def get_ranged_box_for_parent_location(self, component_match: 'm2.Match2d') -> RangedBox:
-        """Получить ограничения на позицию родителя по известной позиции компонента (ребёнка) и известным ограничениям на позицию ребёнка в родителе.
+        """Получить ограничения на позицию родителя
+         по известной позиции компонента (ребёнка) и известным ограничениям на позицию ребёнка в родителе.
 
         Реализовано пока только для LocationConstraint.
+
+        Если одна из сторон в location компонента не задана,
+            её диапазон по умолчанию считается равным:
+            - '0+' для внутренних компонентов,
+            - '*' для внешних компонентов.
+
+        Args:
+            component_match (Match2d): позиция компонента (ребёнка).
+                Паттерн этого компонента (`self.pattern`) должен совпадать или быть совместимым с паттерном переданного "матча" (`component_match.pattern`).
+
 
         Примеры работы алгоритма.
         Пусть координаты component_match.box: Box.from_2points(20, 1, 40, 5)
         
+        Для расположения inner:
+        -----------------------
+        
         {location: left} →
             RangedBox(
-                rx=(20, '40+'),
-                ry=None
+                rx=(20  ,'40+'),
+                ry=('1-', '5+'),
+            )
+
+        {location: {}  # пустое ограничение: просто внутри
+        } →
+            RangedBox(
+                rx=('20-', '40+'),
+                ry=('1-' , '5+'),
+            )
+
+        {location: left, right, bottom
+            # (кратко заданные внутренние стороны равняются 0)
+        } →
+            RangedBox(
+                rx=(20  , 40),
+                ry=('1-', 5),
             )
 
         {location: right, bottom} →
@@ -139,12 +168,67 @@ class PatternComponent(WithCache, WithSafeCreate):
                 ry=(1, '5+'),
             )
 
-        Args:
-            component_match (Match2d): позиция компонента (ребёнка). Паттерн этого компонента (`self.pattern`) должен совпадать или быть совместимым с паттерном переданного "матча" (`component_match.pattern`).
+        {location:
+          top: -2,         # выступает ровно на 2 вверх
+          right: '-3..3',  # может выступать до 3 наружу
+        } →
+            RangedBox(
+                rx=('*..20', '37..43'),
+                ry=(3, '5+'),
+            )
+
+        {location:  # явно сняты все ограничения
+          top:    '*',
+          left:   '*',
+          right:  '*',
+          bottom: '*',
+        } →
+            RangedBox(
+                rx=('*', '*'),
+                ry=('*', '*'),
+            )
+
+
+        Для расположения outer:
+        -----------------------
+
+        {location: left} →
+            RangedBox(
+                rx=('*' ,'20-'),
+                ry=('*' , '*'),
+            )
+
+        {location: {}  # пустое ограничение: просто внутри
+        } →
+            RangedBox(
+                rx=('*' , '*'),
+                ry=('*' , '*'),
+            )
+
+        {location:
+            left: 7,  # на строго заданном расстоянии
+        } →
+            RangedBox(
+                rx=('*' ,'13),
+                ry=('*' , '*'),
+            )
+
+        {location:
+          top: 0,       # примыкает кверху,
+          left: '0-',   # слева есть "заступ" внутрь
+          right: '0-',  # справа есть "заступ" внутрь
+        } →
+            RangedBox(
+                rx=('40-', '20+'),
+                ry=('*', 1),
+            )
+
         """
 
         for constraint in self.constraints:
             if isinstance(constraint, LocationConstraint):
                 ...
         
-        ...
+        ...  # TODO
+
+        return 123
