@@ -11,7 +11,7 @@ class PatternMatcher:
     pattern: 'pt.Pattern2d'
     grammar_matcher: 'ns.GrammarMatcher'
 
-    def find_all(self) -> list[Match2d]:
+    def find_all(self, region: Region = None) -> list[Match2d]:
         """ Find all matches within whole document. """
         pass
         # raise TypeError(f"Unknown element type: {type(self.element)}")
