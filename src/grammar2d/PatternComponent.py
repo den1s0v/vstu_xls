@@ -1,14 +1,15 @@
-from operator import and_
 from dataclasses import dataclass
 from functools import reduce
+from operator import and_
 
-from constraints_2d import SpatialConstraint, LocationConstraint
-from geom2d import open_range
-from geom2d.ranged_box import RangedBox
-import grammar2d.Grammar as ns
-import grammar2d.Match2d as m2
+from loguru import logger
+
 import grammar2d.Pattern2d as pt
+from constraints_2d import SpatialConstraint
+from constraints_2d import LocationConstraint
+from geom2d import open_range, Box, RangedBox
 from utils import WithCache, WithSafeCreate
+from .Match2d import Match2d
 
 
 
@@ -260,10 +261,63 @@ class PatternComponent(WithCache, WithSafeCreate):
         Значение LocationConstraint.inside для простоты принимаем всегда равным True.
         """
 
-        for constraint in self.constraints:
-            if isinstance(constraint, LocationConstraint):
-                ...
-        
-        ...  # TODO
+        mbox = component_match.box
 
-        return RangedBox()
+        # Init result as default when no constraints specified
+        if self.inner:
+            ray = open_range(0, None)
+            rbox = RangedBox(
+                rx=(mbox.left - ray, mbox.right + ray),
+                ry=(mbox.top - ray, mbox.bottom + ray),
+            )
+        else:
+            # Completely unconstrained
+            rbox = RangedBox()
+
+        # Apply constraints
+        for constraint in self.constraints:
+            if not isinstance(constraint, LocationConstraint):
+                logger.warning(f'Unsupported Constraint: pattern `{self.subpattern.name
+                }` defines constraint ({constraint!r
+                }) of type {constraint.__class__.__name__
+                }  that is not supported yet.')
+                continue
+
+            if self.inner:
+                rbox = self._apply_inside_constraint(rbox, constraint, mbox)
+            else:
+                rbox = self._apply_outside_constraint(rbox, constraint, mbox)
+
+        return rbox
+
+    @staticmethod
+    def _apply_inside_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:
+        # Apply constraints for inside location
+        # Заполняется та же сторона, значение той же стороны матча плюс диапазон со знаком основной стороны.
+        for d, gap in constraint.side_to_gap.items():
+            side = d.prop_name
+            if side == 'left':
+                ranged_box.rx.a = mbox.left - gap
+            elif side == 'right':
+                ranged_box.rx.b = mbox.right + gap
+            elif side == 'top':
+                ranged_box.ry.a = mbox.top - gap
+            elif side == 'bottom':
+                ranged_box.ry.b = mbox.bottom + gap
+        return ranged_box
+
+    @staticmethod
+    def _apply_outside_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:
+        # Apply constraints for outside location
+        # Заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
+        for d, gap in constraint.side_to_gap.items():
+            side = d.prop_name
+            if side == 'left':
+                ranged_box.rx.a = mbox.right + gap
+            elif side == 'right':
+                ranged_box.rx.b = mbox.left - gap
+            elif side == 'top':
+                ranged_box.ry.a = mbox.bottom + gap
+            elif side == 'bottom':
+                ranged_box.ry.b = mbox.top - gap
+        return ranged_box
