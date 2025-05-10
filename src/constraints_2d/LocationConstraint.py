@@ -20,7 +20,7 @@ class LocationConstraint(SpatialConstraint):
     def get_kind(cls):
         return "location"
 
-    inside: bool
+    inside: bool  # Направление рассмотрения
     side_to_gap: dict['g2.Direction', 'g2.open_range']
 
     def __init__(self,
@@ -85,21 +85,21 @@ class LocationConstraint(SpatialConstraint):
         # All checks passed.
         return True
 
-    def _get_component_side(self, d) -> 'g2.Direction':
+    def _get_component_side(self, d: 'g2.Direction') -> 'g2.Direction':
         """ Returns `this` box's side
         depending on current state of `inside` flag.
         """
         # Use opposite side for outer components.
         return d if self.inside else d.opposite()
 
-    def _get_component_side_key(self, d) -> str:
+    def _get_component_side_key(self, d: 'g2.Direction') -> str:
         """ Returns name of `this` box's side
         depending on current state of `inside` flag.
         """
         # Use opposite side for outer components.
         return self._get_component_side(d).prop_name
 
-    def _get_parent_side_key(self, d) -> str:
+    def _get_parent_side_key(self, d: 'g2.Direction') -> str:
         """ Returns '_'-prepended name of side specified by `d` (usually for parent box).
         """
         return self.component_name_aliases['parent'] + d.prop_name

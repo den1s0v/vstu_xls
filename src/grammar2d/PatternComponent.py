@@ -108,8 +108,7 @@ class PatternComponent(WithCache, WithSafeCreate):
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
 
-
-    def get_ranged_box_for_parent_location(self, component_match: 'm2.Match2d') -> RangedBox:
+    def get_ranged_box_for_parent_location(self, component_match: Match2d) -> RangedBox:
         """Получить ограничения на позицию родителя
          по известной позиции компонента (ребёнка) и известным ограничениям на позицию ребёнка в родителе.
 
@@ -246,6 +245,19 @@ class PatternComponent(WithCache, WithSafeCreate):
                 ry=('4-', '2+'),
             )
 
+        Returns:
+            RangedBox: Область, в которой может находиться родительский area для этого компонента, найденного в позиции переданного Match'а.
+        """
+        # Initialize the result box with the component match box
+        """ Как считать:
+        Для внутренних сторон:
+            - заполняется та же сторона, значение той же стороны матча плюс диапазон со знаком основной стороны.
+            - незаполненные стороны получают ограничение как с диапазоном '0+'.
+        Для внешних сторон:
+            - заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
+            - незаполненные стороны не получают ограничений вовсе (*).
+            
+        Значение LocationConstraint.inside для простоты принимаем всегда равным True.
         """
 
         for constraint in self.constraints:
