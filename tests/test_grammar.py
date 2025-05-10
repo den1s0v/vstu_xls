@@ -12,7 +12,7 @@ from grammar2d import read_grammar
 from grammar2d.PatternComponent import PatternComponent
 from constraints_2d.LocationConstraint import LocationConstraint
 from geom2d.ranged_box import RangedBox
-from geom2d import Direction, open_range
+from geom2d import Direction, open_range, RangedSegment
 from grammar2d.Match2d import Match2d
 from grammar2d.Pattern2d import Pattern2d
 
@@ -67,8 +67,7 @@ class GrammarTestCase(unittest.TestCase):
             name="child",
             pattern="child_pattern",
             inner=True,
-            constraints=[LocationConstraint(inside=True, side_to_gap={'left': open_range(0, None)})]
-        )
+            constraints=[LocationConstraint(side_to_gap={'left': open_range(0, 0)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=(20, '40+'),
                              ry=('1-', '5+'))
@@ -96,12 +95,10 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=True,
             constraints=[
-                LocationConstraint(inside=True, side_to_gap={'left': open_range(0, None)}),
-                LocationConstraint(inside=True, side_to_gap={
-                    'right': open_range(0, None),
-                    'bottom': open_range(0, None)})
-            ]
-        )
+                LocationConstraint(side_to_gap={
+                    'left': open_range(0, 0),
+                    'right': open_range(0, 0),
+                    'bottom': open_range(0, 0)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=(20, 40),
                              ry=('1-', 5))
@@ -115,13 +112,12 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=True,
             constraints=[
-                LocationConstraint(inside=True, side_to_gap={'right': open_range(0, None)}),
-                LocationConstraint(inside=True, side_to_gap={'bottom': open_range(0, None)})
-            ]
-        )
+                LocationConstraint(side_to_gap={
+                    'right': open_range(0, 0),
+                    'bottom': open_range(0, 0)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('20-', 40),
-                             y=('1-', 5))
+                             ry=('1-', 5))
         self.assertEqual(expected, result)
 
         #
@@ -132,11 +128,10 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=True,
             constraints=[
-                LocationConstraint(inside=True, side_to_gap={'top': open_range(0, 0)}),
-                LocationConstraint(inside=True, side_to_gap={'left': open_range(0, 1)}),
-                LocationConstraint(inside=True, side_to_gap={'right': open_range(0, 2)})
-            ]
-        )
+                LocationConstraint(side_to_gap={
+                    'top': open_range(0, 0),
+                    'left': open_range(0, 1),
+                    'right': open_range(0, 2)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('19..20', '40..42'),
                              ry=(1, '5+'))
@@ -150,10 +145,9 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=True,
             constraints=[
-                LocationConstraint(inside=True, side_to_gap={'top': open_range(-2, -2)}),
-                LocationConstraint(inside=True, side_to_gap={'right': open_range(-3, 3)})
-            ]
-        )
+                LocationConstraint(side_to_gap={
+                    'top': open_range(-2, -2),
+                    'right': open_range(-3, 3)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*..20', '37..43'),
                              ry=(3, '5+'))
@@ -167,12 +161,11 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=True,
             constraints=[
-                LocationConstraint(inside=True, side_to_gap={'top': open_range(None, None)}),
-                LocationConstraint(inside=True, side_to_gap={'left': open_range(None, None)}),
-                LocationConstraint(inside=True, side_to_gap={'right': open_range(None, None)}),
-                LocationConstraint(inside=True, side_to_gap={'bottom': open_range(None, None)})
-            ]
-        )
+                LocationConstraint(side_to_gap={
+                    'top': open_range(None, None),
+                    'left': open_range(None, None),
+                    'right': open_range(None, None),
+                    'bottom': open_range(None, None)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '*'),
                              ry=('*', '*'))
@@ -180,14 +173,14 @@ class GrammarTestCase(unittest.TestCase):
 
     def test_get_ranged_box_for_parent_location_outer(self):
 
-        # Example 1: {location: left}
         component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+
+        # Example 1: {location: left}
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
-            constraints=[LocationConstraint(inside=False, side_to_gap={'left': open_range(0, None)})]
-        )
+            constraints=[LocationConstraint(check_implicit_sides=False, side_to_gap={'left': open_range(0, None)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('40+', '*'),
                              ry=('*', '*'))
@@ -195,13 +188,12 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 2: {location: {}}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
-            constraints=[]
-        )
+            constraints=[])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '*'),
                              ry=('*', '*'))
@@ -209,12 +201,12 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 3: {location: left: 7}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
-            constraints=[LocationConstraint(inside=False, side_to_gap={'top': open_range(7, 7)})])
+            constraints=[LocationConstraint(check_implicit_sides=False, side_to_gap={'top': open_range(7, 7)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '*'),
                              ry=(12 ,'*'))
@@ -222,20 +214,24 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 4: {location: top: '0..2', left: '0-', right: '0-'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
+        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(inside=False, side_to_gap={'top': open_range(0, 2)}),
-                LocationConstraint(inside=False, side_to_gap={'left': open_range(None, 0)}),
-                LocationConstraint(inside=False, side_to_gap={'right': open_range(None, 0)})
-            ]
-        )
+                LocationConstraint(check_implicit_sides=False, side_to_gap={
+                    'top': open_range(0, 2),
+                    'left': open_range(None, 0),
+                    'right': open_range(None, 0)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
-        expected = RangedBox(rx=('40-', '20+'),
-                             ry=('5..7', '*'))
+        expected = RangedBox(
+            rx=RangedSegment.make(
+                ('40-', '20+'),
+                validate=False),
+            ry=RangedSegment.make(
+                ('5..7', '*'),
+                validate=False))
         self.assertEqual(expected, result)
 
         #
@@ -246,7 +242,7 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(inside=False, side_to_gap={'right': open_range(0, None)})])
+                LocationConstraint(check_implicit_sides=False, side_to_gap={'right': open_range(0, None)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '20-'),
                              ry=('*', '*'))
@@ -260,7 +256,7 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(inside=False, side_to_gap={'right': open_range(3, 10)})])
+                LocationConstraint(check_implicit_sides=False, side_to_gap={'right': open_range(3, 10)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '10..17'),
                              ry=('*', '*'))
@@ -274,11 +270,17 @@ class GrammarTestCase(unittest.TestCase):
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(inside=False, side_to_gap={'top': open_range(None, 1)}),
-                LocationConstraint(inside=False, side_to_gap={'bottom': open_range(None, 1)})])
+                LocationConstraint(check_implicit_sides=False, side_to_gap={
+                    'top': open_range(None, -1),
+                    'bottom': open_range(None, -1)})])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
-        expected = RangedBox(rx=('*', '*'),
-                             ry=('4-', '2+'))
+        expected = RangedBox(
+            rx=RangedSegment.make(
+                ('*', '*'),
+                validate=False),
+            ry=RangedSegment.make(
+                ('4-', '2+'),
+                validate=False))
         self.assertEqual(expected, result)
 
 

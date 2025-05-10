@@ -238,8 +238,8 @@ class PatternComponent(WithCache, WithSafeCreate):
             )
 
     7)  {location:
-            top: '1-',  # сверху и
-            bottom: '1-', # снизу есть "заступ" внутрь c обязательным пересечением
+            top: '-1-',  # сверху и
+            bottom: '-1-', # снизу есть "заступ" внутрь c обязательным пересечением
         } →
             RangedBox(
                 rx=('*', '*'),
