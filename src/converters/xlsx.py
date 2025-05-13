@@ -1,10 +1,9 @@
-from typing import Optional
-import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
+
+from converters.abstract import AbstractGridBuilder
 from geom2d.point import Point
 from geom2d.size import Size
-from converters.abstract import AbstractGridBuilder
-from grid import Grid, Cell, CellStyle
+from grid import Cell, CellStyle, Grid
 
 
 class ExcelGrid(Grid, AbstractGridBuilder):
@@ -26,9 +25,8 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 if excel_cell.value is None:
                     continue  # Skip empty cells
 
-                # Convert Excel 1-based indexing to 0-based for Point
-                x = excel_cell.column - 1
-                y = excel_cell.row - 1
+                x = excel_cell.column
+                y = excel_cell.row
 
                 # Create CellStyle from openpyxl cell properties
                 style = self._create_cell_style(excel_cell)
@@ -92,7 +90,6 @@ class ExcelGrid(Grid, AbstractGridBuilder):
             return
 
         for merged_range in self._worksheet.merged_cells.ranges:
-            # Get the top-left cell's coordinates (1-based in openpyxl)
             min_col, min_row, max_col, max_row = (
                 merged_range.min_col,
                 merged_range.min_row,
@@ -100,8 +97,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 merged_range.max_row,
             )
 
-            # Convert to 0-based for Point
-            x, y = min_col - 1, min_row - 1
+            x, y = min_col, min_row
             point = Point(x, y)
 
             # Calculate size of the merged cell
