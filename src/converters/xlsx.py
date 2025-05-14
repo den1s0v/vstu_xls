@@ -19,11 +19,21 @@ class ExcelGrid(Grid, AbstractGridBuilder):
         """Load cells from the provided worksheet, creating Cell objects and storing openpyxl cell references."""
         # Iterate through all cells in the worksheet's defined dimensions
         for row in data.iter_rows(
-            min_row=1, max_row=data.max_row, min_col=1, max_col=data.max_column
+            min_row=1,
+            max_row=data.max_row,
+            min_col=1,
+            max_col=data.max_column,
         ):
             for excel_cell in row:
                 if excel_cell.value is None:
                     continue  # Skip empty cells
+
+                is_merged = any(
+                    excel_cell.coordinate in merged_range
+                    for merged_range in data.merged_cells.ranges
+                )
+                if is_merged:
+                    continue
 
                 x = excel_cell.column
                 y = excel_cell.row
@@ -44,45 +54,49 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 cell.data = {"openpyxl_cell": excel_cell}
 
                 # Register the cell
-                self.registerCell(cell)
+                self.register_cell(cell)
 
         # Handle merged cells
         self._process_merged_cells()
 
     def _create_cell_style(self, excel_cell) -> CellStyle:
         """Create a CellStyle object from openpyxl cell properties."""
-        style = CellStyle()
 
         # Initialize style attributes
-        style.font_style = set()
-        style.borders = set()
-        style.background_color = None
+        font_style = set()
+        borders = set()
+        background_color = None
 
         # Font styles
         if excel_cell.font:
             if excel_cell.font.b:
-                style.font_style.add("bold")
+                font_style.add("bold")
             if excel_cell.font.i:
-                style.font_style.add("italic")
+                font_style.add("italic")
             if excel_cell.font.u:
-                style.font_style.add("underline")
+                font_style.add("underline")
 
         # Border styles
         if excel_cell.border:
             if excel_cell.border.left and excel_cell.border.left.style:
-                style.borders.add("left")
+                borders.add("left")
             if excel_cell.border.right and excel_cell.border.right.style:
-                style.borders.add("right")
+                borders.add("right")
             if excel_cell.border.top and excel_cell.border.top.style:
-                style.borders.add("top")
+                borders.add("top")
             if excel_cell.border.bottom and excel_cell.border.bottom.style:
-                style.borders.add("bottom")
+                borders.add("bottom")
 
         # Background color (convert RGB to hex if present)
         if excel_cell.fill and excel_cell.fill.fgColor and excel_cell.fill.fgColor.type == "rgb":
-            style.background_color = excel_cell.fill.fgColor.rgb
+            background_color = excel_cell.fill.fgColor.rgb
 
-        return style
+        # Create CellStyle object
+        return CellStyle(
+            font_style=font_style,
+            background_color=background_color,
+            borders=borders,
+        )
 
     def _process_merged_cells(self) -> None:
         """Process merged cell ranges, updating Cell objects with appropriate sizes."""
@@ -106,7 +120,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
             size = Size(width, height)
 
             # Get the top-left cell from point2cell
-            cell = self.getCell(point)
+            cell = self.get_cell(point)
             if not cell:
                 # Create a new cell if none exists (e.g., empty merged cell)
                 excel_cell = self._worksheet.cell(row=min_row, column=min_col)
@@ -128,14 +142,14 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 for col in range(min_col, max_col + 1):
                     if row == min_row and col == min_col:
                         continue  # Skip the top-left cell
-                    point = Point(col - 1, row - 1)
+                    point = Point(col, row)
                     if point in self.point2cell:
                         del self.point2cell[point]
                     self.point2cell[point] = cell
 
             # Re-register the cell to update point2cell mappings
-            self.registerCell(cell)
+            self.register_cell(cell)
 
-    def supportsCellMerging(self) -> bool:
+    def supports_cell_merging(self) -> bool:
         """ExcelGrid supports merged cells."""
         return True

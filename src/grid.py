@@ -259,20 +259,3 @@ class GridView(Region):
         return rg
 
 
-class TxtGrid(Grid):
-    """ Simple implementation of Grid
-    that reads cells from lines of `text` where cells are separated with `sep` (tab by default)
-    """
-    def __init__(self, text: str, sep='\t') -> None:
-        super().__init__()
-        self.load_cells(text, sep)
-
-    def load_cells(self, text: str, sep='\t'):
-        lines = text.splitlines()
-        for y, line in enumerate(lines):
-            for x, content in enumerate(line.split(sep)):
-                if not content:
-                    continue
-                cell = Cell(self, Point(x, y), content=content)
-                self.register_cell(cell)
-

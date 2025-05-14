@@ -16,4 +16,4 @@ class TxtGrid(Grid, AbstractGridBuilder):
                 if not content:
                     continue
                 cell = Cell(self, Point(x, y), content=content)
-                self.registerCell(cell)
+                self.register_cell(cell)
