@@ -132,11 +132,15 @@ class GridTestCase(unittest.TestCase):
         self.assertEqual(gw.get_cell_view((3, 1)).cell.content, "c")
         self.assertEqual(gw.get_cell_view((4, 1)).cell.content, "d")
         self.assertEqual(gw.get_cell_view((5, 1)).cell.content, "e")
+        self.assertNotEqual(gw.get_cell_view((5, 1)).cell.style.font_color, None)
+
         self.assertEqual(gw.get_cell_view((6, 1)), None)
 
         self.assertEqual(gw.get_cell_view((1, 2)).cell.content, "x")
         self.assertEqual(gw.get_cell_view((2, 2)).cell.content, "y")
+        self.assertNotEqual(gw.get_cell_view((2, 2)).cell.style.font_color, None)
         self.assertEqual(gw.get_cell_view((3, 2)).cell.content, "z")
+        self.assertTrue("right" in gw.get_cell_view((3, 2)).cell.style.borders)
 
         self.assertEqual(gw.get_cell_view((4, 2)).cell.content, "i")
         self.assertTrue("bold" in gw.get_cell_view((4, 2)).cell.style.font_style)
@@ -157,6 +161,8 @@ class GridTestCase(unittest.TestCase):
         self.assertEqual(gw.get_cell_view((6, 3)).cell.content, "_")
 
         self.assertEqual(gw.get_cell_view((1, 4)).cell.content, "t")
+        self.assertNotEqual(gw.get_cell_view((1, 4)).cell.style.background_color, "00000000")
+
         self.assertEqual(gw.get_cell_view((4, 4)).cell.content, "w")
         self.assertEqual(gw.get_cell_view((5, 4)).cell.content, "p")
         self.assertTrue("bold" in gw.get_cell_view((5, 4)).cell.style.font_style)
