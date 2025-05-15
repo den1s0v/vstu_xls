@@ -97,7 +97,7 @@ class CellStyle:
     font_style: set
     background_color: str
     borders: set
-    pass
+    font_color: str
 
 
 # Проекция 2D-сетки.

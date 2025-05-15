@@ -1,9 +1,46 @@
+from typing import Optional
+from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from converters.abstract import AbstractGridBuilder
+from openpyxl.styles.colors import COLOR_INDEX
+from openpyxl.styles import Color
 from geom2d.point import Point
 from geom2d.size import Size
 from grid import Cell, CellStyle, Grid
+from utils.openpyxl_colorconvert import theme_and_tint_to_rgb, get_theme_colors
+
+
+def get_rgb(color: Color, wb: Workbook) -> Optional[str]:
+    """
+    Получить RGB цвет из объекта Color openpyxl.
+
+    Параметры:
+        color (openpyxl.styles.Color): объект цвета (может быть rgb, theme или indexed)
+        wb (openpyxl.Workbook): рабочая книга для доступа к темам
+
+    Возвращает:
+        str: RGB в шестнадцатеричном формате, например 'FF0000' (без #)
+    """
+    if color is None:
+        return None
+
+    # 1. Если явно задан RGB
+    if color.type == "rgb" and color.rgb:
+        return color.rgb.upper()
+    # 2. Если задан индекс
+    elif color.type == "indexed" and color.indexed is not None:
+        indexed_rgb = COLOR_INDEX[color.indexed]
+        return indexed_rgb.upper()
+    # 3. Если задана тема
+    elif color.type == "theme" and color.theme is not None:
+        return theme_and_tint_to_rgb(
+            wb,
+            color.theme,
+            tint=color.tint,
+        ).upper()
+
+    return None  # Если ничего не найдено
 
 
 class ExcelGrid(Grid, AbstractGridBuilder):
@@ -66,6 +103,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
         font_style = set()
         borders = set()
         background_color = None
+        font_color = None
 
         # Font styles
         if excel_cell.font:
@@ -88,14 +126,20 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 borders.add("bottom")
 
         # Background color (convert RGB to hex if present)
-        if excel_cell.fill and excel_cell.fill.fgColor and excel_cell.fill.fgColor.type == "rgb":
-            background_color = excel_cell.fill.fgColor.rgb
+        if excel_cell.fill and excel_cell.fill.fgColor:
+            background_color = get_rgb(excel_cell.fill.fgColor, self._worksheet.parent)
+
+        # Foreground color (font color)
+        print(excel_cell.font.color)
+        if excel_cell.font and excel_cell.font.color:
+            font_color = get_rgb(excel_cell.font.color, self._worksheet.parent)
 
         # Create CellStyle object
         return CellStyle(
             font_style=font_style,
             background_color=background_color,
             borders=borders,
+            font_color=font_color,
         )
 
     def _process_merged_cells(self) -> None:
