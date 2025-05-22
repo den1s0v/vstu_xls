@@ -30,7 +30,7 @@ from utils import global_var
 def find_combinations_of_compatible_elements(
         elements: Iterable,
         pair_compatibility_checker=None,
-        components_getter=None) -> list[set]:
+        components_getter=None) -> list[list]:
     """ Главная функция .
     """
 
@@ -135,7 +135,7 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElement
 
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
-            arrangements.append(ClashingElementSet(released.clone | sa))
+            arrangements.append(ClashingElementSet(released.clone() | sa))
 
     # Выделение неконфликтующих раскладок.
     # Внутри кластера перебираем все элементы по очереди:

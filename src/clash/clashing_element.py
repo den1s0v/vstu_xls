@@ -33,6 +33,12 @@ class ObjWithDataWrapper(Hashable):
             return id(self.obj)
         raise f"Unexpected TypeError: unhashable type: '{type(obj).__name__}'"
 
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.obj!r})"
+
 
 class ClashingElement(ObjWithDataWrapper):
     # clashes_with: set['ClashingElement']
@@ -104,10 +110,17 @@ class ClashingContainer(ClashingElement):
     def on_remove_from_set(self):
         # delete from related components
         for component in self.components:
-            component.belongs_to.remove(self)
+            component.unbind_from(self)
+            # component.belongs_to.remove(self)
 
     def __hash__(self):
         return super().__hash__()
+
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __repr__(self):
+        return super().__repr__()
 
 
 @dataclass()
@@ -123,8 +136,18 @@ class ClashingComponent(ObjWithDataWrapper):
         }
         return type(self)(**fields)
 
+    def unbind_from(self, element: ClashingContainer):
+        if element in self.belongs_to:
+            self.belongs_to.remove(element)
+
     def __hash__(self):
         return super().__hash__()
+
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __repr__(self):
+        return super().__repr__()
 
 
 # @dataclass()
@@ -136,10 +159,10 @@ class ClashingElementSet(set['ClashingElement']):
         for element in elements:
             if element not in self:
                 continue
-            # trigger changes
-            element.on_remove_from_set()
             # remove as usual
             super().remove(element)
+            # trigger changes
+            element.on_remove_from_set()
 
     def with_removed(self, *elements: 'ClashingElement'):
         s = self.clone()
@@ -150,7 +173,7 @@ class ClashingElementSet(set['ClashingElement']):
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
-            if not el.all_clashing_among(*self):
+            if not el.all_clashing_among(self):
                 s.add(el.clone())
 
         return s
@@ -158,7 +181,7 @@ class ClashingElementSet(set['ClashingElement']):
     @classmethod
     def make(cls,
              elements: Iterable,
-             # pair_compatibity_checker=None,
+             # pair_compatibility_checker=None,
              components_getter=None) -> 'ClashingElementSet':
 
         # Вспомогательное для объединения и наполнения компонентов
@@ -194,6 +217,6 @@ class ClashingElementSet(set['ClashingElement']):
         """Deep clone"""
         return type(self)(el.clone() for el in self)
 
-    def get_bare_objs(self) -> set:
+    def get_bare_objs(self) -> list:
         # Extract objects back
-        return {clash_elem.obj for clash_elem in self}
+        return [clash_elem.obj for clash_elem in self]
