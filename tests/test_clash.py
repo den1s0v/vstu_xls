@@ -21,14 +21,34 @@ class ClashTestCase(unittest.TestCase):
         self.assertIsInstance(ClashingElementSet(u), ClashingElementSet)
 
     def test_clash_1(self):
-        a = [1, 2, 3]
-        b = [2, 3, 4]
+        objs = [
+            [1, 2],
+            [2, 3],
+            [3, 4],
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=lambda x: x)
 
-        combs = find_combinations_of_compatible_elements((a, b), components_getter=lambda x: x)
+        self.assertEqual([
+            [[1, 2], [3, 4]],
+            [[2, 3]],
+        ], combs)
 
-        self.assertSetEqual({
-            {1, 2, 3, 4},
-        }, set(combs))
+    def test_clash_2(self):
+        objs = [
+            [1, 2],
+            [2, 3],
+            [3, 4],
+            [4, 5],
+            [5, 1],
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=lambda x: x)
+
+        self.assertEqual([
+            [[1, 2], [3, 4]],
+            [[1, 2], [4, 5]],
+            [[2, 3], [4, 5]],
+            [[2, 3], [5, 1]],
+        ], combs)
 
 
 if __name__ == '__main__':
