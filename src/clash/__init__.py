@@ -27,19 +27,18 @@ from clash.clashing_element import *
 from utils import global_var
 
 
-
 def find_combinations_of_compatible_elements(
-    elements: Iterable, 
-    pair_compatibility_checker=None, 
-    components_getter=None) -> list[set]:
+        elements: Iterable,
+        pair_compatibility_checker=None,
+        components_getter=None) -> list[set]:
     """ Главная функция .
     """
-    
+
     assert pair_compatibility_checker or components_getter, "Any of parameters: `pair_compatibility_checker` or `components_getter` should be set!"
-    
+
     # # Вспомогательное для объедиенния и наполнения компонентов
     # hash2component: dict[int, ClashingComponent] = {}
-    
+
     # def get_component(component_obj, container: ClashingContainer) -> ClashingComponent:
     #     """ Get or create component """
     #     h = hash(component_obj)
@@ -51,7 +50,7 @@ def find_combinations_of_compatible_elements(
 
     # # Подготовить объекты, упаковав их в наши обёртки
     # clashing_elements = []
-    
+
     # for element in elements:
     #     if components_getter:
     #         el = ClashingContainer(
@@ -65,11 +64,11 @@ def find_combinations_of_compatible_elements(
     #         el = ClashingElement(obj=element)
 
     #     clashing_elements.append(el)
-    
+
     clashing_set = ClashingElementSet.make(
-            elements, 
-            # pair_compatibility_checker, 
-            components_getter,
+        elements,
+        # pair_compatibility_checker,
+        components_getter,
     )
 
     set_pair_compatibility_checker(pair_compatibility_checker)
@@ -85,22 +84,21 @@ def find_combinations_of_compatible_elements(
         clash_set.bare
         for clash_set in clash_sets
     ]
-    
 
 
 # @dataclass()
 # class ClashResolver:
 #     hash2element: dict[int, 'ClashingElement']
-    
+
 #     def resolve(self):
 #         ...
 
-        
+
 # def resolve_clashes(clashing_elements: list['ClashingElement']) -> list[set['ClashingElement']]:
 def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElementSet']:
     """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются """
     # кластеризация накладок.
-    
+
     # Выделение неконфликтующих раскладок.
     arrangements: list['ClashingElementSet'] = []
 
@@ -111,29 +109,29 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElement
     for elem in clashing_set:
         if elem in released_elements:
             continue
-        
+
         released_elements.add(elem)  # Этот мы точно освободим
-        
+
         # Сделать текущий свободным (убрать все мешающие).
         directly_clashing = elem.all_clashing_among(clashing_set)
-        
+
         if not directly_clashing:
             # Ничего ни с чем и не конфликтовало
             arrangement = clashing_set.clone()
             arrangements.append(arrangement)
             break
-        
+
         partially_free_set = clashing_set.with_removed(*directly_clashing)
 
         # Все освобождённые идут в раскладку сразу и исключаются из дальнейшего перебора по внешнему циклу.
         released = partially_free_set.free_subset()
         released_elements |= released
-        
+
         unresolved = partially_free_set.with_removed(released)
-        
+
         # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
         sub_arrangements = resolve_clashes(unresolved)  # recursive call !
-        
+
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
             arrangements.append(released.clone | sa)
@@ -146,6 +144,3 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElement
     # Полученные под-раскладки комбинируются с текущими свободными.
 
     return arrangements
-        
-
-
