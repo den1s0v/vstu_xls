@@ -4,7 +4,7 @@ from functools import cache
 from typing import Any, Hashable, Iterable, override
 # from collections import Or
 
-from dataclasses import Field, dataclass, asdict
+from dataclasses import field, dataclass, asdict
 from adict import adict
 
 # Функция (obj1, obj2) -> bool
@@ -23,15 +23,15 @@ class ObjWithDataWrapper(Hashable):
         optionally associated with some arbitrary data
     """
     obj: Hashable
-    data: adict = Field(default_factory=adict)
+    data: adict = field(default_factory=adict)
 
     def __hash__(self):
         try:
             return hash(self.obj)
-        except:
+        except TypeError:
             # Fallback: instance identity
             return id(self.obj)
-
+        raise f"Unexpected TypeError: unhashable type: '{type(obj).__name__}'"
 
 
 class ClashingElement(ObjWithDataWrapper):
@@ -56,27 +56,31 @@ class ClashingElement(ObjWithDataWrapper):
     def on_remove_from_set(self):
         # nothing to do
         pass
-    
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 @dataclass()
 class ClashingContainer(ClashingElement):
-    components: set['ClashingComponent']
+    components: set['ClashingComponent'] = field(default_factory=set)
+
     # _all_directly_overlapping_cache = None
-    
+
     def clashes_with(self, other: 'ClashingContainer') -> bool:
         assert isinstance(other, ClashingContainer), type(other)
         return bool(self.components & other.components)
-    
+
     def is_free(self):
         return all(
-            self in i.belonds_to and len(i.belonds_to) == 1
+            self in i.belongs_to and len(i.belongs_to) == 1
             for i in self.components)
 
     @cache
     def all_directly_overlapping(self, ) -> set['ClashingContainer']:
         return {other
                 for component in self.components
-                for other in component.belonds_to
+                for other in component.belongs_to
                 if other is not self
                 }
 
@@ -89,29 +93,39 @@ class ClashingContainer(ClashingElement):
         return set(others) - self.all_directly_overlapping()
 
     def clone(self):
-        fields = asdict(self)
-        # clone components as well
-        fields['components'] = {cm.clone() for cm in self.components}
+        fields = {
+            'obj': self.obj,
+            'data': self.data,
+            # clone components as well
+            'components': {cm.clone() for cm in self.components},
+        }
         return type(self)(**fields)
 
     def on_remove_from_set(self):
         # delete from related components
         for component in self.components:
-            component.belonds_to.remove(self)
+            component.belongs_to.remove(self)
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 @dataclass()
 class ClashingComponent(ObjWithDataWrapper):
-    belonds_to: set['ClashingContainer']
-    
+    belongs_to: set['ClashingContainer'] = field(default_factory=set)
+
     def clone(self):
-        fields = asdict(self)
-        # re-create set
-        fields['belonds_to'] = set(self.belonds_to)
+        fields = {
+            'obj': self.obj,
+            'data': self.data,
+            # re-create set
+            'belongs_to': set(self.belongs_to),
+        }
         return type(self)(**fields)
-    
-    
-    
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 # @dataclass()
 class ClashingElementSet(set['ClashingElement']):
@@ -120,6 +134,8 @@ class ClashingElementSet(set['ClashingElement']):
     @override
     def remove(self, *elements: 'ClashingElement'):
         for element in elements:
+            if element not in self:
+                continue
             # trigger changes
             element.on_remove_from_set()
             # remove as usual
@@ -136,7 +152,7 @@ class ClashingElementSet(set['ClashingElement']):
         for el in self:
             if not el.all_clashing_among(*self):
                 s.add(el.clone())
-                
+
         return s
 
     @classmethod
@@ -154,7 +170,7 @@ class ClashingElementSet(set['ClashingElement']):
             comp = hash2component.get(h)
             if not comp:
                 hash2component[h] = comp = ClashingComponent(component_obj)
-            comp.belonds_to.add(container)
+            comp.belongs_to.add(container)
             return comp
 
         # Подготовить объекты, упаковав их в наши обёртки

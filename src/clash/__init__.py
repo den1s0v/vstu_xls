@@ -71,7 +71,8 @@ def find_combinations_of_compatible_elements(
         components_getter,
     )
 
-    set_pair_compatibility_checker(pair_compatibility_checker)
+    if pair_compatibility_checker:
+        set_pair_compatibility_checker(pair_compatibility_checker)
 
     # return ClashResolver({
     #     hash(ce): ce
@@ -81,7 +82,7 @@ def find_combinations_of_compatible_elements(
     # Extract objects back
     return [
         # {clash_elem.obj for clash_elem in clash_set}
-        clash_set.bare
+        clash_set.get_bare_objs()
         for clash_set in clash_sets
     ]
 
@@ -134,7 +135,7 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElement
 
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
-            arrangements.append(released.clone | sa)
+            arrangements.append(ClashingElementSet(released.clone | sa))
 
     # Выделение неконфликтующих раскладок.
     # Внутри кластера перебираем все элементы по очереди:
