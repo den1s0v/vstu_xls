@@ -1,10 +1,9 @@
 # clashing_element.py
 
 from functools import cache
-from typing import Any, Hashable, Iterable, override
+from typing import Hashable, Iterable, override
 # from collections import Or
 
-from dataclasses import field, dataclass, asdict
 from adict import adict
 
 # Функция (obj1, obj2) -> bool
@@ -17,13 +16,19 @@ def set_pair_compatibility_checker(func):
     _pair_compatibility_checker = func
 
 
-@dataclass()
 class ObjWithDataWrapper(Hashable):
     """ A generic wrapper for an arbitrary object, 
         optionally associated with some arbitrary data
     """
     obj: Hashable
-    data: adict = field(default_factory=adict)
+    data: adict
+    
+    def __init__(self, obj: Hashable, data: adict = None):
+        self.obj = obj
+        self.data = data or adict()
+
+    def __str__(self):
+        return f"{type(self).__name__}({self.obj!r})"
 
     def __hash__(self):
         try:
@@ -57,19 +62,23 @@ class ClashingElement(ObjWithDataWrapper):
         return {other for other in others if (other is not self) and not self.clashes_with(other)}
 
     def clone(self):
-        return type(self)(**asdict(self))
+        return type(self)(**self.__dict__)
 
     def on_remove_from_set(self):
         # nothing to do
         pass
 
-    def __hash__(self):
-        return super().__hash__()
 
 
-@dataclass()
 class ClashingContainer(ClashingElement):
-    components: set['ClashingComponent'] = field(default_factory=set)
+    components: set['ClashingComponent']
+    
+    def __init__(self, obj: Hashable, data: adict = None, components: set['ClashingComponent'] = None):
+        super().__init__(obj, data)
+        self.components = components if components is not None else set()
+
+    def __str__(self):
+        return f"{type(self).__name__}({self.obj!r}, components={self.components})"
 
     # _all_directly_overlapping_cache = None
 
@@ -113,19 +122,17 @@ class ClashingContainer(ClashingElement):
             component.unbind_from(self)
             # component.belongs_to.remove(self)
 
-    def __hash__(self):
-        return super().__hash__()
-
-    def __eq__(self, other):
-        return super().__eq__(other)
-
-    def __repr__(self):
-        return super().__repr__()
 
 
-@dataclass()
 class ClashingComponent(ObjWithDataWrapper):
-    belongs_to: set['ClashingContainer'] = field(default_factory=set)
+    belongs_to: set['ClashingContainer']
+    
+    def __init__(self, obj: Hashable, data: adict = None, belongs_to: set['ClashingContainer'] = None):
+        super().__init__(obj, data)
+        self.belongs_to = belongs_to if belongs_to is not None else set()
+
+    def __str__(self):
+        return f"{type(self).__name__}({self.obj!r}, belongs_to={self.belongs_to})"
 
     def clone(self):
         fields = {
@@ -140,14 +147,6 @@ class ClashingComponent(ObjWithDataWrapper):
         if element in self.belongs_to:
             self.belongs_to.remove(element)
 
-    def __hash__(self):
-        return super().__hash__()
-
-    def __eq__(self, other):
-        return super().__eq__(other)
-
-    def __repr__(self):
-        return super().__repr__()
 
 
 # @dataclass()
