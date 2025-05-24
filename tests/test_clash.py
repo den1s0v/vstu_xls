@@ -34,6 +34,21 @@ class ClashTestCase(unittest.TestCase):
             ['a1', 'b2', 'c3'],
         ], combs)
         
+    def test_clash_02_one_free(self):
+        objs = [
+            '0',
+            'a1',
+            'b2',
+            'c3',
+            '1234',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['0', '1234'],
+            ['0', 'a1', 'b2', 'c3'],
+        ], combs)
+        
     def test_clash_1(self):
         objs = [
             [1, 2],
