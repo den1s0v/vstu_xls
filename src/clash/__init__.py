@@ -84,15 +84,6 @@ def find_combinations_of_compatible_elements(
     return arr
 
 
-# @dataclass()
-# class ClashResolver:
-#     hash2element: dict[int, 'ClashingElement']
-
-#     def resolve(self):
-#         ...
-
-
-# def resolve_clashes(clashing_elements: list['ClashingElement']) -> list[set['ClashingElement']]:
 def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
     """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются """
     # кластеризация накладок.
@@ -101,10 +92,6 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
         # early exit: only one variant exists for the input of size 1 or 0.
         return {clashing_set, }
 
-    ###
-    print()
-    print("clashing_set: ", clashing_set)
-    ###
 
     # Выделение неконфликтующих раскладок.
     arrangements: set['ClashingElementSet'] = set()
@@ -127,11 +114,6 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
             arrangement = clashing_set.clone()
             arrangements.add(arrangement)
 
-            ###
-            print()
-            print("arrangement is free: ", arrangement)
-            ###
-
             break
 
         # Все, кроме непосредственно конфликтующих с текущим.
@@ -146,15 +128,6 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
         # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
         sub_arrangements = resolve_clashes(unresolved)  # recursive call !
 
-        ###
-        print()
-        print("elem: ", elem)
-        print("directly_clashing: ", directly_clashing)
-        print("partially_free_set: ", partially_free_set)
-        print("released: ", released)
-        print("unresolved: ", unresolved)
-        print("sub_arrangements: ", sub_arrangements)
-        ###
 
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
