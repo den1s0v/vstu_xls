@@ -20,6 +20,79 @@ class ClashTestCase(unittest.TestCase):
 
         self.assertIsInstance(ClashingElementSet(u), ClashingElementSet)
 
+    def test_sets(self):
+        objs = [
+            '9',
+            '0',
+            'a1',
+            'b2',
+            'c3',
+            '1234',
+        ]
+        clashing_set = ClashingElementSet.make(
+            objs,
+            trivial_components_getter,
+        )
+
+        expected_free = {
+            'a1': ['0', '9', 'b2', 'c3', ],
+            'b2': ['0', '9', 'a1', 'c3', ],
+            'c3': ['0', '9', 'a1', 'b2', ],
+            '1234': ['0', '9', ],
+            '0': ['1234', '9', 'a1', 'b2', 'c3', ],
+            '9': ['0', '1234', 'a1', 'b2', 'c3', ],
+        }
+
+        for clashing_set_1 in (clashing_set, clashing_set.clone()):
+            for el_0 in clashing_set_1:
+                for el in (el_0, el_0.clone(), el_0.clone().clone()):
+                    el_raw: str = el.obj
+
+                    self.assertIn(el, clashing_set, el)
+                    self.assertIn(el.clone(), clashing_set, el)
+
+                    clash = el.all_clashing_among(clashing_set).get_bare_objs()
+                    free = el.all_independent_among(clashing_set).get_bare_objs()
+
+                    self.assertEqual(expected_free[el_raw], free, ('free →', el))
+
+                    expected_clash = list(set(objs) - set(expected_free[el_raw]) - {el_raw})
+                    expected_clash.sort()
+                    self.assertEqual(expected_clash, clash, ('clash →', el))
+
+        base = clashing_set
+        reducible = clashing_set.clone()
+
+        for el in base:
+            self.assertIn(el, base, el)
+            self.assertIn(el, reducible, el)
+            reducible.remove(el)
+            self.assertIn(el, base, el)
+            self.assertNotIn(el, reducible, el)
+        self.assertFalse(bool(reducible))
+
+        reducible = clashing_set | set()
+
+        for el in base:
+            self.assertIn(el, base, el)
+            self.assertIn(el, reducible, el)
+            reducible.remove(el)
+            self.assertIn(el, base, el)
+            self.assertNotIn(el, reducible, el)
+        self.assertFalse(bool(reducible))
+
+        reducible = clashing_set - set()
+
+        for el in base:
+            self.assertIn(el, base, el)
+            self.assertIn(el, reducible, el)
+            reducible.remove(el)
+            self.assertIn(el, base, el)
+            self.assertNotIn(el, reducible, el)
+        self.assertFalse(bool(reducible))
+
+
+
     def test_clash_01(self):
         objs = [
             'a1',
@@ -48,7 +121,23 @@ class ClashTestCase(unittest.TestCase):
             ['0', '1234'],
             ['0', 'a1', 'b2', 'c3'],
         ], combs)
-        
+
+    def test_clash_021_two_free(self):
+        objs = [
+            '9',
+            '0',
+            'a1',
+            'b2',
+            'c3',
+            '1234',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['0', '1234', '9', ],
+            ['0', '9', 'a1', 'b2', 'c3', ],
+        ], combs)
+
     def test_clash_03_all_touch(self):
         objs = [
             'x0',
