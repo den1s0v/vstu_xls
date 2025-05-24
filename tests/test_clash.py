@@ -26,7 +26,7 @@ class ClashTestCase(unittest.TestCase):
             [2, 3],
             [3, 4],
         ]
-        combs = find_combinations_of_compatible_elements(objs, components_getter=lambda x: x)
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
 
         self.assertEqual([
             [[1, 2], [3, 4]],

@@ -10,6 +10,11 @@ from adict import adict
 _pair_compatibility_checker: callable = None
 
 
+def trivial_components_getter(container):
+    """ No-op function that just returns its argument. """ 
+    return container
+
+
 def set_pair_compatibility_checker(func):
     global _pair_compatibility_checker
     assert callable(func)
