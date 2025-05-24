@@ -20,6 +20,20 @@ class ClashTestCase(unittest.TestCase):
 
         self.assertIsInstance(ClashingElementSet(u), ClashingElementSet)
 
+    def test_clash_01(self):
+        objs = [
+            'a1',
+            'b2',
+            'c3',
+            '1234',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['a1', 'b2', 'c3'],
+            ['1234'],
+        ], combs)
+        
     def test_clash_1(self):
         objs = [
             [1, 2],
