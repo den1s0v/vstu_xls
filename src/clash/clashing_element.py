@@ -25,33 +25,39 @@ class ObjWithDataWrapper(Hashable):
     """ A generic wrapper for an arbitrary object, 
         optionally associated with some arbitrary data
     """
-    obj: Hashable
+    _obj: Hashable
     data: adict
+    _hash: int
 
     def __init__(self, obj: Hashable, data: adict = None):
-        self.obj = obj
+        self._obj = obj
         self.data = data or adict()
-
-    def __str__(self):
-        return f"{type(self).__name__}({self.obj!r})"
-
-    def __hash__(self):
         try:
-            return hash(self.obj)
+            self._hash = hash(obj)
         except TypeError:
             # Fallback: instance identity
-            return id(self.obj)
-        raise f"Unexpected TypeError: unhashable type: '{type(obj).__name__}'"
+            self._hash = id(self.obj)
+
+
+    @property
+    def obj(self) -> Hashable:
+        return self._obj
+
+    def __hash__(self):
+        return self._hash
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return self._hash == hash(other)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.obj!r})"
+        return f"{type(self).__name__}({self._obj!r})"
+
+    def __str__(self):
+        return str(self._obj)
 
 
 class ClashingElement(ObjWithDataWrapper):
-    # clashes_with: set['ClashingElement']
+    # clashes_with: frozenset['ClashingElement']
     # cluster: None | int
 
     def clashes_with(self, other: 'ClashingElement') -> bool:
@@ -77,11 +83,15 @@ class ClashingElement(ObjWithDataWrapper):
 
 
 class ClashingContainer(ClashingElement):
-    components: set['ClashingComponent']
+    _components: frozenset['ClashingComponent']
 
     def __init__(self, obj: Hashable, data: adict = None, components: set['ClashingComponent'] = None):
         super().__init__(obj, data)
-        self.components = components if components is not None else set()
+        self._components = frozenset(components) if components is not None else frozenset()
+
+    @property
+    def components(self) -> frozenset['ClashingComponent']:
+        return self._components
 
     def __str__(self):
         return f"{type(self).__name__}({self.obj!r}, components={self.components})"
@@ -122,19 +132,23 @@ class ClashingContainer(ClashingElement):
         }
         return type(self)(**fields)
 
-    def on_remove_from_set(self):
-        # delete from related components
-        for component in self.components:
-            component.unbind_from(self)
-            # component.belongs_to.remove(self)
+    # def on_remove_from_set(self):
+    #     # delete from related components
+    #     for component in self.components:
+    #         component.unbind_from(self)
+    #         # component.belongs_to.remove(self)
 
 
 class ClashingComponent(ObjWithDataWrapper):
-    belongs_to: set['ClashingContainer']
+    _belongs_to: frozenset['ClashingContainer']
 
     def __init__(self, obj: Hashable, data: adict = None, belongs_to: set['ClashingContainer'] = None):
         super().__init__(obj, data)
-        self.belongs_to = belongs_to if belongs_to is not None else set()
+        self._belongs_to = frozenset(belongs_to) if belongs_to is not None else frozenset()
+
+    @property
+    def belongs_to(self) -> frozenset['ClashingContainer']:
+        return self._belongs_to
 
     def __str__(self):
         return f"{type(self).__name__}({self.obj!r}, belongs_to={self.belongs_to})"
@@ -148,9 +162,9 @@ class ClashingComponent(ObjWithDataWrapper):
         }
         return type(self)(**fields)
 
-    def unbind_from(self, element: ClashingContainer):
-        if element in self.belongs_to:
-            self.belongs_to.remove(element)
+    # def unbind_from(self, element: ClashingContainer):
+    #     if element in self.belongs_to:
+    #         self.belongs_to.remove(element)
 
 
 # @dataclass()
@@ -167,12 +181,12 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
             # trigger changes
             element.on_remove_from_set()
 
-    def with_removed(self, *elements: 'ClashingElement'):
+    def with_removed(self, *elements: 'ClashingElement') -> 'ClashingElementSet':
         s = self.clone()
         s.remove(*elements)
         return s
 
-    def free_subset(self):
+    def free_subset(self) -> 'ClashingElementSet':
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
