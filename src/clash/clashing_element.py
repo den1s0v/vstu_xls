@@ -53,7 +53,7 @@ class ObjWithDataWrapper(Hashable):
         return f"{type(self).__name__}({self._obj!r})"
 
     def __str__(self):
-        return str(self._obj)
+        return f"<{self._obj}>"
 
 
 class ClashingElement(ObjWithDataWrapper):
@@ -64,22 +64,19 @@ class ClashingElement(ObjWithDataWrapper):
         assert _pair_compatibility_checker
         return not _pair_compatibility_checker(self.obj, other.obj)
 
-    def all_clashing_among(self, others) -> set['ClashingElement']:
+    def all_clashing_among(self, others) -> 'ClashingElementSet':
         """ Note: Does not clash to itself """
-        return {other for other in others if (other is not self) and self.clashes_with(other)}
+        return ClashingElementSet(other for other in others if (other != self) and self.clashes_with(other))
         # TODO: use `!=`, not `is not` ???
 
-    def all_independent_among(self, others) -> set['ClashingElement']:
+    def all_independent_among(self, others) -> 'ClashingElementSet':
         """ Note: Not independent of itself """
-        return {other for other in others if (other is not self) and not self.clashes_with(other)}
+        return ClashingElementSet(other for other in others if (other != self) and not self.clashes_with(other))
         # TODO: use `!=`, not `is not` ???
 
     def clone(self):
         return type(self)(**self.__dict__)
 
-    def on_remove_from_set(self):
-        # nothing to do
-        pass
 
 
 class ClashingContainer(ClashingElement):
@@ -102,22 +99,9 @@ class ClashingContainer(ClashingElement):
         assert isinstance(other, ClashingContainer), type(other)
         return any(component in other.components for component in self.components)
 
-    def is_free(self):
-        return all(
-            self in i.belongs_to and len(i.belongs_to) == 1
-            for i in self.components)
 
-    @cache
-    def all_directly_overlapping(self, ) -> set['ClashingContainer']:
-        raise DeprecationWarning("This method is deprecated and should not be used.")
 
-    def all_clashing_among(self, others) -> set['ClashingContainer']:
-        # optimized version
-        return (set(others) - {self}) & self.all_directly_overlapping()
 
-    def all_independent_among(self, others) -> set['ClashingContainer']:
-        # optimized version
-        return (set(others) - {self}) - self.all_directly_overlapping()
 
     def clone(self):
         fields = {
@@ -136,7 +120,6 @@ class ClashingContainer(ClashingElement):
 
 
 class ClashingComponent(ObjWithDataWrapper):
-    _belongs_to: frozenset['ClashingContainer']
 
     def __init__(self, obj: Hashable, data: adict = None):
         super().__init__(obj, data)
@@ -156,7 +139,6 @@ class ClashingComponent(ObjWithDataWrapper):
     #         self.belongs_to.remove(element)
 
 
-# @dataclass()
 class ClashingElementSet(set['ClashingElement'], Hashable):
 
     # def __init__(self, *args, **kw):
@@ -170,8 +152,6 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
                 continue
             # remove as usual
             super().remove(element)
-            # trigger changes
-            element.on_remove_from_set()
 
     def with_removed(self, *elements: 'ClashingElement') -> 'ClashingElementSet':
         s = self.clone()
@@ -196,13 +176,12 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
         # Вспомогательное для объединения и наполнения компонентов
         hash2component: dict[int, ClashingComponent] = {}
 
-        def get_component(component_obj, container: ClashingContainer) -> ClashingComponent:
+        def get_component(component_obj) -> ClashingComponent:
             """ Get or create component """
             h = hash(component_obj)
             comp = hash2component.get(h)
             if not comp:
                 hash2component[h] = comp = ClashingComponent(component_obj)
-            comp.belongs_to.add(container)
             return comp
 
         # Подготовить объекты, упаковав их в наши обёртки
@@ -210,11 +189,10 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         for element in elements:
             if components_getter:
-                el = ClashingContainer(obj=element)
-                el.components = {
-                    get_component(component, el)
+                el = ClashingContainer(obj=element, components = {
+                    get_component(component) #, el)
                     for component in components_getter(element)
-                }
+                })
             else:
                 el = ClashingElement(obj=element)
 
