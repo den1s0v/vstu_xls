@@ -100,7 +100,7 @@ class ClashingContainer(ClashingElement):
 
     def clashes_with(self, other: 'ClashingContainer') -> bool:
         assert isinstance(other, ClashingContainer), type(other)
-        return bool(self.components & other.components)
+        return any(component in other.components for component in self.components)
 
     def is_free(self):
         return all(
@@ -109,11 +109,7 @@ class ClashingContainer(ClashingElement):
 
     @cache
     def all_directly_overlapping(self, ) -> set['ClashingContainer']:
-        return {other
-                for component in self.components
-                for other in component.belongs_to
-                if other is not self
-                }
+        raise DeprecationWarning("This method is deprecated and should not be used.")
 
     def all_clashing_among(self, others) -> set['ClashingContainer']:
         # optimized version
@@ -142,23 +138,16 @@ class ClashingContainer(ClashingElement):
 class ClashingComponent(ObjWithDataWrapper):
     _belongs_to: frozenset['ClashingContainer']
 
-    def __init__(self, obj: Hashable, data: adict = None, belongs_to: set['ClashingContainer'] = None):
+    def __init__(self, obj: Hashable, data: adict = None):
         super().__init__(obj, data)
-        self._belongs_to = frozenset(belongs_to) if belongs_to is not None else frozenset()
-
-    @property
-    def belongs_to(self) -> frozenset['ClashingContainer']:
-        return self._belongs_to
 
     def __str__(self):
-        return f"{type(self).__name__}({self.obj!r}, belongs_to={self.belongs_to})"
+        return f"{type(self).__name__}({self.obj!r})"
 
     def clone(self):
         fields = {
             'obj': self.obj,
             'data': self.data,
-            # re-create set
-            'belongs_to': set(self.belongs_to),
         }
         return type(self)(**fields)
 
@@ -169,7 +158,10 @@ class ClashingComponent(ObjWithDataWrapper):
 
 # @dataclass()
 class ClashingElementSet(set['ClashingElement'], Hashable):
-    # elements: set['ClashingElement']
+
+    # def __init__(self, *args, **kw):
+    #     super().__init__(*args, **kw)
+    #     ...
 
     @override
     def remove(self, *elements: 'ClashingElement'):
