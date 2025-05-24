@@ -92,6 +92,9 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
         # early exit: only one variant exists for the input of size 1 or 0.
         return {clashing_set, }
 
+    if len(clashing_set) == len(clashing_set.free_subset()):
+        # Ничто ни с чем не конфликтуeт
+        return {clashing_set, }
 
     # Выделение неконфликтующих раскладок.
     arrangements: set['ClashingElementSet'] = set()
@@ -110,11 +113,8 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
         directly_clashing = elem.all_clashing_among(clashing_set)
 
         if not directly_clashing:
-            # Ничего ни с чем и не конфликтовало
-            arrangement = clashing_set.clone()
-            arrangements.add(arrangement)
-
-            break
+            # Текущий ни с чем не конфликтует. Про остальные ничего не знаем.
+            continue
 
         # Все, кроме непосредственно конфликтующих с текущим.
         partially_free_set = clashing_set.with_removed(*directly_clashing)
