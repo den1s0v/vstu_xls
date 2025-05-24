@@ -11,7 +11,7 @@ _pair_compatibility_checker: callable = None
 
 
 def trivial_components_getter(container):
-    """ No-op function that just returns its argument. """ 
+    """ No-op function that just returns its argument. """
     return container
 
 
@@ -27,7 +27,7 @@ class ObjWithDataWrapper(Hashable):
     """
     obj: Hashable
     data: adict
-    
+
     def __init__(self, obj: Hashable, data: adict = None):
         self.obj = obj
         self.data = data or adict()
@@ -61,10 +61,12 @@ class ClashingElement(ObjWithDataWrapper):
     def all_clashing_among(self, others) -> set['ClashingElement']:
         """ Note: Does not clash to itself """
         return {other for other in others if (other is not self) and self.clashes_with(other)}
+        # TODO: use `!=`, not `is not` ???
 
     def all_independent_among(self, others) -> set['ClashingElement']:
-        """ Note: Not independent from itself """
+        """ Note: Not independent of itself """
         return {other for other in others if (other is not self) and not self.clashes_with(other)}
+        # TODO: use `!=`, not `is not` ???
 
     def clone(self):
         return type(self)(**self.__dict__)
@@ -74,10 +76,9 @@ class ClashingElement(ObjWithDataWrapper):
         pass
 
 
-
 class ClashingContainer(ClashingElement):
     components: set['ClashingComponent']
-    
+
     def __init__(self, obj: Hashable, data: adict = None, components: set['ClashingComponent'] = None):
         super().__init__(obj, data)
         self.components = components if components is not None else set()
@@ -106,11 +107,11 @@ class ClashingContainer(ClashingElement):
 
     def all_clashing_among(self, others) -> set['ClashingContainer']:
         # optimized version
-        return set(others) & self.all_directly_overlapping()
+        return (set(others) - {self}) & self.all_directly_overlapping()
 
     def all_independent_among(self, others) -> set['ClashingContainer']:
         # optimized version
-        return set(others) - self.all_directly_overlapping()
+        return (set(others) - {self}) - self.all_directly_overlapping()
 
     def clone(self):
         fields = {
@@ -128,10 +129,9 @@ class ClashingContainer(ClashingElement):
             # component.belongs_to.remove(self)
 
 
-
 class ClashingComponent(ObjWithDataWrapper):
     belongs_to: set['ClashingContainer']
-    
+
     def __init__(self, obj: Hashable, data: adict = None, belongs_to: set['ClashingContainer'] = None):
         super().__init__(obj, data)
         self.belongs_to = belongs_to if belongs_to is not None else set()
@@ -153,9 +153,8 @@ class ClashingComponent(ObjWithDataWrapper):
             self.belongs_to.remove(element)
 
 
-
 # @dataclass()
-class ClashingElementSet(set['ClashingElement']):
+class ClashingElementSet(set['ClashingElement'], Hashable):
     # elements: set['ClashingElement']
 
     @override
@@ -226,3 +225,7 @@ class ClashingElementSet(set['ClashingElement']):
         arr = [clash_elem.obj for clash_elem in self]
         arr.sort()
         return arr
+
+    def __hash__(self):
+        # return hash(tuple(sorted(self)))
+        return hash(frozenset(self))

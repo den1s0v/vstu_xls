@@ -31,7 +31,7 @@ def find_combinations_of_compatible_elements(
 
     assert pair_compatibility_checker or components_getter, "Any of parameters: `pair_compatibility_checker` or `components_getter` should be set!"
 
-    # # Вспомогательное для объедиенния и наполнения компонентов
+    # # Вспомогательное для объединения и наполнения компонентов
     # hash2component: dict[int, ClashingComponent] = {}
 
     # def get_component(component_obj, container: ClashingContainer) -> ClashingComponent:
@@ -93,14 +93,18 @@ def find_combinations_of_compatible_elements(
 
 
 # def resolve_clashes(clashing_elements: list['ClashingElement']) -> list[set['ClashingElement']]:
-def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElementSet']:
+def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
     """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются """
     # кластеризация накладок.
 
-    # Выделение неконфликтующих раскладок.
-    arrangements: list['ClashingElementSet'] = []
+    if len(clashing_set) <= 1:
+        # early exit: only one variant exists for the input of size 1 or 0.
+        return {clashing_set, }
 
-    # Элементы, полностью освобождённые при формировании раскладок (для них уже рскладки формировать не нужно, иначе это будет просто дублирование)
+    # Выделение неконфликтующих раскладок.
+    arrangements: set['ClashingElementSet'] = set()
+
+    # Элементы, полностью освобождённые при формировании раскладок (для них уже раскладки формировать не нужно, иначе это будет просто дублирование)
     released_elements = set()  # was ever in an arrangement, to avoid trivial duplicates.
 
     # Внутри кластера перебираем все элементы по очереди:
@@ -116,23 +120,24 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> list['ClashingElement
         if not directly_clashing:
             # Ничего ни с чем и не конфликтовало
             arrangement = clashing_set.clone()
-            arrangements.append(arrangement)
+            arrangements.add(arrangement)
             break
 
+        # Все, кроме непосредственно конфликтующих с текущим.
         partially_free_set = clashing_set.with_removed(*directly_clashing)
 
         # Все освобождённые идут в раскладку сразу и исключаются из дальнейшего перебора по внешнему циклу.
         released = partially_free_set.free_subset()
         released_elements |= released
 
-        unresolved = partially_free_set.with_removed(released)
+        unresolved = partially_free_set.with_removed(*released)
 
         # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
         sub_arrangements = resolve_clashes(unresolved)  # recursive call !
 
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
-            arrangements.append(ClashingElementSet(released.clone() | sa))
+            arrangements.add(ClashingElementSet(released.clone() | sa))
 
     # Выделение неконфликтующих раскладок.
     # Внутри кластера перебираем все элементы по очереди:

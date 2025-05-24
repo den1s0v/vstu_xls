@@ -49,6 +49,38 @@ class ClashTestCase(unittest.TestCase):
             ['0', 'a1', 'b2', 'c3'],
         ], combs)
         
+    def test_clash_03_all_touch(self):
+        objs = [
+            'x0',
+            'x1',
+            'x2',
+            'x3',
+            'x4',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['x0'],
+            ['x1'],
+            ['x2'],
+            ['x3'],
+            ['x4'],
+        ], combs)
+
+    def test_clash_04_all_free(self):
+        objs = [
+            '0',
+            '1',
+            '2',
+            '3',
+            '4',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['0', '1', '2', '3', '4', ]
+        ], combs)
+
     def test_clash_1(self):
         objs = [
             [1, 2],
@@ -77,6 +109,7 @@ class ClashTestCase(unittest.TestCase):
             [[1, 2], [4, 5]],
             [[2, 3], [4, 5]],
             [[2, 3], [5, 1]],
+            [[3, 4], [5, 1]],
         ], combs)
 
 
