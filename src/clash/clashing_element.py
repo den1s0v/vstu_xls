@@ -223,4 +223,6 @@ class ClashingElementSet(set['ClashingElement']):
 
     def get_bare_objs(self) -> list:
         # Extract objects back
-        return [clash_elem.obj for clash_elem in self]
+        arr = [clash_elem.obj for clash_elem in self]
+        arr.sort()
+        return arr

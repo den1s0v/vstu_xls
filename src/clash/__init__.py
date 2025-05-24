@@ -16,15 +16,10 @@
 
 """
 
-from functools import cache
-from typing import Any, Hashable, Iterable, override
+from typing import Iterable
 # from collections import Or
 
-from dataclasses import Field, dataclass, asdict
-from adict import adict
-
 from clash.clashing_element import *
-from utils import global_var
 
 
 def find_combinations_of_compatible_elements(
@@ -80,11 +75,13 @@ def find_combinations_of_compatible_elements(
     # }).resolve()
     clash_sets = resolve_clashes(clashing_set)
     # Extract objects back
-    return [
+    arr = [
         # {clash_elem.obj for clash_elem in clash_set}
         clash_set.get_bare_objs()
         for clash_set in clash_sets
     ]
+    arr.sort()
+    return arr
 
 
 # @dataclass()
