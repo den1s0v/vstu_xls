@@ -233,6 +233,39 @@ class ClashTestCase(unittest.TestCase):
             [[3, 4], [5, 1]],
         ], combs)
 
+    def test_clash_3_two_clusters(self):
+        r"""
+        Visually (a link means a conflict, a pair-wise clash):
+
+		   2         (1a)         8
+			\       /    \       /
+		3 — (x234+15)    (y876*ab) — 7
+			/       \    /       \
+		   4         (5b)         6
+
+	    Conflict resolving is be done bu removing central elements.
+        """
+        objs = [
+            '1a',
+            '2',
+            '3',
+            '4',
+            '5b',
+            'x234+15',
+            '6',
+            '7',
+            '8',
+            'y876*ab',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['1a', '2', '3', '4', '5b', '6', '7', '8', ],
+            ['2', '3', '4', 'y876*ab', ],
+            ['6', '7', '8', 'x234+15', ],
+            ['x234+15', 'y876*ab', ],
+        ], combs)
+
 
 if __name__ == '__main__':
     unittest.main()
