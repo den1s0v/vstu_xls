@@ -6,7 +6,7 @@ init_testing_environment()
 
 from pathlib import Path
 
-from grid import TxtGrid
+from converters.text import TxtGrid
 from grammar2d import read_grammar, GrammarMatcher
 
 
