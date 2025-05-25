@@ -56,8 +56,7 @@ class ClashTestCase(unittest.TestCase):
 
                     self.assertEqual(expected_free[el_raw], free, ('free →', el))
 
-                    expected_clash = list(set(objs) - set(expected_free[el_raw]) - {el_raw})
-                    expected_clash.sort()
+                    expected_clash = sorted_list(set(objs) - set(expected_free[el_raw]) - {el_raw})
                     self.assertEqual(expected_clash, clash, ('clash →', el))
 
         base = clashing_set

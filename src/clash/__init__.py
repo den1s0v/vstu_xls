@@ -75,13 +75,11 @@ def find_combinations_of_compatible_elements(
     # }).resolve()
     clash_sets = resolve_clashes(clashing_set)
     # Extract objects back
-    arr = [
+    return sorted_list(
         # {clash_elem.obj for clash_elem in clash_set}
         clash_set.get_bare_objs()
         for clash_set in clash_sets
-    ]
-    arr.sort()
-    return arr
+    )
 
 
 def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
@@ -140,3 +138,10 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
     # Полученные под-раскладки комбинируются с текущими свободными.
 
     return arrangements
+
+
+def sorted_list(s: set | list | Iterable) -> list:
+    """ Make sorted list from a set """
+    arr = list(s)
+    arr.sort()
+    return arr
