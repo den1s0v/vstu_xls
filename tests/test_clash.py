@@ -170,6 +170,39 @@ class ClashTestCase(unittest.TestCase):
             ['0', '1', '2', '3', '4', ]
         ], combs)
 
+    def test_clash_05_one_conflict(self):
+        objs = [
+            '0',
+            '1',
+            '2x',
+            '3',
+            '4x',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['0', '1', '2x', '3', ],
+            ['0', '1', '3', '4x', ],
+        ], combs)
+
+    def test_clash_05_two_groups(self):
+        objs = [
+            '0x',
+            '0y',
+            '0z',
+            'x',
+            'y',
+            'z',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            ['0x', 'y', 'z', ],
+            ['0y', 'x', 'z', ],
+            ['0z', 'x', 'y', ],
+            ['x', 'y', 'z', ],
+        ], combs)
+
     def test_clash_1(self):
         objs = [
             [1, 2],
