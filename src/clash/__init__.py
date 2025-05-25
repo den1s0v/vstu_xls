@@ -107,13 +107,12 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
         if elem in released_elements:
             continue
 
-        released_elements.add(elem)  # Этот мы точно освободим
-
         # Сделать текущий свободным (убрать все мешающие).
         directly_clashing = elem.all_clashing_among(clashing_set)
 
         if not directly_clashing:
             # Текущий ни с чем не конфликтует. Про остальные ничего не знаем.
+            released_elements.add(elem)  # Этот мы точно освободили
             continue
 
         # Все, кроме непосредственно конфликтующих с текущим.
