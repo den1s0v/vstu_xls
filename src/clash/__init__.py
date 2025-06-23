@@ -26,7 +26,10 @@ def find_combinations_of_compatible_elements(
         elements: Iterable,
         pair_compatibility_checker=None,
         components_getter=None) -> list[list]:
-    """ Главная функция .
+    """ Главная функция.
+
+    Returns
+        One or more subsets of given elements, sorted for stability.
     """
 
     assert pair_compatibility_checker or components_getter, "Any of parameters: `pair_compatibility_checker` or `components_getter` should be set!"

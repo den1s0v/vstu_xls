@@ -205,7 +205,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
         return type(self)(el.clone() for el in self)
 
     def get_bare_objs(self) -> list:
-        # Extract objects back
+        # Extract objects back, sort for stability
         arr = [clash_elem.obj for clash_elem in self]
         arr.sort()
         return arr
