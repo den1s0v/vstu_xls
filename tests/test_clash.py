@@ -278,6 +278,79 @@ class ClashTestCase(unittest.TestCase):
             ['x234+15', 'y876*ab', ],
         ], combs)
 
+    def test_clash_4_grid_2X2_shift(self):
+        r"""
+        Data, visually:
+
+        12345678
+        AB9CDEFG
+        HIJKLNMO
+        PQRSTUVW
+        ab9cdefg
+        hijklnmo
+        pqrstuvw
+
+        """
+        objs = [
+            # grid 00 (плотная упаковка квадратов 2x2 c позиции (0,0))
+            '12AB',
+            '349C',
+            '56DE',
+            '78FG',
+            'HIPQ',
+            'JKRS',
+            'LNTU',
+            'MOVW',
+            'abhi',
+            '9cjk',
+            'deln',
+            'fgmo',
+
+            # grid 10 (плотная упаковка квадратов 2x2 c позиции (1,0))
+            '23B9',
+            '45CD',
+            '67EF',
+            'IJQR',
+            'KLST',
+            'NMUV',
+            'b9ij',
+            'cdkl',
+            'efnm',
+
+            # grid 01 (плотная упаковка квадратов 2x2 c позиции (0,1))
+            'ABHI',
+            '9CJK',
+            'DELN',
+            'FGMO',
+            'PQab',
+            'RS9c',
+            'TUde',
+            'VWfg',
+            'hipq',
+            'jkrs',
+            'lntu',
+            'movw',
+
+            # grid 11 (плотная упаковка квадратов 2x2 c позиции (1,1))
+            'B9IJ',
+            'CDKL',
+            'EFNM',
+            'QRb9',
+            'STcd',
+            'UVef',
+            'ijqr',
+            'klst',
+            'nmuv',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            sorted_list(['12AB', '349C', '56DE', '78FG', 'HIPQ', 'JKRS', 'LNTU', 'MOVW', 'abhi', '9cjk', 'deln', 'fgmo',]),
+            sorted_list(['23B9', '45CD', '67EF', 'IJQR', 'KLST', 'NMUV', 'b9ij', 'cdkl', 'efnm', ]),
+            sorted_list(['ABHI', '9CJK', 'DELN', 'FGMO', 'PQab', 'RS9c', 'TUde', 'VWfg', 'hipq', 'jkrs', 'lntu', 'movw',]),
+            sorted_list(['B9IJ', 'CDKL', 'EFNM', 'QRb9', 'STcd', 'UVef', 'ijqr', 'klst', 'nmuv',]),
+        ], combs)
+
 
 if __name__ == '__main__':
     unittest.main()
