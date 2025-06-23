@@ -21,6 +21,7 @@ class ClashTestCase(unittest.TestCase):
         self.assertIsInstance(ClashingElementSet(u), ClashingElementSet)
 
     def test_sets(self):
+        """ Testing internal operations """
         objs = [
             '9',
             '0',
@@ -90,8 +91,6 @@ class ClashTestCase(unittest.TestCase):
             self.assertNotIn(el, reducible, el)
         self.assertFalse(bool(reducible))
 
-
-
     def test_clash_01(self):
         objs = [
             'a1',
@@ -105,7 +104,7 @@ class ClashTestCase(unittest.TestCase):
             ['1234'],
             ['a1', 'b2', 'c3'],
         ], combs)
-        
+
     def test_clash_02_one_free(self):
         objs = [
             '0',
@@ -215,6 +214,19 @@ class ClashTestCase(unittest.TestCase):
             [[2, 3]],
         ], combs)
 
+    def test_clash_1_strings(self):
+        objs = [
+            ['1', '2'],
+            ['2', '3'],
+            ['3', '4'],
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            [['1', '2'], ['3', '4']],
+            [['2', '3']],
+        ], combs)
+
     def test_clash_2(self):
         objs = [
             [1, 2],
@@ -243,7 +255,7 @@ class ClashTestCase(unittest.TestCase):
 			/       \    /       \
 		   4         (5b)         6
 
-	    Conflict resolving is be done bu removing central elements.
+	    Conflict resolving is be done by removing "middle" elements.
         """
         objs = [
             '1a',
