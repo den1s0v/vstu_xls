@@ -278,7 +278,7 @@ class ClashTestCase(unittest.TestCase):
             ['x234+15', 'y876*ab', ],
         ], combs)
 
-    def test_clash_4_grid_5x5_matches_2x2_shift(self):
+    def test_clash_4_grid_5x5_matches_2x2_8(self):
         r"""
         Data, visually:
 
@@ -326,7 +326,108 @@ class ClashTestCase(unittest.TestCase):
             sorted_list([ Q1[0], *Q2[1:4] ]),
         ]), combs)
 
-    def __test_clash_4_grid_8x7_matches_2x2_shift(self):
+    def test_clash_5_grid_5x5_matches_2x2_8(self):
+        r"""
+        Data, visually:
+
+        12345
+        67890
+        ABCDE
+        FGHIJ
+        KLNMO
+
+        Q:
+        13
+        24
+
+        """
+
+        # базовые квадраты 4x4 из четырёх 2x2:
+
+        # grid 00 (плотная упаковка квадратов 2x2 c позиции (0,0))
+        Q1 = [
+    		'1267',
+            '3489',
+            'ABFG',
+            'CDHI',
+            ]
+
+        # grid 01 (плотная упаковка квадратов 2x2 c позиции (0,1))
+        Q2 = [
+    		'67AB',
+            '89CD',
+            'FGKL',
+            'HINM',
+            ]
+
+        # grid 10 (плотная упаковка квадратов 2x2 c позиции (1,0))
+        Q3 = [
+            '2378',
+            '4590',
+            'BCGH',
+            'DEIJ',
+            ]
+
+        # grid 11 (плотная упаковка квадратов 2x2 c позиции (1,1))
+        Q4 = [
+            '78BC',
+            '90DE',
+            'GHLN',
+            'IJMO',
+            ]
+
+        objs = [
+            *Q1, *Q2, *Q3, *Q4,
+        ]
+
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        # self.assertEqual(sorted_list([
+        some_expected_combs = [
+            # базовые квадраты
+            sorted_list(Q1),
+            sorted_list(Q2),
+            sorted_list(Q3),
+            sorted_list(Q4),
+
+            # дальные стороны разных квадратов
+            sorted_list([ *Q1[0:2], *Q2[2:4] ]),
+            sorted_list([ *Q1[0:2], *Q3[2:4] ]),
+            sorted_list([ *Q1[0:2], *Q4[2:4] ]),
+            sorted_list([ Q1[0], Q1[2], Q2[1], Q2[3] ]),
+            sorted_list([ Q1[0], Q1[2], Q3[1], Q3[3] ]),
+            sorted_list([ Q1[0], Q1[2], Q4[1], Q4[3] ]),
+
+            sorted_list([ *Q2[0:2], *Q4[2:4] ]),
+            sorted_list([ Q2[0], Q2[2], Q4[1], Q4[3] ]),
+            sorted_list([ Q2[0], Q2[2], Q4[1], Q4[3] ]),
+
+            sorted_list([ *Q3[0:2], *Q2[2:4] ]),
+            sorted_list([ *Q3[0:2], *Q4[2:4] ]),
+            sorted_list([ Q3[0], Q3[2], Q4[1], Q4[3] ]),
+
+            # уголок из 3-х и отстоящий угол от другого квадрата
+            sorted_list([ *Q1[0:3], Q2[3] ]),
+            sorted_list([ *Q1[0:3], Q3[3] ]),
+            sorted_list([ *Q1[0:3], Q4[3] ]),
+
+            sorted_list([ Q2[0], *Q2[2:4], Q1[1] ]),
+            sorted_list([ Q2[0], *Q2[2:4], Q3[1] ]),
+            sorted_list([ Q2[0], *Q2[2:4], Q4[1] ]),
+
+            sorted_list([ *Q3[0:2], Q3[3], Q1[2] ]),
+            sorted_list([ *Q3[0:2], Q3[3], Q2[2] ]),
+            sorted_list([ *Q3[0:2], Q3[3], Q4[2] ]),
+
+            sorted_list([ Q1[0], *Q4[1:4] ]),
+            sorted_list([ Q2[0], *Q4[1:4] ]),
+            sorted_list([ Q3[0], *Q4[1:4] ]),
+        ]
+
+        for objs in some_expected_combs:
+	        self.assertIn(objs, combs)
+
+    def __test_clash_6_grid_8x7_matches_2x2_shift(self):
         r"""
         Data, visually:
 
