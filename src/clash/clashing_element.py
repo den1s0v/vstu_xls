@@ -22,8 +22,8 @@ def set_pair_compatibility_checker(func):
 
 
 class ObjWithDataWrapper(Hashable):
-    """ A generic wrapper for an arbitrary object, 
-        optionally associated with some arbitrary data
+    """ A generic wrapper for an arbitrary Hashable object,
+        optionally associated with some arbitrary data.
     """
     _obj: Hashable
     data: adict
@@ -37,7 +37,6 @@ class ObjWithDataWrapper(Hashable):
         except TypeError:
             # Fallback: instance identity
             self._hash = id(self.obj)
-
 
     @property
     def obj(self) -> Hashable:
@@ -57,18 +56,22 @@ class ObjWithDataWrapper(Hashable):
 
 
 class ClashingElement(ObjWithDataWrapper):
+    """ Internal wrapper around an object involved into clashing sets """
     # clashes_with: frozenset['ClashingElement']
     # cluster: None | int
 
+    @cache
     def clashes_with(self, other: 'ClashingElement') -> bool:
         assert _pair_compatibility_checker
         return not _pair_compatibility_checker(self.obj, other.obj)
 
+    @cache
     def all_clashing_among(self, others) -> 'ClashingElementSet':
         """ Note: Does not clash to itself """
         return ClashingElementSet(other for other in others if (other != self) and self.clashes_with(other))
         # TODO: use `!=`, not `is not` ???
 
+    @cache
     def all_independent_among(self, others) -> 'ClashingElementSet':
         """ Note: Not independent of itself """
         return ClashingElementSet(other for other in others if (other != self) and not self.clashes_with(other))
@@ -78,8 +81,10 @@ class ClashingElement(ObjWithDataWrapper):
         return type(self)(**self.__dict__)
 
 
-
 class ClashingContainer(ClashingElement):
+    """ A kind of ClashingElement that consists of `ClashingComponent`s and
+    the fact of clash is determined by the
+    presence of common components. """
     _components: frozenset['ClashingComponent']
 
     def __init__(self, obj: Hashable, data: adict = None, components: set['ClashingComponent'] = None):
@@ -99,10 +104,6 @@ class ClashingContainer(ClashingElement):
         assert isinstance(other, ClashingContainer), type(other)
         return any(component in other.components for component in self.components)
 
-
-
-
-
     def clone(self):
         fields = {
             'obj': self.obj,
@@ -120,6 +121,7 @@ class ClashingContainer(ClashingElement):
 
 
 class ClashingComponent(ObjWithDataWrapper):
+    """ A part of one or more `ClashingContainer`s. """
 
     def __init__(self, obj: Hashable, data: adict = None):
         super().__init__(obj, data)
@@ -158,6 +160,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
         s.remove(*elements)
         return s
 
+    @cache
     def free_subset(self) -> 'ClashingElementSet':
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
@@ -189,8 +192,8 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         for element in elements:
             if components_getter:
-                el = ClashingContainer(obj=element, components = {
-                    get_component(component) #, el)
+                el = ClashingContainer(obj=element, components={
+                    get_component(component)  #, el)
                     for component in components_getter(element)
                 })
             else:
