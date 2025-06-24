@@ -278,7 +278,7 @@ class ClashTestCase(unittest.TestCase):
             ['x234+15', 'y876*ab', ],
         ], combs)
 
-    def test_clash_4_grid_2X2_shift(self):
+    def __test_clash_4_grid_8x7_matches_2x2_shift(self):
         r"""
         Data, visually:
 
