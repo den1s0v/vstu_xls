@@ -278,6 +278,54 @@ class ClashTestCase(unittest.TestCase):
             ['x234+15', 'y876*ab', ],
         ], combs)
 
+    def test_clash_4_grid_5x5_matches_2x2_shift(self):
+        r"""
+        Data, visually:
+
+        12345
+        67890
+        ABCDE
+        FGHIJ
+        KLNMO
+
+        """
+
+        # базовые квадраты 4x4 из четырёх 2x2:
+
+        # grid 00 (плотная упаковка квадратов 2x2 c позиции (0,0))
+        Q1 = [
+    		'1267',
+            '3489',
+            'ABFG',
+            'CDHI',
+            ]
+
+        # grid 11 (плотная упаковка квадратов 2x2 c позиции (1,1))
+        Q2 = [
+            '78BC',
+            '90DE',
+            'GHLN',
+            'IJMO',
+            ]
+
+        objs = [
+            *Q1, *Q2
+        ]
+
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual(sorted_list([
+            # базовые квадраты
+            sorted_list(Q1),
+            sorted_list(Q2),
+            # дальные стороны разных квадратов
+            sorted_list([ *Q1[0:2], *Q2[2:4] ]),
+            sorted_list([ Q1[0], Q1[2], Q2[1], Q2[3] ]),
+            # уголок из 3-х и отстоящий угол от другого квадрата
+            sorted_list([ *Q1[0:3], Q2[3] ]),
+            sorted_list([ Q1[0], *Q2[1:4] ]),
+        ]), combs)
+
     def __test_clash_4_grid_8x7_matches_2x2_shift(self):
         r"""
         Data, visually:
