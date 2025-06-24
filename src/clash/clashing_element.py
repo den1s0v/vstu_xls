@@ -170,6 +170,15 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         return s
 
+    def get_all_clashing(self) -> 'ClashingElementSet':
+        """ Make a subset that it contains only elements not clashing with any other (in this) """
+        s = type(self)()
+        for el in self:
+            for sub_el in el.data.globally_clashing:
+                s.add(sub_el.clone())
+
+        return s
+
     @classmethod
     def make(cls,
              elements: Iterable,
@@ -216,3 +225,25 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
     def __hash__(self):
         # return hash(tuple(sorted(self)))
         return hash(frozenset(self))
+
+
+class ClashingLayer(ClashingElementSet):
+    incompatible: ClashingElementSet
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.incompatible = ClashingElementSet()
+
+    def try_accept(self, new_elem: ClashingElement) -> bool:
+        if new_elem in self.incompatible:
+            # We do not expect the new one.
+            return False
+        if new_elem.data.globally_clashing & self:
+            # We have some elements incompatible with the new one.
+            return False
+
+        # Register it
+        self.add(new_elem)
+        self.incompatible.add(new_elem.data.globally_clashing)
+
+        return True

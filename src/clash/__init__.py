@@ -86,7 +86,9 @@ def find_combinations_of_compatible_elements(
 
 
 def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
-    """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются """
+    """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются.
+    (Алгоритм для разреженного размещения элементов.)
+     """
     # кластеризация накладок.
 
     if len(clashing_set) <= 1:
@@ -142,6 +144,69 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
     # Полученные под-раскладки комбинируются со свободными и текущими освобождёнными на этой итерации.
 
     return arrangements
+
+
+def fill_clashing_elements(clashing_set: 'ClashingElementSet'):
+    """ Add sets elem.data.* for each `elem` in clashing_set:
+    - globally_clashing
+    - globally_independent
+    - neighbours: independent elements sharing common clashing ones.
+    """
+
+    for elem in clashing_set:
+        elem.data.globally_clashing = elem.all_clashing_among(clashing_set)
+        elem.data.globally_independent = elem.all_independent_among(clashing_set)
+
+    for elem in clashing_set:
+        clashing = elem.data.globally_clashing
+        if not clashing:
+            elem.data.neighbours = set()
+
+        independent = elem.data.globally_independent
+        # clashing twice, filtered by (limited to) independent
+        elem.data.neighbours = ClashingElementSet(clashing_set.get_all_clashing() & independent)
+        # elem.data.neighbours.remove(elem)  # not a neighbour of itself.
+
+    return clashing_set
+
+
+def resolve_clashes2(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
+    """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются """
+    # кластеризация накладок.
+
+    if len(clashing_set) <= 1:
+        # early exit: only one variant exists for the input of size 1 or 0.
+        return {clashing_set, }
+
+    """
+    (Алгоритм для плотного размещения элементов.)
+
+    Инициализируем и наполняем цепочки-кандидаты, из которых будут получены итоговые раскладки, максимально 2^N.
+
+    Для каждого элемента-кандидита:
+        Решить, в какие цепочки его следует добавить:
+            Для каждой [активной] цепочки^
+              - НЕ добавляем, делая копию последнего состовния цепочки
+              - Добавляем сразу те, которые имеют общие несовместимые элементы.
+              - создаём новую цепочку для этого, если в остальных он нигде не является полностью свободным (во всём set)
+            Обрботать "задвоение" цепочек по принципу подмножеств -- удалить избыточные.
+
+    """
+
+    # always_free = clashing_set.free_subset()
+
+    # if len(clashing_set) == len(always_free):
+    #     # Ничто ни с чем не конфликтуeт
+    #     return {clashing_set, }
+
+    # # Далее рассматриваем только конфликтующие (заменили входную переменную!)
+    # clashing_set = clashing_set.with_removed(*always_free)
+
+    # # Все варианты неконфликтующих раскладок.
+    # arrangements: set['ClashingElementSet'] = set()
+
+
+    # return arrangements
 
 
 def sorted_list(s: set | list | Iterable) -> list:
