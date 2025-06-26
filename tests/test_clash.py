@@ -502,6 +502,86 @@ class ClashTestCase(unittest.TestCase):
             sorted_list(['B9IJ', 'CDKL', 'EFNM', 'QRb9', 'STcd', 'UVef', 'ijqr', 'klst', 'nmuv', ]),
         ], combs)
 
+    def test_arrangement_1(self):
+
+        a = Arrangement.make(range(2))
+        b = Arrangement.make(range(2, 10))
+        u = Arrangement.make(range(10))
+
+        self.assertEqual(b, a.select_candidates_from(u))
+        self.assertEqual(a, b.select_candidates_from(u))
+        self.assertEqual((True, set()), a.try_add_all(b))
+        self.assertEqual(u, a)
+
+    def test_arrangement_2(self):
+
+        s = '12345678901'
+        L = list(s[i:i + 3] for i in range(len(s) - 3 + 1))
+        # print(L)  # ['123', '234', '345', '456', '567', '678', '789', '890', '901']
+
+        u = ClashingElementSet.make(L, trivial_components_getter)
+        fill_clashing_elements(u)
+        su = list(sorted(u))
+
+        # Adding all one by one...
+        a = Arrangement()
+        incompatible_with_a = su[1::3] + su[2::3]
+        self.assertEqual((False, set(incompatible_with_a)), a.try_add_all(su))
+        self.assertEqual(set(su[0::3]), a)
+
+        # Adding all one by one...
+        b = Arrangement()
+        incompatible_with_b = su[2::3] + su[3::3]
+        self.assertEqual((False, set(incompatible_with_b)), b.try_add_all(su[1:]))
+        self.assertEqual(set(su[1::3]), b)
+
+        neighbours_of_a = a.get_outer_neighbours()
+        self.assertEqual(set(), neighbours_of_a)
+
+        neighbours_of_b = b.get_outer_neighbours()
+        self.assertEqual(set(), neighbours_of_b)
+
+    def test_arrangement_3(self):
+
+        s = '1234567890x'
+        L = list(s[i:i + 3] for i in range(len(s) - 3 + 1))
+        # print(L)  # ['123', '234', '345', '456', '567', '678', '789', '890', '90x']
+
+        u = ClashingElementSet.make(L, trivial_components_getter)
+        fill_clashing_elements(u)
+        su = list(sorted(u))
+
+        # Adding some...
+        a = Arrangement()
+        self.assertEqual((True, set()), a.try_add_all(su[0::4]))
+        self.assertEqual(set(su[0::4]), a)
+
+        # Adding some...
+        b = Arrangement()
+        self.assertEqual((True, set()), b.try_add_all(su[1::4]))
+        self.assertEqual(set(su[1::4]), b)
+
+        # Adding some...
+        x = Arrangement()
+        self.assertEqual((True, set()), x.try_add_all(su[2::4]))
+        self.assertEqual(set(su[2::4]), x)
+
+        # Adding some...
+        y = Arrangement()
+        self.assertEqual((True, set()), y.try_add_all(su[3::4]))
+        self.assertEqual(set(su[3::4]), y)
+
+        ### TODO
+        # neighbours_of_a = a.get_outer_neighbours()
+        # self.assertNotEqual(set(), neighbours_of_a)
+        # self.assertEqual(set(), x - neighbours_of_a)
+        #
+        # neighbours_of_y = y.get_outer_neighbours()
+        # self.assertNotEqual(set(), neighbours_of_y)
+        # self.assertEqual(set(), b - y.select_neighbours_from(u))
+        #
+        # # self.assertEqual(u, neighbours_of_a | neighbours_of_b)
+
 
 if __name__ == '__main__':
     unittest.main()
