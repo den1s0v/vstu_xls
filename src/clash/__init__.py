@@ -112,7 +112,6 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
     # Все варианты неконфликтующих раскладок.
     arrangements: set['ClashingElementSet'] = set()
 
-
     # Внутри кластера перебираем все элементы по очереди:
     for elem in clashing_set:
 
@@ -134,7 +133,6 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
 
         # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
         sub_arrangements = resolve_clashes(unresolved)  # recursive call !
-
 
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
