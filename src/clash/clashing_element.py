@@ -6,6 +6,8 @@ from typing import Hashable, Iterable, override
 
 from adict import adict
 
+from utils import safe_adict
+
 # Функция (obj1, obj2) -> bool
 _pair_compatibility_checker: callable = None
 
@@ -26,12 +28,12 @@ class ObjWithDataWrapper(Hashable):
         optionally associated with some arbitrary data.
     """
     _obj: Hashable
-    data: adict
+    data: safe_adict
     _hash: int
 
     def __init__(self, obj: Hashable, data: adict = None):
         self._obj = obj
-        self.data = data or adict()
+        self.data = safe_adict(data or {})
         try:
             self._hash = hash(obj)
         except TypeError:
@@ -48,6 +50,13 @@ class ObjWithDataWrapper(Hashable):
     def __eq__(self, other):
         return self._hash == hash(other)
 
+    def __lt__(self, other):
+        if isinstance(other, ObjWithDataWrapper):
+            return self._obj < other._obj
+        else:
+            raise TypeError(
+                f"'<' not supported between instances of '{type(self).__name__}' and '{type(other).__name__}'")
+
     def __repr__(self):
         return f"{type(self).__name__}({self._obj!r})"
 
@@ -57,6 +66,7 @@ class ObjWithDataWrapper(Hashable):
 
 class ClashingElement(ObjWithDataWrapper):
     """ Internal wrapper around an object involved into clashing sets """
+
     # clashes_with: frozenset['ClashingElement']
     # cluster: None | int
 
@@ -227,23 +237,61 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
         return hash(frozenset(self))
 
 
-class ClashingLayer(ClashingElementSet):
+class Arrangement(ClashingElementSet):
+    """ A set of mutually compatible elements.
+     Primary addition method `try_add` may refuse if the new element is incompatible with the existing.
+     """
     incompatible: ClashingElementSet
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.incompatible = ClashingElementSet()
 
-    def try_accept(self, new_elem: ClashingElement) -> bool:
+    def try_add(self, new_elem: ClashingElement) -> bool:
+        """Returns True if given element was added successfully or already present (i.e. not refused to add)."""
         if new_elem in self.incompatible:
             # We do not expect the new one.
             return False
-        if new_elem.data.globally_clashing & self:
+        external_incompatible = new_elem.data.globally_clashing or set()
+        if external_incompatible & self:
             # We have some elements incompatible with the new one.
             return False
 
         # Register it
         self.add(new_elem)
-        self.incompatible.add(new_elem.data.globally_clashing)
+        self.incompatible |= external_incompatible
 
         return True
+
+    def try_add_all(self, new_elements: Iterable[ClashingElement]) -> tuple[bool, set]:
+        """Returns True if all given elements were added successfully"""
+        ok = True
+        not_added = set()
+        for new_elem in new_elements:
+            success = self.try_add(new_elem)
+            ok = ok and success
+            if not success:
+                not_added.add(new_elem)
+        return ok, not_added
+
+    def select_candidates_from(self, universe: ClashingElementSet | set) -> ClashingElementSet:
+
+        selected_candidates = ClashingElementSet(universe - self - self.incompatible)
+
+        return selected_candidates
+
+    def get_outer_neighbours(self) -> ClashingElementSet:
+
+        neighbours = ClashingElementSet({
+            neighbour
+            for el in self
+            for neighbour in el.data.neighbours
+        })
+
+        return self.select_candidates_from(neighbours)
+
+    def select_neighbours_from(self, universe: ClashingElementSet | set) -> ClashingElementSet:
+
+        selected_candidates = ClashingElementSet(self.get_outer_neighbours() & self.select_candidates_from(universe))
+
+        return selected_candidates
