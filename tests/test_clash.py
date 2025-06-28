@@ -7,7 +7,7 @@ init_testing_environment()
 from clash import *
 
 
-class ClashTestCase(unittest.TestCase):
+class ClashSetsTestCase(unittest.TestCase):
     def test_set_type(self):
         a = ClashingElementSet.make([])
         b = ClashingElementSet.make([])
@@ -91,6 +91,8 @@ class ClashTestCase(unittest.TestCase):
             self.assertNotIn(el, reducible, el)
         self.assertFalse(bool(reducible))
 
+
+class ClashTestCase(unittest.TestCase):
     def test_clash_01(self):
         objs = [
             'a1',
