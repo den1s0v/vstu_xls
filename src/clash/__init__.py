@@ -172,7 +172,7 @@ def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['Clash
     # Далее рассматриваем только конфликтующие (заменили входную переменную!)
     clashing_set = clashing_set.with_removed(*always_free)
 
-    # Все варианты не конфликтующих раскладок.
+    # Все варианты раскладок не конфликтующих элементов.
     arrangements: set['Arrangement'] = set()
 
     # Внутри кластера перебираем все элементы по очереди:
@@ -180,17 +180,11 @@ def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['Clash
 
         arrangement = Arrangement((elem, ))
 
-        # Сделать текущий свободным (убрать все мешающие).
-        directly_clashing = arrangement.incompatible
 
-        # if not directly_clashing:
-        #     # Текущий ни с чем не конфликтует. Про остальные ничего не знаем.
-        #     # Сюда мы не должны зайти, т.к. выше такие отсеяли
-        #     continue
+        # Сделать текущий свободным (убрать все мешающие).
 
         # Все, кроме непосредственно конфликтующих с текущим.
         partially_free_set = arrangement.select_candidates_from(clashing_set)
-        # partially_free_set = clashing_set.with_removed(*directly_clashing)
 
         # Все освобождённые идут в раскладку сразу.
         released = partially_free_set.free_subset()
@@ -205,13 +199,6 @@ def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['Clash
         for sa in sub_arrangements:
             arrangements.add(Arrangement(always_free | arrangement | sa))
 
-    # Выделение неконфликтующих раскладок.
-    # Отделяем полностью свободные элементы от остальных.
-    # Внутри кластера перебираем все элементы по очереди:
-    # Сделать текущий свободным (убрать все мешающие).
-    # Все освобождённые идут в текущую раскладку сразу.
-    # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
-    # Полученные под-раскладки комбинируются со свободными и текущими освобождёнными на этой итерации.
 
     return arrangements
 
