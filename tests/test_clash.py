@@ -502,6 +502,8 @@ class ClashTestCase(unittest.TestCase):
             sorted_list(['B9IJ', 'CDKL', 'EFNM', 'QRb9', 'STcd', 'UVef', 'ijqr', 'klst', 'nmuv', ]),
         ], combs)
 
+        
+class ArrangementCase(unittest.TestCase):
     def test_arrangement_1(self):
 
         a = Arrangement.make(range(2))
@@ -543,37 +545,68 @@ class ClashTestCase(unittest.TestCase):
 
     def test_arrangement_3(self):
 
-        s = '1234567890x'
-        L = list(s[i:i + 3] for i in range(len(s) - 3 + 1))
-        # print(L)  # ['123', '234', '345', '456', '567', '678', '789', '890', '90x']
+        # s = '1234567890x'
+        # L = list(s[i:i + 3] for i in range(len(s) - 3 + 1))
+        # print(L)
+        L = ['123',  #  0
+              '234', #  1
+               '345',  # 2
+                '456', # 3
+                 '567',  # 4
+                  '678', # 5
+                   '789',  # 6
+                    '890', # 7
+                     '90x',# 8
+             ]
 
         u = ClashingElementSet.make(L, trivial_components_getter)
         fill_clashing_elements(u)
         su = list(sorted(u))
 
+        for el in su:
+            assert all(
+            	other in el.data.globally_clashing
+            	for other in su
+            	if other != el and (set(el.obj) & set(other.obj))
+        	)
+
         # Adding some...
         a = Arrangement()
         self.assertEqual((True, set()), a.try_add_all(su[0::4]))
         self.assertEqual(set(su[0::4]), a)
+        self.assertEqual(set(su) - set(su[0::4]), a.incompatible)
 
         # Adding some...
         b = Arrangement()
         self.assertEqual((True, set()), b.try_add_all(su[1::4]))
         self.assertEqual(set(su[1::4]), b)
+        self.assertEqual(set(su[:-1]) - set(su[1::4]), b.incompatible)
 
         # Adding some...
         x = Arrangement()
         self.assertEqual((True, set()), x.try_add_all(su[2::4]))
         self.assertEqual(set(su[2::4]), x)
+        self.assertEqual(set(su) - set(su[2::4]), x.incompatible)
 
         # Adding some...
         y = Arrangement()
         self.assertEqual((True, set()), y.try_add_all(su[3::4]))
         self.assertEqual(set(su[3::4]), y)
+        self.assertEqual(set(su[1:]) - set(su[3::4]), y.incompatible)
 
         ### TODO
-        # neighbours_of_a = a.get_outer_neighbours()
-        # self.assertNotEqual(set(), neighbours_of_a)
+        neighbours_of_a = a.get_outer_neighbours()
+        self.assertEqual(set(), neighbours_of_a)
+
+        neighbours_of_b = b.get_outer_neighbours()
+        self.assertEqual(set(su[-1:]), neighbours_of_b)
+
+        neighbours_of_x = x.get_outer_neighbours()
+        self.assertEqual(set(), neighbours_of_x)
+
+        neighbours_of_y = y.get_outer_neighbours()
+        self.assertEqual(set(su[:1]), neighbours_of_y)
+
         # self.assertEqual(set(), x - neighbours_of_a)
         #
         # neighbours_of_y = y.get_outer_neighbours()
