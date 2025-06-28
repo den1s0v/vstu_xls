@@ -202,28 +202,28 @@ def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['Clash
     return arrangements
 
 
-def fill_clashing_elements(clashing_set: 'ClashingElementSet'):
-    """ Add sets elem.data.* for each `elem` in clashing_set:
+def fill_clashing_elements(universe: 'ClashingElementSet'):
+    """ Add sets elem.data.* for each `elem` in universe:
     - globally_clashing
     - globally_independent
-    - neighbours: independent elements sharing common clashing ones.
+    - neighbours: independent elements sharing common clashing elements.
     """
 
-    for elem in clashing_set:
-        elem.data.globally_clashing = elem.all_clashing_among(clashing_set)
-        elem.data.globally_independent = elem.all_independent_among(clashing_set)
+    for elem in universe:
+        elem.data.globally_clashing = elem.all_clashing_among(universe)
+        elem.data.globally_independent = elem.all_independent_among(universe)
 
-    for elem in clashing_set:
+    for elem in universe:
         clashing = elem.data.globally_clashing
         if not clashing:
             elem.data.neighbours = set()
 
         independent = elem.data.globally_independent
         # clashing twice, filtered by (limited to) independent
-        elem.data.neighbours = ClashingElementSet(clashing_set.get_all_clashing() & independent)
+        elem.data.neighbours = ClashingElementSet(universe.get_all_clashing() & independent)
         # elem.data.neighbours.remove(elem)  # not a neighbour of itself.
 
-    return clashing_set
+    return universe
 
 
 def resolve_clashes2(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
