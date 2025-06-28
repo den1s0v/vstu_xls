@@ -72,7 +72,7 @@ def find_combinations_of_compatible_elements(
     if pair_compatibility_checker:
         set_pair_compatibility_checker(pair_compatibility_checker)
 
-    # prepare for resolve_clashes_refactored()
+    # (!!!) prepare for resolve_clashes_refactored()
     fill_clashing_elements(clashing_set)
 
     # return ClashResolver({
@@ -156,6 +156,7 @@ def resolve_clashes(clashing_set: 'ClashingElementSet') -> set['ClashingElementS
 def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
     """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются.
     (Алгоритм для разреженного размещения элементов.)
+    Это в 2..3 раза быстрее, чем `resolve_clashes()`.
      """
     # кластеризация накладок.
 
@@ -180,7 +181,6 @@ def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['Clash
 
         arrangement = Arrangement((elem, ))
 
-
         # Сделать текущий свободным (убрать все мешающие).
 
         # Все, кроме непосредственно конфликтующих с текущим.
@@ -198,7 +198,6 @@ def resolve_clashes_refactored(clashing_set: 'ClashingElementSet') -> set['Clash
         # Полученные под-раскладки комбинируются с текущими свободными.
         for sa in sub_arrangements:
             arrangements.add(Arrangement(always_free | arrangement | sa))
-
 
     return arrangements
 
