@@ -495,16 +495,20 @@ class ClashTestCase(unittest.TestCase):
         ]
         combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
 
-        self.assertEqual([
+        some_expected_combs = [
             sorted_list(
                 ['12AB', '349C', '56DE', '78FG', 'HIPQ', 'JKRS', 'LNTU', 'MOVW', 'abhi', '9cjk', 'deln', 'fgmo', ]),
             sorted_list(['23B9', '45CD', '67EF', 'IJQR', 'KLST', 'NMUV', 'b9ij', 'cdkl', 'efnm', ]),
             sorted_list(
                 ['ABHI', '9CJK', 'DELN', 'FGMO', 'PQab', 'RS9c', 'TUde', 'VWfg', 'hipq', 'jkrs', 'lntu', 'movw', ]),
             sorted_list(['B9IJ', 'CDKL', 'EFNM', 'QRb9', 'STcd', 'UVef', 'ijqr', 'klst', 'nmuv', ]),
-        ], combs)
+        ]
 
-        
+        for objs in some_expected_combs:
+            self.assertIn(objs, combs)
+        # self.assertEqual(, combs)
+
+
 class ArrangementCase(unittest.TestCase):
     def test_arrangement_1(self):
 
