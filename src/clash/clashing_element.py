@@ -245,7 +245,7 @@ class Arrangement(ClashingElementSet):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.incompatible = ClashingElementSet()
+        self.incompatible = self.find_all_incompatible()
 
     def try_add(self, new_elem: ClashingElement) -> bool:
         """Returns True if given element was added successfully or already present (i.e. not refused to add)."""
@@ -274,13 +274,26 @@ class Arrangement(ClashingElementSet):
                 not_added.add(new_elem)
         return ok, not_added
 
+    def find_all_incompatible(self) -> ClashingElementSet:
+        """ Return from universe the elements that do clash with this set. """
+        all_incompatible = ClashingElementSet()
+        for el in self:
+            incompatible = el.data.globally_clashing or set()
+            all_incompatible |= incompatible
+        return all_incompatible
+
     def select_candidates_from(self, universe: ClashingElementSet | set) -> ClashingElementSet:
+        """ Retain only elements that are compatible with this set. """
 
         selected_candidates = ClashingElementSet(universe - self - self.incompatible)
 
         return selected_candidates
 
     def get_outer_neighbours(self) -> ClashingElementSet:
+        """ Get elements of universe that are not in this set
+        and are "neighbours"
+        (i.e. close to elements of this set in the sense that they have common clashing
+        elements). """
 
         neighbours = ClashingElementSet({
             neighbour
@@ -291,7 +304,16 @@ class Arrangement(ClashingElementSet):
         return self.select_candidates_from(neighbours)
 
     def select_neighbours_from(self, universe: ClashingElementSet | set) -> ClashingElementSet:
+        """ Retain only elements that are compatible with this set
+        and are "neighbours"
+        (i.e. close to elements of this set in the sense that they have common clashing elements). """
 
         selected_candidates = ClashingElementSet(self.get_outer_neighbours() & self.select_candidates_from(universe))
 
         return selected_candidates
+
+    def clone(self) -> 'Arrangement':
+        """Deep clone"""
+        obj = super().clone()
+        obj.incompatible = self.incompatible.clone()
+        return obj
