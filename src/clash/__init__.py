@@ -83,7 +83,8 @@ def find_combinations_of_compatible_elements(
     # clash_sets = resolve_clashes_refactored(clashing_set)
     # clash_sets = resolve_clashes2(clashing_set)
     # clash_sets = resolve_clashes3(clashing_set)
-    clash_sets = resolve_clashes4(clashing_set)
+    # clash_sets = resolve_clashes4(clashing_set)
+    clash_sets = resolve_clashes5(clashing_set)
     # Extract objects back
     return sorted_list(
         # {clash_elem.obj for clash_elem in clash_set}
@@ -468,6 +469,78 @@ def resolve_clashes4(clashing_set: 'ClashingElementSet') -> set['ClashingElement
 
             # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
             sub_arrangements = resolve_clashes4(unresolved)  # recursive call !
+
+            # Полученные под-раскладки комбинируются с текущими свободными.
+            for sa in sub_arrangements:
+                arrangements.add(Arrangement(always_free | arrangement | sa))
+
+    return arrangements
+
+@cache
+def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
+    """ Нахождение всех локально оптимальных раскладок элементов, в которых они не пересекаются """
+    # кластеризация накладок.
+
+    if len(clashing_set) <= 1:
+        # early exit: only one variant exists for the input of size 1 or 0.
+        return {clashing_set, }
+
+    always_free = clashing_set.free_subset()
+
+    if len(clashing_set) == len(always_free):
+        # Ничто ни с чем не конфликтуeт
+        return {clashing_set, }
+
+    # ###
+    # print()
+    # print("clashing_set: ", clashing_set.get_bare_objs())
+    # ###
+
+    # Далее рассматриваем только конфликтующие (заменили входную переменную!)
+    clashing_set = clashing_set.with_removed(*always_free)
+
+    # Все варианты раскладок не конфликтующих элементов.
+    arrangements: set['Arrangement'] = set()
+
+    # Отсортируем элементы для однозначного порядка обхода
+    unused_elements = sorted(clashing_set)
+
+    @cache
+    def find_spot_arrangements(basis: 'ClashingElementSet') -> set[Arrangement]:
+
+        arrangement = Arrangement(basis)
+        arrangements = {arrangement}
+
+        # обход в ширину: пока "пятно соседей" растёт
+        while neighbour_sets := arrangement.closest_neighbour_sets_from(clashing_set):
+
+            # кластеризация соседей на несовместимые между собой подгруппы
+            neighbours, *rest = [*neighbour_sets]
+
+            if not neighbours:
+                break  # empty
+
+            for alt_neighbours in rest:
+                # recursive call !
+                arrangements |= find_spot_arrangements(ClashingElementSet(arrangement | alt_neighbours))
+
+            ok, bad = arrangement.try_add_all(neighbours)
+            assert ok, bad
+
+        # Готово: пятно построено.
+        return arrangements
+
+    while unused_elements:
+        elem = unused_elements.pop(0)
+
+        spot_arrangements = find_spot_arrangements(ClashingElementSet({elem}))
+
+        for arrangement in spot_arrangements:
+
+            unresolved = arrangement.select_candidates_from(clashing_set)
+
+            # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
+            sub_arrangements = resolve_clashes5(unresolved)  # recursive call !
 
             # Полученные под-раскладки комбинируются с текущими свободными.
             for sa in sub_arrangements:

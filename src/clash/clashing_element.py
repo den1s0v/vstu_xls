@@ -329,8 +329,6 @@ class Arrangement(ClashingElementSet):
         and are "neighbours" & having the largest number on common clashes.
          """
 
-        # neighbour_candidates = ClashingElementSet(self.get_outer_neighbours() & self.select_candidates_from(universe))
-
         all_globally_clashing_with_this_set = {
             clashing_element
             for elem in self
@@ -355,6 +353,58 @@ class Arrangement(ClashingElementSet):
         addable_arrangement.try_add_all(t[1] for t in rating_candidate_list)
 
         return self.select_candidates_from(addable_arrangement)
+
+    def closest_neighbour_sets_from(self, universe: ClashingElementSet | set) -> set[ClashingElementSet]:
+        """ Retain only elements that are all compatible with this set
+        and are "neighbours" & having the largest number on common clashes.
+         """
+
+        all_globally_clashing_with_this_set = {
+            clashing_element
+            for elem in self
+            for clashing_element in (elem.data.globally_clashing or ())
+        }
+
+        rating_candidate_list: list[tuple[int, ClashingElement]] = []  # (count of common clashes, candidate)
+
+        for ext_elem in universe:
+            ext_clashing_elements = ext_elem.data.globally_clashing or set()
+            common = all_globally_clashing_with_this_set & ext_clashing_elements
+            if common:
+                rating = len(common)
+                rating_candidate_list.append((
+                    rating, ext_elem
+                ))
+                # # save rating in metadata
+                # ext_elem.data._rating = rating
+
+        rating_candidate_list.sort(key=lambda t: t[0], reverse=True)
+
+        addable_arrangement = Arrangement()
+
+        # Adding starting from the closest, keeping the most close elements
+        candidate_list = [t[1] for t in rating_candidate_list]
+        _, extra_1 = addable_arrangement.try_add_all(candidate_list)
+        
+        neighbour_sets = {
+            self.select_candidates_from(addable_arrangement),
+        }
+        
+        if extra_1:
+            # Возможны альтернативные варианты
+            top_rating_sum = sum(t[0] for t in rating_candidate_list if t[1] not in extra_1)
+            # try to find another combinations starting from not used (extra) elements
+            for extra_elem in extra_1:
+                arrangement_2 = Arrangement()
+                _, extra_2 = arrangement_2.try_add_all([extra_elem] + candidate_list)
+                rating_sum_2 = sum(t[0] for t in rating_candidate_list if t[1] not in extra_2)
+                if rating_sum_2 >= top_rating_sum:
+                    # Found another good arrangement
+                    neighbour_sets.add(
+                        self.select_candidates_from(arrangement_2)
+                    )
+
+        return neighbour_sets
 
     def clone(self) -> 'Arrangement':
         """Deep clone"""
