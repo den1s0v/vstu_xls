@@ -82,7 +82,8 @@ def find_combinations_of_compatible_elements(
     # clash_sets = resolve_clashes(clashing_set)
     # clash_sets = resolve_clashes_refactored(clashing_set)
     # clash_sets = resolve_clashes2(clashing_set)
-    clash_sets = resolve_clashes3(clashing_set)
+    # clash_sets = resolve_clashes3(clashing_set)
+    clash_sets = resolve_clashes4(clashing_set)
     # Extract objects back
     return sorted_list(
         # {clash_elem.obj for clash_elem in clash_set}
@@ -322,7 +323,6 @@ def resolve_clashes2(clashing_set: 'ClashingElementSet') -> set['ClashingElement
 
     """
 
-    # return arrangements
 
 @cache
 def resolve_clashes3(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:

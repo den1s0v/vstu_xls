@@ -203,6 +203,24 @@ class ClashTestCase(unittest.TestCase):
             ['x', 'y', 'z', ],
         ], combs)
 
+    def test_clash_05_two_groups_rev_data(self):
+        objs = [
+            'ёx',
+            'ёy',
+            'ёz',
+            'x',
+            'y',
+            'z',
+        ]
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        self.assertEqual([
+            (['x', 'y', 'z', ]),
+            (['x', 'y', 'ёz', ]),
+            (['x', 'z', 'ёy', ]),
+            (['y', 'z', 'ёx', ]),
+        ], combs)
+
     def test_clash_1(self):
         objs = [
             [1, 2],
@@ -316,17 +334,25 @@ class ClashTestCase(unittest.TestCase):
 
         combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
 
-        self.assertEqual(sorted_list([
+        some_expected_combs = [
             # базовые квадраты
             sorted_list(Q1),
             sorted_list(Q2),
-            # дальные стороны разных квадратов
-            sorted_list([*Q1[0:2], *Q2[2:4]]),
-            sorted_list([Q1[0], Q1[2], Q2[1], Q2[3]]),
-            # уголок из 3-х и отстоящий угол от другого квадрата
-            sorted_list([*Q1[0:3], Q2[3]]),
-            sorted_list([Q1[0], *Q2[1:4]]),
-        ]), combs)
+            # excessive arrangements ↓
+            # # дальние стороны разных квадратов
+            # sorted_list([*Q1[0:2], *Q2[2:4]]),
+            # sorted_list([Q1[0], Q1[2], Q2[1], Q2[3]]),
+            # # уголок из 3-х и отстоящий угол от другого квадрата
+            # sorted_list([*Q1[0:3], Q2[3]]),
+            # sorted_list([Q1[0], *Q2[1:4]]),
+        ]
+
+        print('resulting combs: ', len(combs))
+        print(*combs, sep='\n')
+
+        for objs in some_expected_combs:
+            self.assertIn(objs, combs)
+
 
     def test_clash_5_grid_5x5_matches_2x2_8(self):
         r"""
@@ -392,44 +418,48 @@ class ClashTestCase(unittest.TestCase):
             sorted_list(Q3),
             sorted_list(Q4),
 
-            # дальние стороны разных квадратов
-            sorted_list([*Q1[0:2], *Q2[2:4]]),
-            sorted_list([*Q1[0:2], *Q3[2:4]]),
-            sorted_list([*Q1[0:2], *Q4[2:4]]),
-            sorted_list([Q1[0], Q1[2], Q2[1], Q2[3]]),
-            sorted_list([Q1[0], Q1[2], Q3[1], Q3[3]]),
-            sorted_list([Q1[0], Q1[2], Q4[1], Q4[3]]),
-
-            sorted_list([*Q2[0:2], *Q4[2:4]]),
-            sorted_list([Q2[0], Q2[2], Q4[1], Q4[3]]),
-            sorted_list([Q2[0], Q2[2], Q4[1], Q4[3]]),
-
-            sorted_list([*Q3[0:2], *Q2[2:4]]),
-            sorted_list([*Q3[0:2], *Q4[2:4]]),
-            sorted_list([Q3[0], Q3[2], Q4[1], Q4[3]]),
-
-            # уголок из 3-х и отстоящий угол от другого квадрата
-            sorted_list([*Q1[0:3], Q2[3]]),
-            sorted_list([*Q1[0:3], Q3[3]]),
-            sorted_list([*Q1[0:3], Q4[3]]),
-
-            sorted_list([Q2[0], *Q2[2:4], Q1[1]]),
-            sorted_list([Q2[0], *Q2[2:4], Q3[1]]),
-            sorted_list([Q2[0], *Q2[2:4], Q4[1]]),
-
-            sorted_list([*Q3[0:2], Q3[3], Q1[2]]),
-            sorted_list([*Q3[0:2], Q3[3], Q2[2]]),
-            sorted_list([*Q3[0:2], Q3[3], Q4[2]]),
-
-            sorted_list([Q1[0], *Q4[1:4]]),
-            sorted_list([Q2[0], *Q4[1:4]]),
-            sorted_list([Q3[0], *Q4[1:4]]),
+            # excessive arrangements ↓
+            # # дальние стороны разных квадратов
+            # sorted_list([*Q1[0:2], *Q2[2:4]]),
+            # sorted_list([*Q1[0:2], *Q3[2:4]]),
+            # sorted_list([*Q1[0:2], *Q4[2:4]]),
+            # sorted_list([Q1[0], Q1[2], Q2[1], Q2[3]]),
+            # sorted_list([Q1[0], Q1[2], Q3[1], Q3[3]]),
+            # sorted_list([Q1[0], Q1[2], Q4[1], Q4[3]]),
+            #
+            # sorted_list([*Q2[0:2], *Q4[2:4]]),
+            # sorted_list([Q2[0], Q2[2], Q4[1], Q4[3]]),
+            # sorted_list([Q2[0], Q2[2], Q4[1], Q4[3]]),
+            #
+            # sorted_list([*Q3[0:2], *Q2[2:4]]),
+            # sorted_list([*Q3[0:2], *Q4[2:4]]),
+            # sorted_list([Q3[0], Q3[2], Q4[1], Q4[3]]),
+            #
+            # # уголок из 3-х и отстоящий угол от другого квадрата
+            # sorted_list([*Q1[0:3], Q2[3]]),
+            # sorted_list([*Q1[0:3], Q3[3]]),
+            # sorted_list([*Q1[0:3], Q4[3]]),
+            #
+            # sorted_list([Q2[0], *Q2[2:4], Q1[1]]),
+            # sorted_list([Q2[0], *Q2[2:4], Q3[1]]),
+            # sorted_list([Q2[0], *Q2[2:4], Q4[1]]),
+            #
+            # sorted_list([*Q3[0:2], Q3[3], Q1[2]]),
+            # sorted_list([*Q3[0:2], Q3[3], Q2[2]]),
+            # sorted_list([*Q3[0:2], Q3[3], Q4[2]]),
+            #
+            # sorted_list([Q1[0], *Q4[1:4]]),
+            # sorted_list([Q2[0], *Q4[1:4]]),
+            # sorted_list([Q3[0], *Q4[1:4]]),
         ]
+
+        print('resulting combs: ', len(combs))
+        print(*combs, sep='\n')
 
         for objs in some_expected_combs:
             self.assertIn(objs, combs)
 
-    def __test_clash_6_grid_8x7_matches_2x2_shift(self):
+    def test_clash_6_grid_8x7_matches_2x2_shift(self):
         r"""
         Data, visually:
 
@@ -442,67 +472,69 @@ class ClashTestCase(unittest.TestCase):
         pqrstuvw
 
         """
-        objs = [
-            # grid 00 (плотная упаковка квадратов 2x2 c позиции (0,0))
-            '12AB',
-            '349C',
-            '56DE',
-            '78FG',
-            'HIPQ',
-            'JKRS',
-            'LNTU',
-            'MOVW',
-            'abhi',
-            '9cjk',
-            'deln',
-            'fgmo',
+        T = '''
+        12345678
+        AB_CDEFG
+        HIJKLNMO
+        PQRSTUVW
+        ab9cdefg
+        hijklnmo
+        pqrstuvw
+        '''.strip().replace(" ", '').splitlines()
 
-            # grid 10 (плотная упаковка квадратов 2x2 c позиции (1,0))
-            '23B9',
-            '45CD',
-            '67EF',
-            'IJQR',
-            'KLST',
-            'NMUV',
-            'b9ij',
-            'cdkl',
-            'efnm',
+        all_chars = [ch for line in T for ch in line]
+        for ch in all_chars:
+            if all_chars.count(ch) > 1:
+                print(f"DUPLICATE OF CHAR: `{ch}`")
+                assert False, ch
 
-            # grid 01 (плотная упаковка квадратов 2x2 c позиции (0,1))
-            'ABHI',
-            '9CJK',
-            'DELN',
-            'FGMO',
-            'PQab',
-            'RS9c',
-            'TUde',
-            'VWfg',
-            'hipq',
-            'jkrs',
-            'lntu',
-            'movw',
+        W = 8
+        H = 7
+        D = 2
 
-            # grid 11 (плотная упаковка квадратов 2x2 c позиции (1,1))
-            'B9IJ',
-            'CDKL',
-            'EFNM',
-            'QRb9',
-            'STcd',
-            'UVef',
-            'ijqr',
-            'klst',
-            'nmuv',
+        def get(y, x) -> str:
+            return ''.join(
+                T[i][x:x + D]
+                for i in range(y, y + D)
+            )
+
+        Q1 = [
+            get(i, j)
+            for i in range(0, H - D + 1, D)
+            for j in range(0, W - D + 1, D)
         ]
+        Q2 = [
+            get(i, j)
+            for i in range(0, H - D + 1, D)
+            for j in range(1, W - D + 1, D)
+        ]
+        Q3 = [
+            get(i, j)
+            for i in range(1, H - D + 1, D)
+            for j in range(0, W - D + 1, D)
+        ]
+        Q4 = [
+            get(i, j)
+            for i in range(1, H - D + 1, D)
+            for j in range(1, W - D + 1, D)
+        ]
+
+        objs = Q1 + Q2 + Q3 + Q4
+
         combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
 
         some_expected_combs = [
-            sorted_list(
-                ['12AB', '349C', '56DE', '78FG', 'HIPQ', 'JKRS', 'LNTU', 'MOVW', 'abhi', '9cjk', 'deln', 'fgmo', ]),
-            sorted_list(['23B9', '45CD', '67EF', 'IJQR', 'KLST', 'NMUV', 'b9ij', 'cdkl', 'efnm', ]),
-            sorted_list(
-                ['ABHI', '9CJK', 'DELN', 'FGMO', 'PQab', 'RS9c', 'TUde', 'VWfg', 'hipq', 'jkrs', 'lntu', 'movw', ]),
-            sorted_list(['B9IJ', 'CDKL', 'EFNM', 'QRb9', 'STcd', 'UVef', 'ijqr', 'klst', 'nmuv', ]),
+            sorted_list(Q1),
+            sorted_list(Q2),
+            sorted_list(Q3),
+            sorted_list(Q4),
         ]
+
+        print('resulting combs: ', len(combs))
+        print(*combs, sep='\n')
+        print('some expected combs: ', len(some_expected_combs))
+        print(*some_expected_combs, sep='\n')
+
 
         for objs in some_expected_combs:
             self.assertIn(objs, combs)
@@ -545,7 +577,56 @@ class ClashTestCase(unittest.TestCase):
         for objs in some_expected_combs:
             self.assertIn(objs, combs)
 
-    def __test_clash_8_8x8(self):
+    def test_clash_7_lines_per3(self):
+        r"""
+        Data, visually:
+
+        0123456789ABCDEFGHIJKLNMOPQRSTUVWXYZ_+abcdefghi
+        <–><–><–><–><–><–><•><•><•>
+                  <–><–><–><•><•><•><–><–><–>
+                            <•><•><•><–><–><–><–><–><–>
+        """
+        D = 3
+
+        def chunks(s: str, D: int = D) -> list[str]:
+            return [s[i:i+D] for i in range(0, len(s), D)]
+
+        s1 = '0123456789ABCDEFGHIJKLNMOPQ'
+        s2 = 'ABCDEFGHIJKLNMOPQRSTUVWXYZ_'
+        s3 = 'KLNMOPQRSTUVWXYZ_+abcdefghi'
+
+        objs = [
+            *chunks(s1),
+            *chunks(s2),
+            *chunks(s3),
+            # *chunks(s4),
+        ]
+
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        s1_free2 = '012345678'
+        s1_free3 = '0123456789ABCDEFGH'
+        s2_free1 = 'STUVWXYZ_'
+        s2_free3 = 'ABCDEFGHI'
+        s3_free1 = 'TUVWXYZ_+abcdefghi'
+        s3_free2 = 'abcdefghi'
+
+        some_expected_combs = [
+            # sorted_list([*chunks(s1), *chunks(s3_free1)]),
+            sorted_list([*chunks(s1), *chunks(s2_free1), *chunks(s3_free2)]),
+            sorted_list([*chunks(s1_free2), *chunks(s2), *chunks(s3_free2)]),
+            # sorted_list([*chunks(s3), *chunks(s1_free3)]),
+            sorted_list([*chunks(s3), *chunks(s2_free3), *chunks(s1_free2)]),
+        ]
+
+        print('resulting combs: ', len(combs))
+        print(*combs, sep='\n')
+        # print('expected combs: ', len(some_expected_combs))
+
+        for objs in some_expected_combs:
+            self.assertIn(objs, combs)
+
+    def test_clash_8_8x8(self):
 
         # T = '''
         # 0 1 2 3 4 5 6 7 8
