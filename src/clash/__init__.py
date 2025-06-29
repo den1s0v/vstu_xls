@@ -530,6 +530,10 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
             assert ok, bad
 
         # Готово: пятно построено.
+
+        # ??? Выигрыша не заметно. На 1-5% может уменьшить число итоговых комбинаций. ↓
+        arrangements = retain_longest_only(arrangements)
+
         return arrangements
 
     while unused_elements:
