@@ -2,7 +2,6 @@
 
 from functools import cache
 from typing import Hashable, Iterable, override
-# from collections import Or
 
 from adict import adict
 
@@ -23,13 +22,20 @@ def set_pair_compatibility_checker(func):
     _pair_compatibility_checker = func
 
 
-def retain_longest_only(objects: set) -> set:
+def retain_longest_only(objects: set | list | Iterable) -> set:
     if len(objects) > 1:
         with_sizes = [(len(obj), obj) for obj in objects]
         with_sizes.sort(reverse=True, key=lambda t: t[0])
         top_len = with_sizes[0][0]
         objects = {t[1] for t in with_sizes if len(t[1]) == top_len}
     return objects
+
+
+def sorted_list(s: set | list | Iterable) -> list:
+    """ Make sorted list from a set """
+    arr = list(s)
+    arr.sort()
+    return arr
 
 
 class ObjWithDataWrapper(Hashable):
@@ -423,6 +429,6 @@ class Arrangement(ClashingElementSet):
 
     def clone(self) -> 'Arrangement':
         """Deep clone"""
-        obj = super().clone()
+        obj: Arrangement = super().clone()
         obj.incompatible = self.incompatible.clone()
         return obj

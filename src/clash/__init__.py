@@ -152,10 +152,3 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
                 arrangements.add(Arrangement(always_free | arrangement | sa))
 
     return arrangements
-
-
-def sorted_list(s: set | list | Iterable) -> list:
-    """ Make sorted list from a set """
-    arr = list(s)
-    arr.sort()
-    return arr
