@@ -293,9 +293,10 @@ class ClashTestCase(unittest.TestCase):
 
         self.assertEqual([
             ['1a', '2', '3', '4', '5b', '6', '7', '8', ],
-            ['2', '3', '4', 'y876*ab', ],
-            ['6', '7', '8', 'x234+15', ],
             ['x234+15', 'y876*ab', ],
+            # excessive arrangements ↓
+            # ['2', '3', '4', 'y876*ab', ],
+            # ['6', '7', '8', 'x234+15', ],
         ], combs)
 
     def test_clash_4_grid_5x5_matches_2x2_8(self):
