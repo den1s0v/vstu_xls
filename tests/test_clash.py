@@ -240,11 +240,11 @@ class ClashTestCase(unittest.TestCase):
         combs = find_combinations_of_compatible_elements(objs, components_getter=lambda x: x)
 
         self.assertEqual([
-            [[1, 2], [3, 4]],
-            [[1, 2], [4, 5]],
-            [[2, 3], [4, 5]],
-            [[2, 3], [5, 1]],
-            [[3, 4], [5, 1]],
+            [[1, 2], [3, 4]],  # +
+            [[1, 2], [4, 5]],  # +
+            [[2, 3], [4, 5]],  # !!!
+            [[2, 3], [5, 1]],  # +
+            [[3, 4], [5, 1]],  # !!!
         ], combs)
 
     def test_clash_3_two_clusters(self):

@@ -405,6 +405,76 @@ def resolve_clashes3(clashing_set: 'ClashingElementSet') -> set['ClashingElement
 
     return arrangements
 
+@cache
+def resolve_clashes4(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
+    """ Нахождение всех локально оптимальных раскладок элементов, где они не пересекаются """
+    # кластеризация накладок.
+
+    if len(clashing_set) <= 1:
+        # early exit: only one variant exists for the input of size 1 or 0.
+        return {clashing_set, }
+
+    always_free = clashing_set.free_subset()
+
+    if len(clashing_set) == len(always_free):
+        # Ничто ни с чем не конфликтуeт
+        return {clashing_set, }
+
+    # ###
+    # print()
+    # print("clashing_set: ", clashing_set.get_bare_objs())
+    # ###
+
+    # Далее рассматриваем только конфликтующие (заменили входную переменную!)
+    clashing_set = clashing_set.with_removed(*always_free)
+
+    # Все варианты раскладок не конфликтующих элементов.
+    arrangements: set['Arrangement'] = set()
+
+    # Отсортируем элементы для однозначного порядка обхода
+    unused_elements = sorted(clashing_set)
+
+    @cache
+    def find_spot_arrangements(basis: 'ClashingElementSet') -> set[Arrangement]:
+
+        arrangement = Arrangement(basis)
+        arrangements = {arrangement}
+
+        # обход в ширину: пока "пятно соседей" растёт
+        while neighbours := arrangement.closest_neighbours_from(clashing_set):
+
+            ok, bad = arrangement.try_add_all(neighbours)
+            assert ok, bad
+
+            # # # исключаем повторный пересчёт этого пятна из других его участников.
+            # # !!!!!!!!!!!
+            # if 0 & 1:
+            #     for used_neighbour in neighbours:
+            #         if used_neighbour in unused_elements:
+            #             unused_elements.remove(used_neighbour)
+            # # !!!!!!!!!!!
+
+        # Готово: пятно построено.
+        return arrangements
+
+    while unused_elements:
+        elem = unused_elements.pop(0)
+
+        spot_arrangements = find_spot_arrangements(ClashingElementSet({elem}))
+
+        for arrangement in spot_arrangements:
+
+            unresolved = arrangement.select_candidates_from(clashing_set)
+
+            # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
+            sub_arrangements = resolve_clashes4(unresolved)  # recursive call !
+
+            # Полученные под-раскладки комбинируются с текущими свободными.
+            for sa in sub_arrangements:
+                arrangements.add(Arrangement(always_free | arrangement | sa))
+
+    return arrangements
+
 
 def sorted_list(s: set | list | Iterable) -> list:
     """ Make sorted list from a set """

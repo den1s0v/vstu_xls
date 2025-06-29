@@ -324,6 +324,38 @@ class Arrangement(ClashingElementSet):
 
         return selected_candidates
 
+    def closest_neighbours_from(self, universe: ClashingElementSet | set) -> ClashingElementSet:
+        """ Retain only elements that are all compatible with this set
+        and are "neighbours" & having the largest number on common clashes.
+         """
+
+        # neighbour_candidates = ClashingElementSet(self.get_outer_neighbours() & self.select_candidates_from(universe))
+
+        all_globally_clashing_with_this_set = {
+            clashing_element
+            for elem in self
+            for clashing_element in (elem.data.globally_clashing or ())
+        }
+
+        rating_candidate_list: list[tuple[int, ClashingElement]] = []  # (count of common clashes, candidate)
+
+        for ext_elem in universe:
+            ext_clashing_elements = ext_elem.data.globally_clashing or set()
+            common = all_globally_clashing_with_this_set & ext_clashing_elements
+            if common:
+                rating_candidate_list.append((
+                    len(common), ext_elem
+                ))
+
+        rating_candidate_list.sort(key=lambda t: t[0], reverse=True)
+
+        addable_arrangement = Arrangement()
+
+        # Adding starting from the closest, keeping the most close elements
+        addable_arrangement.try_add_all(t[1] for t in rating_candidate_list)
+
+        return self.select_candidates_from(addable_arrangement)
+
     def clone(self) -> 'Arrangement':
         """Deep clone"""
         obj = super().clone()
