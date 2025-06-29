@@ -23,6 +23,15 @@ def set_pair_compatibility_checker(func):
     _pair_compatibility_checker = func
 
 
+def retain_longest_only(objects: set) -> set:
+    if len(objects) > 1:
+        with_sizes = [(len(obj), obj) for obj in objects]
+        with_sizes.sort(reverse=True, key=lambda t: t[0])
+        top_len = with_sizes[0][0]
+        objects = {t[1] for t in with_sizes if len(t[1]) == top_len}
+    return objects
+
+
 class ObjWithDataWrapper(Hashable):
     """ A generic wrapper for an arbitrary Hashable object,
         optionally associated with some arbitrary data.
@@ -385,6 +394,7 @@ class Arrangement(ClashingElementSet):
         # Adding starting from the closest, keeping the most close elements
         candidate_list = [t[1] for t in rating_candidate_list]
         _, extra_1 = addable_arrangement.try_add_all(candidate_list)
+        size_1 = len(addable_arrangement)
         
         neighbour_sets = {
             self.select_candidates_from(addable_arrangement),
@@ -397,12 +407,19 @@ class Arrangement(ClashingElementSet):
             for extra_elem in extra_1:
                 arrangement_2 = Arrangement()
                 _, extra_2 = arrangement_2.try_add_all([extra_elem] + candidate_list)
+                size_2 = len(arrangement_2)
                 rating_sum_2 = sum(t[0] for t in rating_candidate_list if t[1] not in extra_2)
-                if rating_sum_2 >= top_rating_sum:
-                    # Found another good arrangement
+                if size_2 > size_1 or rating_sum_2 >= top_rating_sum:
+                    # Found another good arrangement: at least the same rating or higher coverage
+                    # Note: changing to `size_2 >= size_1` makes it slower by 7 times. This does not make it smarter.
                     neighbour_sets.add(
                         self.select_candidates_from(arrangement_2)
                     )
+
+        # Это ускоряет в 2-3 раза.
+        # Отфильтровать: взять только самые длинные.
+        if len(neighbour_sets) > 1:
+            neighbour_sets = retain_longest_only(neighbour_sets)
 
         return neighbour_sets
 

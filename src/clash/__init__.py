@@ -517,12 +517,14 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
             # кластеризация соседей на несовместимые между собой подгруппы
             neighbours, *rest = [*neighbour_sets]
 
-            if not neighbours:
-                break  # empty
-
             for alt_neighbours in rest:
+                if not alt_neighbours:
+                    continue  # empty
                 # recursive call !
                 arrangements |= find_spot_arrangements(ClashingElementSet(arrangement | alt_neighbours))
+
+            if not neighbours:
+                break  # empty
 
             ok, bad = arrangement.try_add_all(neighbours)
             assert ok, bad
