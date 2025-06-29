@@ -1,4 +1,5 @@
 import unittest
+from random import shuffle
 
 from tests_bootstrapper import init_testing_environment
 
@@ -701,6 +702,75 @@ class ClashTestCase(unittest.TestCase):
         print(*combs, sep='\n')
         print('some expected combs: ', len(some_expected_combs))
         print(*some_expected_combs, sep='\n')
+
+        for objs in some_expected_combs:
+            self.assertIn(objs, combs)
+
+    def test_clash_9_matrix_rand_ints(self):
+
+        # Размер матрицы данных
+        W = 8 + 3
+        H = 8 + 3
+        # Длина стороны блока-квадрата
+        D = 3
+
+        nums = list(range(W * H))
+        shuffle(nums)
+
+        T = [
+            nums[i:i+W]
+            for i in range(0, W * H, W)
+        ]
+
+        all_elems = [ch for line in T for ch in line]
+        for el in all_elems:
+            if all_elems.count(el) > 1:
+                print(f"DUPLICATE OF ELEMENT: `{el}`")
+                assert False, el
+
+        def get(y, x) -> tuple:
+            return tuple(
+                el
+                for i in range(y, y + D)
+                for el in T[i][x:x + D]
+            )
+
+        Q1 = [
+            get(i, j)
+            for i in range(0, H - D + 1, D)
+            for j in range(0, W - D + 1, D)
+        ]
+        Q2 = [
+            get(i, j)
+            for i in range(0,     H - D + 1, D)
+            for j in range(D - 1, W - D + 1, D)
+        ]
+        Q3 = [
+            get(i, j)
+            for i in range(D - 1, H - D + 1, D)
+            for j in range(0,     W - D + 1, D)
+        ]
+        Q4 = [
+            get(i, j)
+            for i in range(D - 1, H - D + 1, D)
+            for j in range(D - 1, W - D + 1, D)
+        ]
+
+        objs = Q1 + Q2 + Q3 + Q4
+
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        some_expected_combs = [
+            sorted_list(Q1),
+            sorted_list(Q2),
+            sorted_list(Q3),
+            sorted_list(Q4),
+        ]
+
+        print('resulting combs: ', len(combs))
+        # print(*combs, sep='\n')
+        # print('some expected combs: ', len(some_expected_combs))
+#         print(*some_expected_combs, sep='\n')
 
         for objs in some_expected_combs:
             self.assertIn(objs, combs)
