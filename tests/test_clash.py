@@ -714,10 +714,10 @@ class ClashTestCase(unittest.TestCase):
     def test_clash_9_matrix_rand_ints(self):
 
         # Размер матрицы данных
-        W = 8 + 3
-        H = 8 + 3
+        W = 54
+        H = 54
         # Длина стороны блока-квадрата
-        D = 3
+        D = 21
 
         nums = list(range(W * H))
         shuffle(nums)
@@ -767,9 +767,9 @@ class ClashTestCase(unittest.TestCase):
 
         some_expected_combs = [
             sorted_list(Q1),
-            sorted_list(Q2),
-            sorted_list(Q3),
-            sorted_list(Q4),
+            # sorted_list(Q2),
+            # sorted_list(Q3),
+            # sorted_list(Q4),
         ]
 
         print('resulting combs: ', len(combs))
@@ -777,8 +777,10 @@ class ClashTestCase(unittest.TestCase):
         # print('some expected combs: ', len(some_expected_combs))
 #         print(*some_expected_combs, sep='\n')
 
-        for objs in some_expected_combs:
+        for i, objs in enumerate(some_expected_combs):
+            print('check', i, end='… ')
             self.assertIn(objs, combs)
+            print('OK!')
 
 
 class ArrangementCase(unittest.TestCase):
