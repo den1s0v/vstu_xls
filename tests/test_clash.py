@@ -251,13 +251,13 @@ class ClashTestCase(unittest.TestCase):
         r"""
         Visually (a link means a conflict, a pair-wise clash):
 
-		   2         (1a)         8
-			\       /    \       /
-		3 — (x234+15)    (y876*ab) — 7
-			/       \    /       \
-		   4         (5b)         6
+           2         (1a)         8
+            \       /    \       /
+        3 — (x234+15)    (y876*ab) — 7
+            /       \    /       \
+           4         (5b)         6
 
-	    Conflict resolving is be done by removing "middle" elements.
+        Conflict resolving is be done by removing "middle" elements.
         """
         objs = [
             '1a',
@@ -508,6 +508,119 @@ class ClashTestCase(unittest.TestCase):
             self.assertIn(objs, combs)
         # self.assertEqual(, combs)
 
+    def test_clash_7_line_1_shift(self):
+        r"""
+        Data, visually:
+
+        0123456789ABCDEFGHIJKLNMOPQRSTUVWXYZ
+        <><><><><><><><><><><><>
+                   <><><><><><><><><><><><>
+        """
+        D = 2
+
+        def chunks(s: str, D: int = D) -> list[str]:
+            return [s[i:i+D] for i in range(0, len(s), D)]
+
+        s1 = '0123456789ABCDEFGHIJKLNM'
+        s2 = 'BCDEFGHIJKLNMOPQRSTUVWXY'
+
+        objs = [
+            *chunks(s1),
+            *chunks(s2),
+        ]
+
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        s1_free = '0123456789'
+        s2_free = 'PQRSTUVWXY'
+
+        some_expected_combs = [
+            sorted_list([*chunks(s1), *chunks(s2_free)]),
+            sorted_list([*chunks(s1_free), *chunks(s2)]),
+        ]
+
+        print('resulting combs: ', len(combs))
+        print(*combs, sep='\n')
+
+        for objs in some_expected_combs:
+            self.assertIn(objs, combs)
+
+    def __test_clash_8_8x8(self):
+
+        # T = '''
+        # 0 1 2 3 4 5 6 7 8
+        # A ☺ ║ ═ ╗ 🂡 ☻ L ♥
+        # B ╔ ▓ ▒ ╠ O X ♦ U
+        # C * ┼ ▀ ♠ e a k ○
+        # D R ─ s ♣ ╫ ⌂ ↨ <
+        # E ▪ ▫ ▲ ▼ → • : ↓
+        # F ♫ r b ⚐ ↑ _ ∟ ←
+        # G > W ⚘ f N Y ! h
+        # H ◘ o S / « … » ╜
+        # '''.strip().replace(" ", '').splitlines()
+        T = '''
+        ! " # $ % & • (
+        ) * + , - . / 0
+        1 2 3 4 5 6 7 8
+        9 : ; < = > ? @
+        A B C D E F G H
+        I J K L M N O P
+        Q R S T U V W X
+        Y Z [ | ] ^ _ ♣
+        '''.strip().replace(" ", '').splitlines()
+
+        all_chars = [ch for line in T for ch in line]
+        for ch in all_chars:
+            if all_chars.count(ch) > 1:
+                print(f"DUPLICATE OF CHAR: `{ch}`")
+                assert False, ch
+
+        L = 8
+        D = 2
+
+        def get(y, x) -> str:
+            return ''.join(
+                T[i][x:x + D]
+                for i in range(y, y + D)
+            )
+
+        objs = [
+            get(i, j)
+            for i in range(L - D + 1)
+            for j in range(L - D + 1)
+        ]
+
+        combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
+
+        some_expected_combs = [
+            sorted_list([
+                get(i, j)
+                for i in range(0, L - D + 1, D)
+                for j in range(0, L - D + 1, D)
+            ]),
+            sorted_list([
+                get(i, j)
+                for i in range(1, L - D + 1, D)
+                for j in range(0, L - D + 1, D)
+            ]),
+            sorted_list([
+                get(i, j)
+                for i in range(0, L - D + 1, D)
+                for j in range(1, L - D + 1, D)
+            ]),
+            sorted_list([
+                get(i, j)
+                for i in range(1, L - D + 1, D)
+                for j in range(1, L - D + 1, D)
+            ]),
+        ]
+
+        print('resulting combs: ', len(combs))
+        print(*combs, sep='\n')
+
+        for objs in some_expected_combs:
+            self.assertIn(objs, combs)
+
 
 class ArrangementCase(unittest.TestCase):
     def test_arrangement_1(self):
@@ -571,10 +684,10 @@ class ArrangementCase(unittest.TestCase):
 
         for el in su:
             assert all(
-            	other in el.data.globally_clashing
-            	for other in su
-            	if other != el and (set(el.obj) & set(other.obj))
-        	)
+                other in el.data.globally_clashing
+                for other in su
+                if other != el and (set(el.obj) & set(other.obj))
+            )
 
         # Adding some...
         a = Arrangement()
