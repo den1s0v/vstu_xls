@@ -34,35 +34,7 @@ def find_combinations_of_compatible_elements(
 
     assert pair_compatibility_checker or components_getter, "Any of parameters: `pair_compatibility_checker` or `components_getter` should be set!"
 
-    # # Вспомогательное для объединения и наполнения компонентов
-    # hash2component: dict[int, ClashingComponent] = {}
-
-    # def get_component(component_obj, container: ClashingContainer) -> ClashingComponent:
-    #     """ Get or create component """
-    #     h = hash(component_obj)
-    #     comp = hash2component.get(h)
-    #     if not comp:
-    #         hash2component[h] = comp = ClashingComponent(component_obj)
-    #     comp.belonds_to.add(container)
-    #     return comp
-
-    # # Подготовить объекты, упаковав их в наши обёртки
-    # clashing_elements = []
-
-    # for element in elements:
-    #     if components_getter:
-    #         el = ClashingContainer(
-    #             obj=element, 
-    #             components={
-    #                 get_component(component, element)
-    #                 for component in components_getter(element)
-    #             }
-    #         )
-    #     else:
-    #         el = ClashingElement(obj=element)
-
-    #     clashing_elements.append(el)
-
+    # Оборачивание объектов во внутренние обёртки
     clashing_set = ClashingElementSet.make(
         elements,
         # pair_compatibility_checker,
@@ -72,22 +44,13 @@ def find_combinations_of_compatible_elements(
     if pair_compatibility_checker:
         set_pair_compatibility_checker(pair_compatibility_checker)
 
-    # (!!!) prepare for resolve_clashes_refactored()
+    # Пред-вычисление взаимных накладок
+    # (!!!) prepare for resolve_clashes*()
     fill_clashing_elements(clashing_set)
 
-    # return ClashResolver({
-    #     hash(ce): ce
-    #     for ce in clashing_set
-    # }).resolve()
-    # clash_sets = resolve_clashes(clashing_set)
-    # clash_sets = resolve_clashes_refactored(clashing_set)
-    # clash_sets = resolve_clashes2(clashing_set)
-    # clash_sets = resolve_clashes3(clashing_set)
-    # clash_sets = resolve_clashes4(clashing_set)
-    clash_sets = resolve_clashes5(clashing_set)
+    clash_sets = resolve_clashes5(clashing_set)  # latest and best implementation
     # Extract objects back
     return sorted_list(
-        # {clash_elem.obj for clash_elem in clash_set}
         clash_set.get_bare_objs()
         for clash_set in clash_sets
     )
@@ -551,6 +514,16 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
             # Полученные под-раскладки комбинируются с текущими свободными.
             for sa in sub_arrangements:
                 arrangements.add(Arrangement(always_free | arrangement | sa))
+
+    # ###  НЕТ проблем.
+    # for a1 in arrangements:
+    #     for a2 in arrangements:
+    #         if a1 != a2:
+    #             if not(a1 - a2):
+    #                 print()
+    #                 print("ИЗБЫТОЧНЫЙ ОТВЕТ!!!")
+    #                 print()
+    # ###
 
     return arrangements
 
