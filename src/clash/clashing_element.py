@@ -84,7 +84,6 @@ class ClashingElement(ObjWithDataWrapper):
         assert _pair_compatibility_checker
         return not _pair_compatibility_checker(self.obj, other.obj)
 
-    @cache
     def all_clashing_among(self, others) -> 'ClashingElementSet':
         """ Note: Does not clash to itself """
         if self.data.globally_clashing is not None:
@@ -96,7 +95,6 @@ class ClashingElement(ObjWithDataWrapper):
         return ClashingElementSet(other for other in others if (other != self) and self.clashes_with(other))
         # TODO: use `!=`, not `is not` ???
 
-    @cache
     def all_independent_among(self, others) -> 'ClashingElementSet':
         """ Note: Not independent of itself """
         if self.data.globally_clashing is not None:
