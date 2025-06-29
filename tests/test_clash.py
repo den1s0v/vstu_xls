@@ -535,10 +535,8 @@ class ClashTestCase(unittest.TestCase):
         print('some expected combs: ', len(some_expected_combs))
         print(*some_expected_combs, sep='\n')
 
-
         for objs in some_expected_combs:
             self.assertIn(objs, combs)
-        # self.assertEqual(, combs)
 
     def test_clash_7_line_1_shift(self):
         r"""
@@ -656,7 +654,8 @@ class ClashTestCase(unittest.TestCase):
                 print(f"DUPLICATE OF CHAR: `{ch}`")
                 assert False, ch
 
-        L = 8
+        W = 8
+        H = 8
         D = 2
 
         def get(y, x) -> str:
@@ -665,39 +664,42 @@ class ClashTestCase(unittest.TestCase):
                 for i in range(y, y + D)
             )
 
-        objs = [
+        Q1 = [
             get(i, j)
-            for i in range(L - D + 1)
-            for j in range(L - D + 1)
+            for i in range(0, H - D + 1, D)
+            for j in range(0, W - D + 1, D)
         ]
+        Q2 = [
+            get(i, j)
+            for i in range(0, H - D + 1, D)
+            for j in range(1, W - D + 1, D)
+        ]
+        Q3 = [
+            get(i, j)
+            for i in range(1, H - D + 1, D)
+            for j in range(0, W - D + 1, D)
+        ]
+        Q4 = [
+            get(i, j)
+            for i in range(1, H - D + 1, D)
+            for j in range(1, W - D + 1, D)
+        ]
+
+        objs = Q1 + Q2 + Q3 + Q4
 
         combs = find_combinations_of_compatible_elements(objs, components_getter=trivial_components_getter)
 
         some_expected_combs = [
-            sorted_list([
-                get(i, j)
-                for i in range(0, L - D + 1, D)
-                for j in range(0, L - D + 1, D)
-            ]),
-            sorted_list([
-                get(i, j)
-                for i in range(1, L - D + 1, D)
-                for j in range(0, L - D + 1, D)
-            ]),
-            sorted_list([
-                get(i, j)
-                for i in range(0, L - D + 1, D)
-                for j in range(1, L - D + 1, D)
-            ]),
-            sorted_list([
-                get(i, j)
-                for i in range(1, L - D + 1, D)
-                for j in range(1, L - D + 1, D)
-            ]),
+            sorted_list(Q1),
+            sorted_list(Q2),
+            sorted_list(Q3),
+            sorted_list(Q4),
         ]
 
         print('resulting combs: ', len(combs))
         print(*combs, sep='\n')
+        print('some expected combs: ', len(some_expected_combs))
+        print(*some_expected_combs, sep='\n')
 
         for objs in some_expected_combs:
             self.assertIn(objs, combs)
