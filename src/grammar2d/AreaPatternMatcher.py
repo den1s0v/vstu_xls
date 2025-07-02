@@ -12,10 +12,11 @@ from grammar2d.Match2d import Match2d
 import grammar2d.GrammarMatcher as ns
 from grid import Region
 
+from clash import find_combinations_of_compatible_elements
+
 
 @dataclass
 class AreaPatternMatcher(PatternMatcher):
-
     pattern: AreaPattern
     grammar_matcher: 'ns.GrammarMatcher'
 
@@ -30,11 +31,9 @@ class AreaPatternMatcher(PatternMatcher):
 
         return matches
 
-
     def match_exact_region(self, region: Region) -> list[Match2d]:
         """ Find all matches within given region. """
         return self.find_all(region)
-
 
     def find_match_candidates(self, region: Region = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
@@ -51,12 +50,11 @@ class AreaPatternMatcher(PatternMatcher):
             occurrences = gm.get_pattern_matches(k.subpattern, region)
 
             if not occurrences and not k.optional:
-                logger.info(f'NO MATCH: pattern `{self.pattern.name
-                }` cannot have any matches since its required component {k.name} has no matches.')
+                logger.info(f'''NO MATCH: pattern `{self.pattern.name
+                }` cannot have any matches since its required component {k.name} has no matches.''')
                 return []
 
             matches_by_component[k] = occurrences
-
 
         # 2. Получить все "развёрнутые" области потенциального местонахождения родителя-area
         #    для последующего комбинирования.
@@ -67,10 +65,11 @@ class AreaPatternMatcher(PatternMatcher):
 
         # 3. Найти комбинации из паттернов всех обязательных компонентов, дающие непустой матч для area.
         #   (для оптимальности, добавлять обязательные компоненты
-        #       в порядке возрастанию числа кандидатов для каждого из них)
+        #       в порядке возрастания числа кандидатов для каждого из них, т.е. с самых малочисленных)
 
         # 3.1. Добавить в каждый матч опциональные компоненты, попавшие в "зону влияния" найденной области.
-        # 3.2. Рассчитать точность (precision) для каждой комбинации-варианта.
+        # 3.2. (Это не здесь, а только для потенциальных раскладок??) Рассчитать точность (precision) для каждой
+        # комбинации-варианта.
 
         ...  # TODO
 
@@ -100,6 +99,14 @@ class AreaPatternMatcher(PatternMatcher):
         # 4. Сформировать итоговый ответ.
 
         ...  # TODO
+
+        arrangements = find_combinations_of_compatible_elements(match_candidates, components_getter=...)
+
+        # Рассчитать точность (precision) для каждой комбинации-варианта,
+        # получив значения точности для каждого элемента в отдельности.
+
+        # Отобрать наилучшую раскладку и вернуть её.
+
 
         return []
 
