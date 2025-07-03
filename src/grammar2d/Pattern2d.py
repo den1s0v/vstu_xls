@@ -58,6 +58,10 @@ class Pattern2d(WithCache, WithSafeCreate):
     def get_kind(cls):
         return "Base 2D pattern"
 
+    def is_inner_space_transparent(self):
+        """ Default: opaque """
+        return False
+
     # parent: Optional['Pattern2d'] = None # родительский узел грамматики
     # components: dict[str, 'PatternComponent']
 

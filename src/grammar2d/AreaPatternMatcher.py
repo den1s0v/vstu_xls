@@ -21,7 +21,11 @@ class AreaPatternMatcher(PatternMatcher):
     grammar_matcher: 'ns.GrammarMatcher'
 
     def find_all(self, _region: Region = None) -> list[Match2d]:
-        """ Find all matches within whole document. """
+        """ Find all matches within whole document.
+
+        Все найденные совпадения существуют одновременно,
+        т.е. они не пересекаются между собой и не мешают друг другу.
+        """
 
         # Найти все матчи-кандидаты для всех паттернов-компонентов.
         match_candidates = self.find_match_candidates(_region)
@@ -37,7 +41,10 @@ class AreaPatternMatcher(PatternMatcher):
 
     def find_match_candidates(self, region: Region = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
-         The patterns may be not applicable if they do overlap. """
+         The patterns may be not applicable if they do overlap.
+
+         Каждое найденное совпадение существует как бы независимо от остальных.
+         """
 
         pattern = self.pattern
         gm = self.grammar_matcher
@@ -79,8 +86,11 @@ class AreaPatternMatcher(PatternMatcher):
         return []
 
     def filter_candidates(self, match_candidates: list[Match2d]) -> list[Match2d]:
-        """ Filter given matches so all returned matches do not overlap and the combination seems to be the best. """
-        """
+        """ Filter given matches so all returned matches do not overlap and the combination seems to be the best.
+
+        Наилучшая раскладка выбирается из соображений количества совместимых совпадений
+        и качества каждого вошедшего совпадения (фактически, максимизируется сумма precision всех совпадений).
+
         Общий алгоритм решения:
         1. Найти перекрывающиеся конфликтующие пары совпадений.
         2. Найти кластеры конфликтующих совпадений.

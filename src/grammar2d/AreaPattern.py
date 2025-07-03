@@ -14,13 +14,23 @@ from grammar2d.PatternComponent import PatternComponent
 class AreaPattern(NonTerminal):
     """Структура из элементов разного типа.
     
-    AreaPattern включает "внутренние" компоненты и может включать внешние компоненты (последние не входят в область матча для AreaPattern).
+    AreaPattern включает "внутренние" компоненты
+    и может включать внешние компоненты (последние не входят в область матча для AreaPattern).
 
-    Компоненты области типа area в текущей версии грамматики могут задавать своё расстояние до стенок области area (в виде диапазона) и не могут иметь ограничений непосредственно между собой.
+    Компоненты области типа area в текущей версии грамматики
+    могут задавать своё расстояние до стенок области area (в виде диапазона)
+    и не могут иметь ограничений непосредственно между собой.
     Зато наборы ограничений между стенками можно задавать в произвольном составе.
 
     """
     components: list[PatternComponent]
+
+    # Считаются ли незанятые области внутри структуры её частью (opaque; False),
+    # или нет (transparent; True).
+    # Имеет значение при обнаружении накладок между перекрывающимися совпадениями этого паттерна.
+    # Если используется прозрачность (True), то допускается накладывание совпадений,
+    # в которых не накладываются отдельные компоненты.
+    inner_space_transparent = False
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -49,15 +59,24 @@ class AreaPattern(NonTerminal):
         for comp in self.components:
             comp.set_grammar(grammar)
 
+    def is_inner_space_transparent(self):
+        """ Get the pattern configuration """
+        return self.inner_space_transparent
+
     # component_by_name: dict[str, PatternComponent] = None
     @property
-    def component_by_name(self) -> dict[str, PatternComponent] | None:
+    def components_by_name(self) -> dict[str, PatternComponent] | None:
+        """ Returns whole component mapping as dict. """
         if not self._cache.component_by_name:
             self._cache.component_by_name = {
                 comp.name: comp
                 for comp in self.components
             }
         return self._cache.component_by_name
+
+    def get_component(self, name: str = None) -> dict[str, PatternComponent] | PatternComponent | None:
+        """ Returns requested component if `name` is present, otherwise returns `None`. """
+        return self.components_by_name.get(name)
 
     @override
     def max_score(self) -> float:

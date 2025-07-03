@@ -60,6 +60,10 @@ class ArrayPattern(NonTerminal):
     def get_kind(cls):
         return "array"  # ???
 
+    def is_inner_space_transparent(self):
+        """ Default: transparent """
+        return True
+
     @property
     def subpattern(self) -> Pattern2d:
         """Дочерний элемент грамматики.
