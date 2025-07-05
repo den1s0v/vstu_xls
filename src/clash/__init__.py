@@ -16,10 +16,10 @@
 
 """
 
-from typing import Iterable
 # from collections import Or
 
 from clash.clashing_element import *
+from utils import sorted_list
 
 
 def find_combinations_of_compatible_elements(

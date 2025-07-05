@@ -31,13 +31,6 @@ def retain_longest_only(objects: set | list | Iterable) -> set:
     return objects
 
 
-def sorted_list(s: set | list | Iterable) -> list:
-    """ Make sorted list from a set """
-    arr = list(s)
-    arr.sort()
-    return arr
-
-
 class ObjWithDataWrapper(Hashable):
     """ A generic wrapper for an arbitrary Hashable object,
         optionally associated with some arbitrary data.

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
+from typing import Iterable
 
 from adict import adict
 
@@ -157,3 +158,8 @@ def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=3) 
     return None
 
 
+def sorted_list(s: set | list | Iterable) -> list:
+    """ Make sorted list from a set """
+    arr = list(s)
+    arr.sort()
+    return arr
