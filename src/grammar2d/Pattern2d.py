@@ -3,10 +3,12 @@ from dataclasses import dataclass
 from constraints_2d import SpatialConstraint
 from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
+import grammar2d.Match2d as m2
 import grammar2d.PatternComponent as pc
 import grammar2d.PatternMatcher as pm
 from geom2d import open_range, Box
-from utils import WithCache, WithSafeCreate
+from geom2d import Point
+from utils import WithCache, WithSafeCreate, sorted_list
 
 
 @dataclass(kw_only=True, )
@@ -58,9 +60,11 @@ class Pattern2d(WithCache, WithSafeCreate):
     def get_kind(cls):
         return "Base 2D pattern"
 
-    def is_inner_space_transparent(self):
-        """ Default: opaque """
-        return False
+    def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
+        """ Default: opaque.
+         	Реализация по умолчанию: Просто берём внутреннюю прямоугольную область
+        """
+        return sorted_list(match.box.iterate_points())
 
     # parent: Optional['Pattern2d'] = None # родительский узел грамматики
     # components: dict[str, 'PatternComponent']

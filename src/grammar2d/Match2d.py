@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from clash import sorted_list
+from utils import sorted_list
 from geom2d import Box
 from geom2d import Point
 import grammar2d.Pattern2d as pt
@@ -23,20 +23,7 @@ class Match2d:
         return self.precision
 
     def get_occupied_points(self) -> list[Point]:
-        if not self.pattern.is_inner_space_transparent:
-            # Просто берём внутреннюю прямоугольную область
-            return sorted_list(self.box.iterate_points())
-
-        else:
-            component_points = set()
-            for name, comp_match in self.component2match.items():
-                ############### TODO ↓
-                if self.pattern.get_component(name).inner:
-                    component_points |= set(comp_match.get_occupied_points())
-
-            inner_points = set(self.box.iterate_points())
-            return sorted_list(inner_points & component_points)
-
+        return self.pattern.get_points_occupied_by_match(self)
 
     def clone(self):
         """Make a shallow copy"""

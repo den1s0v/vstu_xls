@@ -1,12 +1,13 @@
 from dataclasses import dataclass, field
 from typing import override
 
-from geom2d import open_range
+from geom2d import open_range, Point
 import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 from grammar2d.PatternComponent import PatternComponent
+from utils import sorted_list
 
 
 @PatternRegistry.register
@@ -59,9 +60,21 @@ class AreaPattern(NonTerminal):
         for comp in self.components:
             comp.set_grammar(grammar)
 
-    def is_inner_space_transparent(self):
-        """ Get the pattern configuration """
-        return self.inner_space_transparent
+    def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
+        """ For areas: transparent if pattern.inner_space_transparent else opaque (the default).
+        """
+        if not self.inner_space_transparent:
+            return super().get_points_occupied_by_match(match)
+
+        # Взять все занятые ВНУТРЕННИМИ компонентами позиции.
+        component_points = set()
+        for name, comp_match in match.component2match.items():
+            if self.get_component(name).inner:
+                component_points |= set(comp_match.get_occupied_points())
+
+        # Отсечь наружные части, если таковые есть (могут быть при отрицательных отступах).
+        inner_points = set(match.box.iterate_points())
+        return sorted_list(inner_points & component_points)
 
     # component_by_name: dict[str, PatternComponent] = None
     @property
