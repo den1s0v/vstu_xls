@@ -391,66 +391,6 @@ class Arrangement(ClashingElementSet):
 
         return self.select_candidates_from(addable_arrangement)
 
-    def closest_neighbour_sets_from_v0(self, universe: ClashingElementSet | set) -> set[ClashingElementSet]:
-        """ Retain only elements that are all compatible with this set
-        and are "neighbours" & having the largest number on common clashes.
-         """
-
-        all_globally_clashing_with_this_set = {
-            clashing_element
-            for elem in self
-            for clashing_element in (elem.data.globally_clashing or ())
-        }
-
-        rating_candidate_list: list[tuple[int, ClashingElement]] = []  # (count of common clashes, candidate)
-
-        for ext_elem in universe:
-            ext_clashing_elements = ext_elem.data.globally_clashing or set()
-            common = all_globally_clashing_with_this_set & ext_clashing_elements
-            if common:
-                rating = len(common)
-                rating_candidate_list.append((
-                    rating, ext_elem
-                ))
-                # # save rating in metadata
-                # ext_elem.data._rating = rating
-
-        rating_candidate_list.sort(key=lambda t: t[0], reverse=True)
-
-        addable_arrangement = Arrangement()
-
-        # Adding starting from the closest, keeping the most close elements
-        candidate_list = [t[1] for t in rating_candidate_list]
-        _, extra_1 = addable_arrangement.try_add_all(candidate_list)
-        size_1 = len(addable_arrangement)
-        
-        neighbour_sets = {
-            self.select_candidates_from(addable_arrangement),
-        }
-        
-        if extra_1:
-            # Возможны альтернативные варианты
-            top_rating_sum = sum(t[0] for t in rating_candidate_list if t[1] not in extra_1)
-            # try to find another combinations starting from not used (extra) elements
-            for extra_elem in extra_1:
-                arrangement_2 = Arrangement()
-                _, extra_2 = arrangement_2.try_add_all([extra_elem] + candidate_list)
-                size_2 = len(arrangement_2)
-                rating_sum_2 = sum(t[0] for t in rating_candidate_list if t[1] not in extra_2)
-                if size_2 > size_1 or rating_sum_2 >= top_rating_sum:
-                    # Found another good arrangement: at least the same rating or higher coverage
-                    # Note: changing to `size_2 >= size_1` makes it slower by 7 times. This does not make it smarter.
-                    neighbour_sets.add(
-                        self.select_candidates_from(arrangement_2)
-                    )
-
-        # Это ускоряет в 2-3 раза.
-        # Отфильтровать: взять только самые длинные.
-        if len(neighbour_sets) > 1:
-            neighbour_sets = retain_longest_only(neighbour_sets)
-
-        return neighbour_sets
-
     def closest_neighbour_sets_from(self, universe: ClashingElementSet | set) -> set[ClashingElementSet]:
         """ Retain only elements that are all compatible with this set
         and are "neighbours" & having the largest number on common clashes.
