@@ -130,7 +130,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
             background_color = get_rgb(excel_cell.fill.fgColor, self._worksheet.parent)
 
         # Foreground color (font color)
-        print(excel_cell.font.color)
+        ### print(excel_cell.font.color)
         if excel_cell.font and excel_cell.font.color:
             font_color = get_rgb(excel_cell.font.color, self._worksheet.parent)
 
