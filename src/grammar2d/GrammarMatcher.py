@@ -128,7 +128,8 @@ class GrammarMatcher:
             self.register_match(m)
 
         ###
-        print()
+        # print()
+        logger.debug('')
         logger.debug(f':: matches of pattern `{pattern.name}` ↓')
         logger.debug(matches)
         ...
