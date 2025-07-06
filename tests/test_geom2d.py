@@ -151,6 +151,17 @@ class BoxTestCase(unittest.TestCase):
         self.assertEqual(r, a.unite(b))
         self.assertEqual(r, b.unite(a))
 
+    def test_sort(self):
+        a = Box.from_2points(0, 0, 5, 5)
+        b = Box.from_2points(10, 10, 15, 15)
+        r = Box.from_2points(0, 0, 15, 15)
+
+        L = [a, b, r]
+        L.sort()
+        self.assertEqual([a, r, b], L)
+        L.sort(reverse=True)
+        self.assertEqual([b, r, a], L)
+
 
 class VariBoxTestCase(unittest.TestCase):
     def test_in_1(self):

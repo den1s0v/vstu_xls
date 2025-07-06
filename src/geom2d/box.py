@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Self
 
 from adict import adict
 
@@ -49,13 +49,28 @@ class Box:
             return self._tuple.__eq__(other._tuple)
         return other == self
 
-    def __ne__(self, other):
+    def __ne__(self, other: Self):
         return not self == other
 
-    # def __lt__(self, other): return self._tuple.__lt__(other)
-    # def __le__(self, other): return self._tuple.__le__(other)
-    # def __gt__(self, other): return self._tuple.__gt__(other)
-    # def __ge__(self, other): return self._tuple.__ge__(other)
+    def __lt__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__lt__(other._tuple)
+        return NotImplemented
+
+    def __le__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__le__(other._tuple)
+        return NotImplemented
+
+    def __gt__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__gt__(other._tuple)
+        return NotImplemented
+
+    def __ge__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__ge__(other._tuple)
+        return NotImplemented
 
     @property
     def x(self):
@@ -152,8 +167,7 @@ class Box:
             return other in self
         return False
 
-
-    def manhattan_distance_to(self, other: Union['Point', 'Box'], per_axis=False) -> int:
+    def manhattan_distance_to(self, other: Union['Point', 'Box'], per_axis=False) -> int | ManhattanDistance:
         """ Расстояние городских кварталов, или манхеттенское расстояние между двумя точками на плоскости.
         Для прямоугольника: расстояние до касания, см. `Box.manhattan_distance_to_touch()`.
         Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу (внутрь) прямоугольника.
@@ -178,6 +192,7 @@ class Box:
                 corner.manhattan_distance_to(other, per_axis=per_axis)
                 for corner in self.iterate_corners()
             )
+        raise TypeError(other)
 
     def manhattan_distance_to_overlap(self, other: Union[Point, 'Box'], per_axis=False) -> int:
         """ Целочисленное расстояние до максимального перекрытия:
