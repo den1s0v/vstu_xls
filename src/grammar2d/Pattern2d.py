@@ -36,7 +36,8 @@ class Pattern2d(WithCache, WithSafeCreate):
     def __post_init__(self):
         # convert attributes to usable types
         if not isinstance(self.count_in_document, open_range):
-            self.count_in_document = open_range.parse(str(self.count_in_document)) if self.count_in_document else open_range(0, None)
+            self.count_in_document = open_range.parse(
+                str(self.count_in_document)) if self.count_in_document else open_range(0, None)
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -62,7 +63,7 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
         """ Default: opaque.
-         	Реализация по умолчанию: Просто берём внутреннюю прямоугольную область
+        Реализация по умолчанию: Просто берём внутреннюю прямоугольную область.
         """
         return sorted_list(match.box.iterate_points())
 

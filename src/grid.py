@@ -216,7 +216,7 @@ class GridView(Region):
         self.cell_cache = dict()  # WeakValueDictionary()
         self.region_cache = dict()  # WeakValueDictionary()
 
-    def get_cell_view(self, point: Point) -> Optional['CellView']:
+    def get_cell_view(self, point: Point | tuple[int, int]) -> Optional['CellView']:
         if point not in self:
             return None  # не показывать ничего за пределами области проекции.
 

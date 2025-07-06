@@ -9,7 +9,7 @@ from grammar2d.Match2d import Match2d
 class TerminalMatcher(PatternMatcher):
     pattern: Terminal
 
-    def find_all(self) -> list[Match2d]:
+    def find_all(self, region: Region = None) -> list[Match2d]:
         # type_name = self.element.cell_type.name
         type_name = self.pattern.cell_type.name
         gm = self.grammar_matcher  # short alias

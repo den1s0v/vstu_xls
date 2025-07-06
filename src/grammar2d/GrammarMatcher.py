@@ -29,7 +29,8 @@ class GrammarMatcher:
     type_to_cells: dict[str, list[CellView]] = None
 
     def get_pattern_matches(self, pattern: Pattern2d, region: Region = None) -> list[Match2d]:
-        """ Get all currently known matches of given parrern. If region specified, return only matches that are within the region. """
+        """ Get all currently known matches of given pattern.
+        If region specified, return only matches that are within the region. """
         occurrences = self.matches_by_element[pattern] or []
 
         if region:
@@ -38,7 +39,6 @@ class GrammarMatcher:
                 lambda m: m.box in region,
                 occurrences))
         return occurrences
-        
 
     def run_match(self, grid: Grid) -> list[Match2d]:
         self._grid_view = grid.get_view()
