@@ -104,7 +104,7 @@ class ClashingElement(ObjWithDataWrapper):
             )
         # else: fallback
         return ClashingElementSet(other for other in others if (other != self) and self.clashes_with(other))
-        # TODO: use `!=`, not `is not` ???
+        # Note: using `!=`, not `is not`.
 
     def all_independent_among(self, others) -> 'ClashingElementSet':
         """ Note: Not independent of itself """
@@ -214,13 +214,13 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
             # remove as usual
             super().remove(element)
 
-    def with_removed(self, *elements: 'ClashingElement') -> 'ClashingElementSet':
+    def with_removed(self, *elements: 'ClashingElement') -> Self:
         s = self.clone()
         s.remove(*elements)
         return s
 
     @cache
-    def free_subset(self) -> 'ClashingElementSet':
+    def free_subset(self) -> Self:
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
@@ -229,7 +229,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         return s
 
-    def get_all_clashing(self) -> 'ClashingElementSet':
+    def get_all_clashing(self) -> Self:
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
@@ -242,7 +242,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
     def make(cls,
              elements: Iterable,
              # pair_compatibility_checker=None,
-             components_getter=None) -> 'ClashingElementSet':
+             components_getter=None) -> Self:
 
         # Вспомогательное для объединения и наполнения компонентов
         hash2component: dict[int, ClashingComponent] = {}
@@ -271,7 +271,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         return cls(clashing_elements)
 
-    def clone(self) -> 'ClashingElementSet':
+    def clone(self) -> Self:
         """Deep clone"""
         return type(self)(el.clone() for el in self)
 

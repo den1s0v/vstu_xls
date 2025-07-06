@@ -98,7 +98,7 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
     # Далее рассматриваем только конфликтующие (заменили входную переменную!)
     clashing_set = clashing_set.with_removed(*always_free)
 
-    # Все варианты раскладок не конфликтующих элементов.
+    # Все варианты раскладок неконфликтующих элементов.
     arrangements: set['Arrangement'] = set()
 
     # Отсортируем элементы для однозначного порядка обхода
