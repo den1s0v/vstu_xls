@@ -114,6 +114,7 @@ class GridTestCase(unittest.TestCase):
         g = ExcelGrid(workbook.active)
         gw = g.get_view()
         self.assertEqual(gw.get_cell_view((1, 1)).cell.content, "a")
+        self.assertEqual(gw.get_cell_view((1, 2)), None)
         self.assertEqual(gw.get_cell_view((1, 3)).cell.content, "x")
         self.assertEqual(gw.get_cell_view((2, 3)).cell.content, "m")
         self.assertEqual(gw.get_cell_view((3, 1)).cell.content, "b")
@@ -122,6 +123,12 @@ class GridTestCase(unittest.TestCase):
         self.assertEqual(gw.get_cell_view((4, 1)).cell.content, "merged")
         self.assertEqual(gw.get_cell_view((4, 1)).size.h, 3)
         self.assertEqual(gw.get_cell_view((4, 1)).size.w, 2)
+
+        self.assertIs(gw.get_cell_view((4, 1)), gw.get_cell_view((4, 2)))
+        self.assertIs(gw.get_cell_view((4, 1)), gw.get_cell_view((4, 3)))
+        self.assertIs(gw.get_cell_view((4, 1)), gw.get_cell_view((5, 1)))
+        self.assertIs(gw.get_cell_view((4, 1)), gw.get_cell_view((5, 2)))
+        self.assertIs(gw.get_cell_view((4, 1)), gw.get_cell_view((5, 3)))
 
     def test_in_3(self):
         workbook = openpyxl.load_workbook(testdata_path / "grid3.xlsx")
@@ -171,4 +178,5 @@ class GridTestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
+    GridTestCase.test_in_2(...)
