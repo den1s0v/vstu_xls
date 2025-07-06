@@ -108,9 +108,9 @@ class AreaPattern(NonTerminal):
 
     ...
 
-    # def get_matcher(self, grammar_matcher):
-    #     from grammar2d.AreaPatternMatcher import AreaPatternMatcher
-    #     return AreaPatternMatcher(self, grammar_matcher)
+    def get_matcher(self, grammar_matcher):
+        from grammar2d.AreaPatternMatcher import AreaPatternMatcher
+        return AreaPatternMatcher(self, grammar_matcher)
 
     def __str__(self) -> str:
         return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
