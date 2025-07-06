@@ -708,8 +708,8 @@ class ClashTestCase(unittest.TestCase):
         print('some expected combs: ', len(some_expected_combs))
         print(*some_expected_combs, sep='\n')
 
-        for objs in some_expected_combs:
-            self.assertIn(objs, combs)
+        for i, objs in enumerate(some_expected_combs):
+            self.assertIn(objs, combs, i)
 
     def test_clash_9_matrix_rand_ints(self):
 
