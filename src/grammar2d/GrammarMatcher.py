@@ -41,6 +41,7 @@ class GrammarMatcher:
         return occurrences
 
     def run_match(self, grid: Grid) -> list[Match2d]:
+        self.matches_by_element.clear()
         self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
         self._roll_matching_waves()
