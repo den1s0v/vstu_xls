@@ -11,7 +11,7 @@ from grammar2d import read_grammar
 
 from grammar2d.PatternComponent import PatternComponent
 from constraints_2d.LocationConstraint import LocationConstraint
-from geom2d.ranged_box import RangedBox
+from geom2d import Box, RangedBox
 from geom2d import Direction, open_range, RangedSegment
 from grammar2d.Match2d import Match2d
 from grammar2d.Pattern2d import Pattern2d
@@ -62,7 +62,7 @@ class GrammarTestCase(unittest.TestCase):
     def test_get_ranged_box_for_parent_location_inner(self):
 
         # Example 1: {location: left}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -75,7 +75,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 2: {location: {}}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -89,7 +89,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 3: {location: left, right, bottom}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -106,7 +106,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 4: {location: right, bottom}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -122,7 +122,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 5: {location: top: 0, left: '0..1', right: '0..2'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -139,7 +139,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 6: {location: top: -2, right: '-3..3'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -155,7 +155,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 7: {location: top: '*', left: '*', right: '*', bottom: '*'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -173,7 +173,7 @@ class GrammarTestCase(unittest.TestCase):
 
     def test_get_ranged_box_for_parent_location_outer(self):
 
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
 
         # Example 1: {location: left}
         pattern_component = PatternComponent(
@@ -188,7 +188,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 2: {location: {}}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -201,7 +200,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 3: {location: left: 7}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -214,7 +212,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 4: {location: top: '0..2', left: '0-', right: '0-'}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -236,7 +233,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 5: {location: right}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -250,7 +246,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 6: {location: right: '3..10'}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -264,7 +259,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 7: {location: top: '1-', bottom: '1-' }
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",

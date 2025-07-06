@@ -12,8 +12,8 @@ class RangedBox:
     __slots__ = ("rx", "ry")
 
     def __init__(self,
-                 rx: RangedSegment | int | tuple[int | None, int | None] = None,
-                 ry: RangedSegment | int | tuple[int | None, int | None] = None
+                 rx: RangedSegment | int | tuple[int | str | None, int | str | None] = None,
+                 ry: RangedSegment | int | tuple[int | str | None, int | str | None] = None
                  ):
         self.rx = RangedSegment.make(rx)
         self.ry = RangedSegment.make(ry)
