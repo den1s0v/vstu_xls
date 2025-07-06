@@ -22,15 +22,15 @@ class AreaPattern(NonTerminal):
     могут задавать своё расстояние до стенок области area (в виде диапазона)
     и не могут иметь ограничений непосредственно между собой.
     Зато наборы ограничений между стенками можно задавать в произвольном составе.
-
     """
+
     components: list[PatternComponent]
 
     # Считаются ли незанятые области внутри структуры её частью (opaque; False),
     # или нет (transparent; True).
     # Имеет значение при обнаружении накладок между перекрывающимися совпадениями этого паттерна.
-    # Если используется прозрачность (True), то допускается накладывание совпадений,
-    # в которых не накладываются отдельные компоненты.
+    # Если используется прозрачность (True), то допускается накладывание ограничивающих прямоугольников совпадений,
+    # при условии, что не накладываются области, непосредственно занятые внутренними компонентами.
     inner_space_transparent = False
 
     def __hash__(self) -> int:
@@ -61,7 +61,7 @@ class AreaPattern(NonTerminal):
             comp.set_grammar(grammar)
 
     def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
-        """ For areas: transparent if pattern.inner_space_transparent else opaque (the default).
+        """ For Area: transparent if `pattern.inner_space_transparent` is True  else opaque (the default).
         """
         if not self.inner_space_transparent:
             return super().get_points_occupied_by_match(match)
@@ -72,7 +72,7 @@ class AreaPattern(NonTerminal):
             if self.get_component(name).inner:
                 component_points |= set(comp_match.get_occupied_points())
 
-        # Отсечь наружные части, если таковые есть (могут быть при отрицательных отступах).
+        # Отсечь наружные части внутренних компонентов, если таковые есть (могут быть при отрицательных отступах).
         inner_points = set(match.box.iterate_points())
         return sorted_list(inner_points & component_points)
 
@@ -102,7 +102,7 @@ class AreaPattern(NonTerminal):
             (?) if any is absent but required?
         """
         return sum(
-                comp_m.precision * self.component_by_name[name].weight
+                comp_m.precision * self.components_by_name[name].weight
                 for name, comp_m in match.component2match.items()
         )
 
