@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from grammar2d import Terminal
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
+from grid import Region
+from string_matching import StringMatch
+from utils import safe_adict
 
 
 @dataclass
@@ -16,12 +19,24 @@ class TerminalMatcher(PatternMatcher):
         matches = []
 
         for cw in gm.type_to_cells.get(type_name) or ():
-            precision = cw.data['cell_matches'][type_name].confidence
+
+            string_match: StringMatch = cw.data['cell_matches'][type_name]
+
+            precision = string_match.confidence
+            if precision < self.pattern.precision_threshold:
+                continue
+
+            position = string_match.confidence
             if precision < self.pattern.precision_threshold:
                 continue
 
             # make Match
-            m = Match2d(self.pattern, precision=precision, box=cw, data=cw.data['cell_matches'][type_name])
+            m = Match2d(self.pattern, precision=precision, box=cw, data=safe_adict(
+                    string_match=string_match,
+                    cell_type=type_name,
+                    text=string_match.text,
+                 )
+            )
             matches.append(m)
 
         return matches
