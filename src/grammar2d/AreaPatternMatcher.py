@@ -44,7 +44,7 @@ class AreaPatternMatcher(PatternMatcher):
          The patterns may be not applicable if they do overlap.
 
          Каждое найденное совпадение существует как бы независимо от остальных.
-         """
+        """
 
         pattern = self.pattern
         gm = self.grammar_matcher
@@ -88,8 +88,7 @@ class AreaPatternMatcher(PatternMatcher):
         #       в порядке возрастания числа кандидатов для каждого из них, т.е. с самых малочисленных)
 
         # 3.1. Добавить в каждый матч опциональные компоненты, попавшие в "зону влияния" найденной области.
-        # 3.2. (Это не здесь, а только для потенциальных раскладок??)
-        #   Рассчитать точность (precision) для каждой комбинации-варианта.
+        # 3.2. Рассчитать точность (precision) для каждой комбинации-варианта.
 
         # Сортировать: все опциональные в конце, сначала внутренние, по возрастанию числа матчей
         component_matches_list.sort(key=lambda t: (
@@ -145,9 +144,6 @@ class AreaPatternMatcher(PatternMatcher):
             m.box = combined_ranged_box.minimal_box().to_box()
             # TODO: recalc precision ?
 
-        # inner_components = [p for p in pattern.components if p.inner]
-        # outer_components = [p for p in pattern.components if not p.inner]
-
         return partial_matches
 
     def filter_candidates(self, match_candidates: list[Match2d]) -> list[Match2d]:
@@ -155,14 +151,6 @@ class AreaPatternMatcher(PatternMatcher):
 
         Наилучшая раскладка выбирается из соображений количества совместимых совпадений
         и качества каждого вошедшего совпадения (фактически, максимизируется сумма precision всех совпадений).
-
-        Общий алгоритм решения:
-        1. Найти перекрывающиеся конфликтующие пары совпадений.
-        2. Найти кластеры конфликтующих совпадений.
-        3. Для каждого кластера:
-            3.1 Найти раскладки без конфликтов.
-            3.2. Проранжировать раскладки и выбрать лучшую.
-        4. Объединить раскладки всех кластеров в общее совпадение и вернуть его.
         """
 
         arrangements = find_combinations_of_compatible_elements(
@@ -174,7 +162,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         rating_length_arrangement_list = []
 
-        # Отобрать наилучшую раскладку и вернуть её.
+        # Найти наилучшую раскладку (макс. суммарная точность, затем макс. кол-во).
         for arrangement in arrangements:
             rating_length_arrangement_list.append((
                 sum(m.precision for m in arrangement),
@@ -185,5 +173,3 @@ class AreaPatternMatcher(PatternMatcher):
         best = max(rating_length_arrangement_list, key=lambda t: t[0:2])
 
         return best[2]
-
-##### TODO #####
