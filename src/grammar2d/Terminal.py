@@ -43,6 +43,15 @@ class Terminal(Pattern2d):
         """
         return match.precision
 
+    def get_text_of_match(self, match: 'm2.Match2d') -> list[str]:
+        """ Просто всё содержимое всех ячеек.
+        """
+        return [match.data.text]
+
+    def get_content_of_match(self, match: 'm2.Match2d') -> dict | list | str:
+        """ Компактные данные для экспорта в JSON. """
+        return match.data.text
+
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher
         return TerminalMatcher(self, grammar_matcher)

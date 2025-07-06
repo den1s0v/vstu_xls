@@ -28,6 +28,12 @@ class Match2d:
     def get_occupied_points(self) -> list[Point]:
         return self.pattern.get_points_occupied_by_match(self)
 
+    def get_text(self) -> list[str]:
+        return self.pattern.get_text_of_match(self)
+
+    def get_content(self) -> dict | list | str:
+        return self.pattern.get_content_of_match(self)
+
     def clone(self):
         """Make a shallow copy"""
         return Match2d(

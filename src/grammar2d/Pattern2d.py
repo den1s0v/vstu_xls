@@ -67,6 +67,21 @@ class Pattern2d(WithCache, WithSafeCreate):
         """
         return sorted_list(match.box.iterate_points())
 
+    def get_text_of_match(self, match: 'm2.Match2d') -> list[str]:
+        """ Просто всё содержимое всех ячеек.
+        """
+        return [s
+                for m in match.component2match.values()
+                for s in m.get_content()]
+
+    def get_content_of_match(self, match: 'm2.Match2d') -> dict | list | str:
+        """ Компактные данные для экспорта в JSON.
+        """
+        return {
+            name: m.get_content()
+            for name, m in match.component2match.items()
+        }
+
     # parent: Optional['Pattern2d'] = None # родительский узел грамматики
     # components: dict[str, 'PatternComponent']
 

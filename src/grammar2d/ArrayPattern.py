@@ -73,6 +73,14 @@ class ArrayPattern(NonTerminal):
         inner_points = set(match.box.iterate_points())
         return sorted_list(inner_points & component_points)
 
+    def get_content_of_match(self, match: 'm2.Match2d') -> dict | list | str:
+        """ Компактные данные для экспорта в JSON.
+        """
+        return [
+            m.get_content()
+            for m in match.component2match.values()
+        ]
+
     @property
     def subpattern(self) -> Pattern2d:
         """Дочерний элемент грамматики.
