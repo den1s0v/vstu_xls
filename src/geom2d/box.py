@@ -14,7 +14,7 @@ class Box:
     """ Прямоугольник на целочисленной координатной плоскости (2d). `Box(x, y, w, h)`. """
     # Dev note: i'm avoiding subclassing namedtuple to allow usual inheritance via __init__, not __new__.
 
-    __slots__ = ('_tuple')
+    __slots__ = ('_tuple',)
 
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
