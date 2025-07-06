@@ -1,4 +1,7 @@
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Self
+
+import openpyxl
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -51,6 +54,13 @@ class ExcelGrid(Grid, AbstractGridBuilder):
         super().__init__()
         self._worksheet = worksheet
         self._load_cells(worksheet)
+
+    @classmethod
+    def read_xlsx(cls, filepath: str | Path, _sheet=None) -> Self:
+        """ Read Grid from the first active sheet from workbook at given path.
+         TODO: implement sheet choosing.
+         """
+        return ExcelGrid(openpyxl.load_workbook(Path(filepath)).active)
 
     def _load_cells(self, data: Worksheet) -> None:
         """Load cells from the provided worksheet, creating Cell objects and storing openpyxl cell references."""
