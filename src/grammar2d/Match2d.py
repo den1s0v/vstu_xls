@@ -1,6 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Self
 
-from utils import sorted_list
+from adict import adict
+
+from utils import sorted_list, safe_adict
 from geom2d import Box
 from geom2d import Point
 import grammar2d.Pattern2d as pt
@@ -15,7 +18,7 @@ class Match2d:
     box: Box = None
     precision: float = None
     component2match: dict['str|int', 'Match2d'] = None
-    data: dict = None
+    data: adict = field(default_factory=safe_adict)
 
     def calc_precision(self) -> float:
         if self.precision is None:
@@ -32,7 +35,7 @@ class Match2d:
             self.box,
             self.precision,
             dict(self.component2match),
-            dict(self.data),
+            adict(self.data),
         )
 
     def __str__(self) -> str:
@@ -49,6 +52,9 @@ class Match2d:
             component2match=self.component2match,
             data=self.data,
         )
+
+    def __lt__(self, other: Self) -> bool:
+        return (self.box.position < other.box.position) if hasattr(other, 'box') else False
 
 
 def filter_best_matches(matches: list['Match2d'], precision_ratio_cutoff=0.9) -> list['Match2d']:
