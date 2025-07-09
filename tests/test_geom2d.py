@@ -727,6 +727,64 @@ class RangedSegmentTestCase(unittest.TestCase):
                 RangedSegment((50, 50), (60, 70)),
             r1.combine(r2))
 
+    def test_restricted_by_size_1(self):
+        r1 = RangedSegment((3, 4), (6, 7))
+
+        self.assertEqual(r1,
+            r1.restricted_by_size(open_range(0, 3)))
+        self.assertEqual(r1,
+            r1.restricted_by_size(open_range(3, 3)))
+        self.assertEqual(RangedSegment((4, 4), (6, 6)),
+            r1.restricted_by_size(open_range(2, 2)))
+        self.assertEqual(RangedSegment((3, 3), (7, 7)),
+            r1.restricted_by_size(open_range(4, 4)))
+
+        r2 = RangedSegment((0, 5), (100, 110))
+
+        self.assertEqual(r2,
+            r2.restricted_by_size(open_range(100, 105)))
+
+        self.assertEqual(RangedSegment((0, 5), (100, 105)),
+            r2.restricted_by_size(open_range(100, 100)))
+
+        self.assertEqual(RangedSegment((0, 5), (105, 110)),
+            r2.restricted_by_size(open_range(105, 105)))
+
+        self.assertEqual(RangedSegment((2, 5), (100, 103)),
+            r2.restricted_by_size(open_range(98, 98)))
+
+        self.assertEqual(RangedSegment((0, 3), (107, 110)),
+            r2.restricted_by_size(open_range(107, 107)))
+
+        self.assertEqual(RangedSegment((0, 0), (110, 110)),
+            r2.restricted_by_size(open_range(110, 110)))
+
+        self.assertEqual(RangedSegment((5, 5), (100, 100)),
+            r2.restricted_by_size(open_range(95, 95)))
+
+        self.assertEqual(None,
+            r2.restricted_by_size(open_range(None, 94)))
+
+        self.assertEqual(None,
+            r2.restricted_by_size(open_range(111, None)))
+
+        r3 = RangedSegment((None, 10), (100, None))
+
+        self.assertEqual(r3,
+            r3.restricted_by_size(open_range(90, None)))
+
+        self.assertEqual(r3,
+            r3.restricted_by_size(open_range(180, None)))
+
+        self.assertEqual(RangedSegment((0, 10), (100, 110)),
+            r3.restricted_by_size(open_range(100, 100)))
+
+        self.assertEqual(RangedSegment((0, 10), (100, 110)),
+            r3.restricted_by_size(open_range(None, 100)))
+
+        self.assertEqual(RangedSegment((9, 10), (100, 101)),
+            r3.restricted_by_size(open_range(None, 91)))
+
 
 class RangedBoxTestCase(unittest.TestCase):
     def test_init(self):
