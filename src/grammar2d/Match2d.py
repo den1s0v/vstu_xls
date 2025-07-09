@@ -34,6 +34,9 @@ class Match2d:
     def get_content(self) -> dict | list | str:
         return self.pattern.get_content_of_match(self)
 
+    def get_children(self) -> list[Self]:
+        return list(self.component2match.values()) if self.component2match else []
+
     def clone(self):
         """Make a shallow copy"""
         return Match2d(
@@ -43,6 +46,12 @@ class Match2d:
             dict(self.component2match),
             adict(self.data),
         )
+
+    def __contains__(self, item) -> bool:
+        return item in self.component2match
+
+    def __getitem__(self, item) -> Self:
+        return self.component2match[item]
 
     def __str__(self) -> str:
         return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
