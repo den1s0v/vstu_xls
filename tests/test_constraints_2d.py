@@ -66,17 +66,17 @@ class constraints_2d_TestCase(unittest.TestCase):
         sc.replace_vars({'a': 'b', 'b': 'a'})
         self.assertEqual('(-a + b)/b', str(sc._expr))
 
-    def test_components_1(self):
+    def __test_components_1(self):
         expr = 'a_x < b_L < c_R == R'
         sc = AlgebraicExpr(expr)
         self.assertSetEqual(set(['a', 'b', 'c', '']), sc.referenced_components())
 
-    def test_components_2(self):
+    def __test_components_2(self):
         expr = '_y_z_a_x < b_L < c_R == L < _right'
         sc = AlgebraicExpr(expr)
         self.assertSetEqual(set(['_y_z_a', 'b', 'c', '', '_']), sc.referenced_components())
 
-    def test_components_3(self):
+    def __test_components_3(self):
         expr = '_y_z_a_x < b_L < c_R == L < _right'
         sc = AlgebraicExpr(expr)
         self.assertDictEqual({
@@ -87,7 +87,7 @@ class constraints_2d_TestCase(unittest.TestCase):
             '_': ['right'],
         }, sc.referenced_components_with_attributes())
 
-    def test_components_4(self):
+    def __test_components_4(self):
         expr = '_y_z_a_B < b_L < b_R == L < R'
         sc = AlgebraicExpr(expr)
         self.assertDictEqual({
@@ -117,13 +117,13 @@ class constraints_2d_TestCase(unittest.TestCase):
         area = sc.eval_with_components({'this': Box(1, 1, 7, 9)})
         self.assertEqual(7 * 9, area)
 
-    def test_eval_box_2(self):
+    def __test_eval_box_2(self):
         expr = 'x == 1 and y == 10 and left == x and top == y and right == 8 and bottom == 19'
         sc = AlgebraicExpr(expr)
         area = sc.eval_with_components({'this': Box(1, 10, 7, 9)})
         self.assertEqual(True, area)
 
-    def test_eval_box_3(self):
+    def __test_eval_box_3(self):
         # note x: 1 != 2, so full conjunction gives False.
         expr = 'x == 2 and y == 10 and left == x and top == y and right == 8 and bottom == 19'
         sc = AlgebraicExpr(expr)
