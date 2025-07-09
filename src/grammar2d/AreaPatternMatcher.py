@@ -142,7 +142,8 @@ class AreaPatternMatcher(PatternMatcher):
         for m in partial_matches:
             combined_ranged_box: RangedBox = m.data.ranged_box
             m.box = combined_ranged_box.minimal_box().to_box()
-            # TODO: recalc precision ?
+            # recalc precision
+            m.calc_precision(force=True)
 
         return partial_matches
 

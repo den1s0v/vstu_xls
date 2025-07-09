@@ -20,8 +20,8 @@ class Match2d:
     component2match: dict['str|int', Self] = None
     data: adict = field(default_factory=safe_adict)
 
-    def calc_precision(self) -> float:
-        if self.precision is None:
+    def calc_precision(self, force=False) -> float:
+        if self.precision is None or force:
             self.precision = self.pattern.score_of_match(self) / self.pattern.max_score()
         return self.precision
 
