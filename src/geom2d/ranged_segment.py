@@ -1,4 +1,5 @@
 # ranged_segment.py
+from typing import Self
 
 from geom2d.open_range import open_range
 
@@ -118,6 +119,26 @@ class RangedSegment:
 
         # make a new instance if changed
         return type(self)(lower, upper, validate=False) if changed else self
+
+    def restricted_by_size(self, size: open_range) -> Self | None:
+        """ Update segment to fit given size constraints:
+        cut outer probable areas if too long,
+        cut inner probable areas if too short.
+
+        If the segment is not compatible with given size, return None.
+        """
+        if size.is_double_open():
+            # no restriction
+            return self
+
+        lower, upper = self.a, self.b
+        new_lower = (upper - size).intersect(lower)
+        new_upper = (lower + size).intersect(upper)
+        if new_lower is None or new_upper is None:
+            # invalid range for any edge
+            return None
+        return RangedSegment(new_lower, new_upper)
+
 
     def intersect(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
         """Find intersection of both definite & probable areas.
