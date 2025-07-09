@@ -163,14 +163,25 @@ class AreaPatternMatcher(PatternMatcher):
 
         rating_length_arrangement_list = []
 
-        # Найти наилучшую раскладку (макс. суммарная точность, затем макс. кол-во).
+        # Найти наилучшую раскладку:
+        #   макс. суммарная точность, затем
+        #   макс. кол-во, затем
+        #   лево-верхнее расположение.
         for arrangement in arrangements:
+            if not arrangement:
+                # empty
+                continue
+
             rating_length_arrangement_list.append((
+                arrangement,  # [0]
                 sum(m.precision for m in arrangement),
                 len(arrangement),
-                arrangement
+                # DESC: минимальная сумма координат:
+                -min((sum(m.box.position) for m in arrangement), default=0),
             ))
 
-        best = max(rating_length_arrangement_list, key=lambda t: t[0:2])
+        best = max(
+            rating_length_arrangement_list, key=lambda t: t[1:],
+            default=([], ))
 
-        return best[2]
+        return best[0]
