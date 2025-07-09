@@ -16,8 +16,8 @@ class Match2d:
     """
     pattern: 'pt.Pattern2d'
     box: Box = None
-    precision: float = None
-    component2match: dict['str|int', 'Match2d'] = None
+    precision: float = None  # must be in range [0..1]
+    component2match: dict['str|int', Self] = None
     data: adict = field(default_factory=safe_adict)
 
     def calc_precision(self) -> float:
@@ -51,6 +51,7 @@ class Match2d:
         return str(self)
 
     def __dict__(self) -> dict:
+        """ For repr / pretty printing """
         return dict(
             pattern=self.pattern.name,
             box=self.box,

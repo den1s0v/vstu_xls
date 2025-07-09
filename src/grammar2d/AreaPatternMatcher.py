@@ -59,7 +59,7 @@ class AreaPatternMatcher(PatternMatcher):
 
             if not occurrences and not pattern_component.optional:
                 logger.info(f'''NO MATCH: pattern `{self.pattern.name
-                }` cannot have any matches since its required component {pattern_component.name} has no matches.''')
+                }` cannot have any matches since its required component `{pattern_component.name}` has no matches.''')
                 return []
 
             # Убрать совпадения паттерна, слишком неточные для этого компонента
