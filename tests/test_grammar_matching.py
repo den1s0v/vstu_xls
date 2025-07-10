@@ -18,6 +18,10 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
 
         cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
+        cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
+        cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
+
+        cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -92,6 +96,25 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 'numbers': ['8', '7', '6', '5', '4', '3', '2', '1'],
                 'letters': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']},
                 root_content)
+
+    def test_grid2(self):
+        gm = GrammarMatcher(grammar=self.simple_grammar_2)
+
+        for g in (
+                # self.grid2_x,
+                self.grid2_t,
+                # self.grid2_x,
+        ):
+            print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            self.assertEqual((9, 9), root.box.size)
+
+
+            root_content = root.get_content()
+            root_content['field'] = set(root_content['field'])
 
 
 if __name__ == '__main__':
