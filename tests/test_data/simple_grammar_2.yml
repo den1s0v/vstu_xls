@@ -65,23 +65,31 @@ patterns:
     inner:
       mark_1:
         pattern: mark
+        location: left, top
       mark_2:
         pattern: mark
+        location: right, top
       mark_3:
         pattern: mark
+        location: left, bottom
       mark_4:
         pattern: mark
+        location: right, bottom
       mark_5:
         pattern: mark
+        location: {left: 0, top: 1, bottom: 1}
       mark_6:
         pattern: mark
+        location: {right: 0, top: 1, bottom: 1}
       mark_7:
         pattern: mark
+        location: {left: 1, right: 1, top: 0}
       mark_8:
         pattern: mark
+        location: {left: 1, right: 1, bottom: 0}
       mark_9:
         pattern: mark
-  #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
+        location: {left: 1, right: 1, top: 1, bottom: 1}
 
 
   field:
