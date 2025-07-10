@@ -1,5 +1,6 @@
 # ranged_box.py
 from functools import reduce
+from typing import Self
 
 from geom2d.ranged_segment import RangedSegment
 from geom2d.open_range import open_range
@@ -90,6 +91,14 @@ class RangedBox:
         rx = self.rx.combine(other.rx)
         ry = self.ry.combine(other.ry)
         return RangedBox(rx, ry) if rx and ry else None
+
+    def restricted_by_size(self, hor_size: open_range, ver_size: open_range) -> Self | None:
+        new_rx = self.rx.restricted_by_size(hor_size)
+        new_ry = self.ry.restricted_by_size(ver_size)
+        if new_rx is None or new_ry is None:
+            # invalid range for any edge
+            return None
+        return RangedBox(new_rx, new_ry)
 
     def combine_many(self, *others: 'RangedBox') -> 'RangedBox | None':
         # f = RangedBox.combine
