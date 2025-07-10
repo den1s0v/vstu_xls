@@ -56,6 +56,9 @@ class SizeConstraint(SpatialConstraint):
     def clone(self) -> 'SizeConstraint':
         return type(self)(size_range_tuple=self.size_range_tuple)
 
+    def __iter__(self):
+        return iter(self.size_range_tuple)
+
     def __str__(self) -> str:
         s = 'SizeConstraint(%s x %s)' % self.size_range_tuple
         return s

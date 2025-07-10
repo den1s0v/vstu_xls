@@ -2,8 +2,9 @@ from dataclasses import dataclass
 
 from loguru import logger
 
+from constraints_2d import SizeConstraint
 # import grammar2d as pt
-from geom2d import Box, Direction, RIGHT, DOWN, RangedBox
+from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range
 # from grammar2d import AreaPattern, PatternComponent
 from grammar2d.AreaPattern import AreaPattern
 from grammar2d.PatternComponent import PatternComponent
@@ -98,9 +99,13 @@ class AreaPatternMatcher(PatternMatcher):
         ))
 
         partial_matches: list[Match2d] = []
+        size_constraint = (list(filter(lambda x: isinstance(x, SizeConstraint), pattern.global_constraints))
+               or
+            (SizeConstraint('* x *'),))[0]
 
         for component, match_list in component_matches_list:
             current_wave: list[Match2d] = []
+            occupied_areas: set[str] = set()
 
             for component_match in match_list:
                 if not partial_matches:
@@ -122,12 +127,23 @@ class AreaPatternMatcher(PatternMatcher):
                         rb1 = existing_match.data.ranged_box
                         combined_rb = rb1.combine(rb2)
 
+                        # наложить ограничения на размеры области
+                        combined_rb = combined_rb and combined_rb.restricted_by_size(*size_constraint)
+
                         if combined_rb:
+                            # Ограничить число комбинаций на поле по позициям
+                            combined_rb_repr = repr(combined_rb)
+                            if combined_rb_repr in occupied_areas:
+                                continue
+
+                            occupied_areas.add(combined_rb_repr)
+
                             # it's possible to use this one together with the match.
                             m = existing_match.clone()
                             m.component2match[component.name] = component_match
                             m.precision += component_match.precision * component.weight
                             m.data.ranged_box = combined_rb
+
                             current_wave.append(m)
 
                         elif component.optional:
