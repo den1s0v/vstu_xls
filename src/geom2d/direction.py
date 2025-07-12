@@ -80,6 +80,12 @@ class Direction:
     def __repr__(self) -> str:
         return f'Direction(rotation={self.rotation}, prop_name={self.prop_name})'
 
+    def __hash__(self):
+        return self.rotation
+
+    def __lt__(self, other):
+        return isinstance(other, type(self)) and self.rotation < other.rotation
+
 
 # define constants
 RIGHT= Direction.get(0)

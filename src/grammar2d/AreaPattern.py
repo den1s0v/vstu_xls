@@ -106,7 +106,28 @@ class AreaPattern(NonTerminal):
                 for name, comp_m in match.component2match.items()
         )
 
-    ...
+    def get_similar_component_pairs(self) -> list[tuple[PatternComponent, PatternComponent]]:
+        """ Могут присутствовать внутренние компоненты с одинаковыми ожиданиями,
+        т.е. требуемым паттерном и ограничениями.
+        • Такие компоненты нуждаются в упорядочивании
+        совпадений, подходящих под них,
+        для избежания комбинаторного взрыва.
+        → Здесь делается неявное предположение о том, что
+        одинаково заданные внутренние компоненты паттерна
+        должны быть различными элементами на поле (что подразумевается интуитивно).
+        Этот метод возвращает пары компонентов:
+        первый компонент должен иметь позицию "раньше" второго, но не наоборот.
+        """
+        similar_component_pairs = []
+        inner_components = [k for k in self.components if k.inner]
+        for k2 in inner_components:
+            for k1 in inner_components:
+                # Note: k1 is listed before k2 in the components list.
+                if k1 is k2:
+                    break  # exit inner loop
+                if k1.is_similar_to(k2):
+                    similar_component_pairs.append((k1, k2))
+        return similar_component_pairs
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.AreaPatternMatcher import AreaPatternMatcher

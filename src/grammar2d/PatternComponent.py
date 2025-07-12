@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from functools import reduce
 from operator import and_
+from typing import Self
 
 from loguru import logger
 
@@ -108,6 +109,22 @@ class PatternComponent(WithCache, WithSafeCreate):
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
+
+    def is_similar_to(self, other: Self) -> bool:
+        """ True, если компоненты с одинаковыми ожиданиями,
+        т.е. требуемым паттерном и ограничениями.
+        """
+        if not isinstance(other, type(self)):
+            return False
+        if self.inner != other.inner:
+            return False
+        if self.pattern != other.pattern:
+            return False
+        if len(self.constraints) != len(other.constraints):
+            return False
+        if set(self.constraints) != set(other.constraints):
+            return False
+        return True
 
     def get_ranged_box_for_parent_location(self, component_match: Match2d) -> RangedBox:
         """Получить ограничения на позицию родителя

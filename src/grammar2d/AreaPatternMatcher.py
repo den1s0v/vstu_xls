@@ -20,6 +20,7 @@ from clash import find_combinations_of_compatible_elements
 class AreaPatternMatcher(PatternMatcher):
     pattern: AreaPattern
     grammar_matcher: 'ns.GrammarMatcher'
+    _similar_component_pairs: list[tuple[PatternComponent, PatternComponent]] = None
 
     def find_all(self, _region: Region = None) -> list[Match2d]:
         """ Find all matches within whole document.
@@ -51,6 +52,7 @@ class AreaPatternMatcher(PatternMatcher):
         gm = self.grammar_matcher
 
         # 1. Найти все матчи-кандидаты для всех паттернов-компонентов.
+        # Включая потенциально пустые наборы матчей для опциональных компонентов.
 
         # matches_by_component: dict[str, list[Match2d]] = {}
         component_matches_list: list[tuple[PatternComponent, list[Match2d]]] = []
@@ -144,10 +146,12 @@ class AreaPatternMatcher(PatternMatcher):
                             m.precision += component_match.precision * component.weight
                             m.data.ranged_box = combined_rb
 
-                            current_wave.append(m)
+                            if self._check_similar_component_pairs(m):
+                                current_wave.append(m)
 
                         elif component.optional:
-                            # компонент опциональный, здесь его не будет, но матч остаётся.
+                            # компонент опциональный, здесь его не будет (он не попал в нашу область),
+                            # но матч остаётся.
                             current_wave.append(existing_match)
 
             partial_matches = current_wave
@@ -201,3 +205,19 @@ class AreaPatternMatcher(PatternMatcher):
             default=([], ))
 
         return best[0]
+
+    def _check_similar_component_pairs(self, partial_match: Match2d) -> bool:
+        """ Cut off matches having excessive variant of match-to-component mapping. """
+        if self._similar_component_pairs is None:
+            self._similar_component_pairs = self.pattern.get_similar_component_pairs()
+
+        for k1, k2 in self._similar_component_pairs:
+            m1 = partial_match.component2match.get(k1.name)
+            m2 = partial_match.component2match.get(k2.name)
+            if m1 and m2:
+                if not (m1.box.position < m2.box.position):
+                    # inappropriate ordering detected
+                    return False
+        # no problems found
+        return True
+

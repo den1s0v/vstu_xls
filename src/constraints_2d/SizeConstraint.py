@@ -65,5 +65,11 @@ class SizeConstraint(SpatialConstraint):
 
     __repr__ = __str__
 
+    def __hash__(self):
+        return hash(str(self))
+
+    def __lt__(self, other):
+        return isinstance(other, type(self)) and str(self) < str(other)
+
 
 BoolExprRegistry.register(SizeConstraint)

@@ -181,7 +181,7 @@ def read_pattern(data: dict) -> Pattern2d | None:
         kind = data['kind']
         del data['kind']
     except KeyError:
-        raise ValueError('Format error: `kind` key expected for any pattern of grammar.')
+        raise ValueError('Format error: `kind` key is expected for any pattern of a grammar.')
 
     pattern_cls = PatternRegistry.get_pattern_class_by_kind(kind)
 

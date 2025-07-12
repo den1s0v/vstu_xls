@@ -194,11 +194,17 @@ class LocationConstraint(SpatialConstraint):
     def __str__(self) -> str:
         s = 'LocationConstraint(%s)' % repr({
             d.prop_name: range_
-            for d, range_ in self.side_to_gap.items()
+            for d, range_ in sorted(self.side_to_gap.items())
         })
         return s
 
     __repr__ = __str__
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __lt__(self, other):
+        return isinstance(other, type(self)) and str(self) < str(other)
 
 
 BoolExprRegistry.register(LocationConstraint)
