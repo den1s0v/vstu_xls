@@ -120,14 +120,14 @@ class RangedSegment:
         # make a new instance if changed
         return type(self)(lower, upper, validate=False) if changed else self
 
-    def restricted_by_size(self, size: open_range) -> Self | None:
+    def restricted_by_size(self, size: open_range | None) -> Self | None:
         """ Update segment to fit given size constraints:
         cut outer probable areas if too long,
         cut inner probable areas if too short.
 
         If the segment is not compatible with given size, return None.
         """
-        if size.is_double_open():
+        if size is None or size.is_double_open():
             # no restriction
             return self
 
