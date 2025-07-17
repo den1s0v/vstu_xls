@@ -102,8 +102,8 @@ class AreaPatternMatcher(PatternMatcher):
 
         partial_matches: list[Match2d] = []
         size_constraint = (list(filter(lambda x: isinstance(x, SizeConstraint), pattern.global_constraints))
-               or
-            (SizeConstraint('* x *'),))[0]
+                           or
+                           (SizeConstraint('* x *'),))[0]
 
         for component, match_list in component_matches_list:
             current_wave: list[Match2d] = []
@@ -116,7 +116,7 @@ class AreaPatternMatcher(PatternMatcher):
                                 box=component_match.box,
                                 precision=component_match.precision * component.weight,
                                 component2match={component.name: component_match}
-                    )
+                                )
                     m.data.ranged_box = component_match.data.parent_location[pattern.name]
                     current_wave.append(m)
 
@@ -202,7 +202,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         best = max(
             rating_length_arrangement_list, key=lambda t: t[1:],
-            default=([], ))
+            default=([],))
 
         return best[0]
 
