@@ -4,6 +4,7 @@ from typing import override
 from geom2d import open_range, Point
 import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
+from grammar2d.MatchRelation import MatchRelation, lt, ne
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 from grammar2d.PatternComponent import PatternComponent
@@ -128,6 +129,36 @@ class AreaPattern(NonTerminal):
                 if k1.is_similar_to(k2):
                     similar_component_pairs.append((k1, k2))
         return similar_component_pairs
+
+    def get_component_matches_relations(self) -> list[tuple[PatternComponent, PatternComponent, MatchRelation]]:
+        """ Могут присутствовать внутренние компоненты с одинаковыми ожиданиями,
+        т.е. требуемым паттерном и ограничениями.
+        • Такие компоненты нуждаются в упорядочивании
+        совпадений, подходящих под них,
+        для избежания комбинаторного взрыва.
+        → Здесь делается неявное предположение о том, что
+        одинаково заданные внутренние компоненты паттерна
+        должны быть различными элементами на поле (что подразумевается интуитивно).
+        Этот метод возвращает пары компонентов:
+        первый компонент должен иметь позицию "раньше" второго, но не наоборот.
+        """
+        rel_ne = MatchRelation(ne)
+        rel_lt = MatchRelation(lt)
+
+        relation_triples = []
+
+        for k2 in self.components:
+            for k1 in self.components:
+                # Note: k1 is listed before k2 in the components list.
+                if k1 is k2:
+                    break  # exit inner loop
+                if k1.is_similar_to(k2):
+                    # strictly less
+                    relation_triples.append((k1, k2, rel_lt))
+                if k1.pattern == k2.pattern:
+                    # simply non-equal
+                    relation_triples.append((k1, k2, rel_ne))
+        return relation_triples
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.AreaPatternMatcher import AreaPatternMatcher

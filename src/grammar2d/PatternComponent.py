@@ -8,6 +8,7 @@ from loguru import logger
 import grammar2d.Pattern2d as pt
 from constraints_2d import SpatialConstraint
 from constraints_2d import LocationConstraint
+from geom1d import LinearSegment
 from geom2d import open_range, Box, RangedBox
 from utils import WithCache, WithSafeCreate
 from .Match2d import Match2d
@@ -109,6 +110,40 @@ class PatternComponent(WithCache, WithSafeCreate):
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
+
+    def calc_distance_of_match_to_box(self, match: Match2d, box: Box) -> float:
+
+        # Use cache attached to match object
+        distance_to_as: dict[tuple[Box, str], float] = match.data.get('distance_to_as') or dict()
+        match.data.distance_to_as = distance_to_as  # set back if created
+
+        key = (box, 'inner' if self.inner else 'outer')
+        known_distance = distance_to_as.get(key)
+
+        if known_distance is None:
+            if self.inner:
+                # Расстояние для внутреннего компонента
+                # равняется росту периметра области совпадения,
+                # необходимого для включения его в матч.
+                known_distance = match.box.manhattan_distance_to_overlap(box)
+            else:
+                # Близость для внешнего компонента
+                # равняется длине максимального из пересечений проекций на оси.
+                # Это позволяет компоненту быть далеко, но напротив.
+                # pr1_x = match.box.project('h')
+                # pr2_x = box.project('h')
+                # pr1_y = match.box.project('v')
+                # pr2_y = box.project('v')
+                # how_close = max(
+                #     (pr1_x.intersect(pr2_x) or LinearSegment(0, 0)).size,
+                #     (pr1_y.intersect(pr2_y) or LinearSegment(0, 0)).size,
+                # )
+                # Расстояние же будем считать как минимальное из смещений по проекциям
+                known_distance = min(match.box.manhattan_distance_to_overlap(box, per_axis=True))
+            # Записать вычисленное значение в кэш
+            distance_to_as[key] = known_distance
+
+        return known_distance
 
     def is_similar_to(self, other: Self) -> bool:
         """ True, если компоненты с одинаковыми ожиданиями,
