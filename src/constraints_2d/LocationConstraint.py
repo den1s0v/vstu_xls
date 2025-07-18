@@ -145,7 +145,10 @@ class LocationConstraint(SpatialConstraint):
         # repair & validate data
         result = {}
         for key in desired_keys:
-            value = side_to_gap.get(key) or default_range
+            value = side_to_gap.get(key, None)
+            if value is None:
+                # side is not set
+                value = default_range
             if isinstance(key, g2.Direction):
                 pass
             elif isinstance(key, str):
