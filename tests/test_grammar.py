@@ -171,6 +171,30 @@ class GrammarTestCase(unittest.TestCase):
                              ry=('*', '*'))
         self.assertEqual(expected, result)
 
+    def test_get_ranged_box_for_parent_location_inner_3x3(self):
+
+        #
+        m_box =  RangedBox(rx=(2, 3), ry=(1, 2)).to_box()
+        self.assertEqual(Box(2,1, 1,1), m_box)
+        component_match = Match2d(box=m_box, pattern="dummy str instead of pattern")
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=True,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range(1, 1),
+                    'left': open_range(0, 0),
+                    'right': open_range(0, None),
+                    'bottom': open_range(1, 1)})])
+        """  |¯ ¯ ¯~
+             |◘    ~
+             |_ _ _~   """
+        result = pattern_component.get_ranged_box_for_parent_location(component_match)
+        expected = RangedBox(rx=(2, '3+'),
+                             ry=(0, 3))
+        self.assertEqual(expected, result)
+
     def test_get_ranged_box_for_parent_location_outer(self):
 
         component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
