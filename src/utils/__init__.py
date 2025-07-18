@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Iterable
+from typing import Iterable, Self
 
 from adict import adict
 
@@ -129,7 +129,7 @@ class WithSafeCreate:
         return kwargs_filtered, kwargs_ignored
 
     @classmethod
-    def safe_create(cls, **kwargs) -> type:
+    def safe_create(cls, **kwargs) -> Self:
         """ Class method to be used with dataclasses
         instead of direct instance creation
         to avoid `Unknown/unsupported keyword argument` errors in a smart way.

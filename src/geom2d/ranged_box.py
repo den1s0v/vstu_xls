@@ -166,6 +166,11 @@ class RangedBox:
     def __repr__(self):
         return f"RangedBox(rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}))"
 
+    def __str__(self):
+        if self.is_deterministic():
+            return f"RangedBox[deterministic](rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}))"
+        return repr(self)
+
     def __bool__(self):
         """ If the box exists it should be always treated as True. """
         return True
