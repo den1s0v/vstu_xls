@@ -14,13 +14,13 @@ from grammar2d import read_grammar, GrammarMatcher
 class GrammarMatchingTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
-        cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
+        # cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
+        # cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
 
-        cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
         cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
 
+        # cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
 
     def _test_txt_debug(self):
@@ -110,15 +110,25 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
             self.assertEqual(1, len(matched_documents))
             root = matched_documents[0]
-            self.assertEqual((9, 9), root.box.size)
+            self.assertEqual((8, 9), root.box.size)
 
+            # self.assertEqual((8, 1), root['letters'].box.size)
+            # self.assertEqual((1, 8), root['numbers'].box.size)
+            # self.assertEqual((8, 8), root['field'].box.size)
 
-            root_content = root.get_content()
-            root_content['field'] = set(root_content['field'])
+            # self.assertEqual(('ABCDEFGH'), ''.join(root['letters'].get_text()))
+            # self.assertEqual(('87654321'), ''.join(root['numbers'].get_content()))
+
+            groups_3x3 = root['field'].get_children()
+            self.assertEqual(5, len(groups_3x3))
+
+            positions = [m.box.position for m in groups_3x3]
+            # Note!
+            assert False, ('Intended fail for debugging. positions:', positions)
 
 
 if __name__ == '__main__':
     # unittest.main()
     # GrammarMatchingTestCase._test_txt_debug(...)
     GrammarMatchingTestCase.setUpClass()
-    GrammarMatchingTestCase.test_grid1(GrammarMatchingTestCase())
+    GrammarMatchingTestCase.test_grid2(GrammarMatchingTestCase())

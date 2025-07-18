@@ -20,6 +20,9 @@ class Match2d:
     component2match: dict['str|int', Self] = None
     data: adict = field(default_factory=safe_adict)
 
+    def __post_init__(self):
+        self.recalc_box()
+
     def calc_precision(self, force=False) -> float:
         if self.precision is None or force:
             self.precision = self.pattern.score_of_match(self) / self.pattern.max_score()
@@ -36,6 +39,13 @@ class Match2d:
 
     def get_children(self) -> list[Self]:
         return list(self.component2match.values()) if self.component2match else []
+
+    def recalc_box(self) -> Self:
+        """ Calc box simply as union of all components """
+        if self.component2match:
+            union = Box.union(*(m.box for m in self.component2match.values()))
+            self.box = union
+        return self
 
     def clone(self):
         """Make a shallow copy"""
