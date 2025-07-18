@@ -49,6 +49,10 @@ class AreaPatternMatcher(PatternMatcher):
          The patterns may be not applicable if they do overlap.
 
          Каждое найденное совпадение существует как бы независимо от остальных.
+
+         Вариант с полным перебором и отсечение вариантов компонентов по уже занятым позициям
+          (чего в общем случае недостаточно).
+         За приемлемое время не работает.
         """
 
         pattern = self.pattern
@@ -161,8 +165,7 @@ class AreaPatternMatcher(PatternMatcher):
             if not partial_matches:
                 break
 
-            ###
-            logger.info(f'partial_matches: {len(partial_matches)}')
+            ### logger.info(f'partial_matches: {len(partial_matches)}')
 
         # Получить окончательную область совпадения area для всех кандидатов
         for m in partial_matches:
@@ -179,7 +182,10 @@ class AreaPatternMatcher(PatternMatcher):
 
          Каждое найденное совпадение существует как бы независимо от остальных.
 
-         Вариант с оптимизацией обхода
+         Вариант с оптимизацией обхода кандидатов по близости к текущей области совпадения.
+         Отсекаются далёкие варианты.
+         Идея была брать x2 от минимального найденного расстояния,
+          но за приемлемое время работает только с x1 (т.е. только лучшее расстояние + 1 единица длины на запас)
         """
 
         pattern = self.pattern
@@ -219,19 +225,13 @@ class AreaPatternMatcher(PatternMatcher):
                 # Записать в метаданные
                 component_match.data.parent_location[(pattern.name, pattern_component.name)] = parent_location
 
-                # ###
-                # print()
-                # print('component.name:', pattern_component.name)
-                # print('component.constraints:', pattern_component.constraints)
-                # print(' match location:', component_match.box)
-                # print('parent location:', parent_location)
-                # print()
-                # ###
 
         # 3. Найти комбинации из паттернов всех обязательных компонентов, дающие непустой матч для area.
         # 3.1. После обязательных, добавлять в каждый матч опциональные компоненты, попавшие в "зону влияния"
         # найденной области (он не может быть опущен, если лежит внутри области,
         # обозначенной обязательными компонентами).
+
+        # TODO: пересмотреть описание ↓
         # Каждое действие добавления нового компонента в матч носит вероятностный и ветвящийся характер.
         #  Поэтому заводим стек для уровней/ветвей наращивания вглубь дерева принятия решений о добавлении компонентов.
         #  На листьях дерева будут готовые, полностью заполненные матчи нашего паттерна.
@@ -248,10 +248,6 @@ class AreaPatternMatcher(PatternMatcher):
             len(t[1]),
         ))
 
-        # size_constraint = (tuple(filter(lambda x: isinstance(x, SizeConstraint), pattern.global_constraints))
-        #                    or
-        #                    (SizeConstraint('* x *'),))[0]
-
         partial_matches: list[Match2d] = []
 
         for component, match_list in component_matches_list:
@@ -266,7 +262,6 @@ class AreaPatternMatcher(PatternMatcher):
                                 component2match={component.name: component_match}
                                 )
                     m.data.ranged_box = component_match.data.parent_location[(pattern.name, component.name)]
-                    # m.data.distance_to
                     current_wave.append(m)
             else:
                 for pm in partial_matches:
@@ -282,9 +277,7 @@ class AreaPatternMatcher(PatternMatcher):
 
             partial_matches = current_wave
 
-            ###
-            logger.info(f'partial_matches: {len(partial_matches)}')
-            ###
+            ### logger.info(f'partial_matches: {len(partial_matches)}')
 
             if not partial_matches:
                 break
@@ -328,44 +321,16 @@ class AreaPatternMatcher(PatternMatcher):
             rb2 = component_match.data.parent_location[(self.pattern.name, component.name)]
             combined_rb = rb1.combine(rb2)
 
-            ###
-            combined_rb_back = combined_rb
-            # if not combined_rb:
-            #     print()
-            #     print('Zero combination:')
-            #     print(rb1)
-            #     print(rb2)
-            #     print()
-            ###
-
             if not combined_rb: continue
 
             # наложить ограничения на размеры области
             if combined_rb and size_constraint:
                 combined_rb = combined_rb.restricted_by_size(*size_constraint)
-                ###
-                # if not combined_rb:
-                #     print()
-                #     print('combination restricted_by_size:')
-                #     print(combined_rb_back)
-                #     print(rb1)
-                #     print(rb2)
-                #     print()
-                ###
 
             if not combined_rb: continue
 
             if not self._check_component_relations(existing_match, (component, component_match)):
                 # не подошёл, дальше не рассматриваем
-                ###
-                # if component_match not in existing_match.get_children():
-                #     print()
-                #     print('dropped by component_relations:')
-                #     print(component.name)
-                #     print(component_match.box)
-                #     print({name: m.box for name, m in existing_match.component2match.items()})
-                #     print()
-                ###
                 continue
 
             # Расстояние до подходящего кандидата
@@ -374,7 +339,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         min_distance = min((t[0] for t in distance_rb_match_list), default=0)
 
-        # 2. вычисляем порог отсечки и фильтруем кандидатов по этой отсечке
+        # 2. вычисляем порог отсечки и фильтруем кандидатов по этой отсечке для расстояния
         # CUTOFF_COEF = 2.0
         CUTOFF_COEF = 1   # !!!!!!! Минимум ←
         CUTOFF_MIN_DIST = 1
@@ -393,7 +358,6 @@ class AreaPatternMatcher(PatternMatcher):
         # попытаться добавить текущий матч в существующие накапливаемые частичные матчи
 
         current_wave = []
-        # used_self = False
 
         for combined_rb, component_match in selected_match_rb_list:
 
@@ -405,15 +369,7 @@ class AreaPatternMatcher(PatternMatcher):
                 m2.data.ranged_box = combined_rb
 
                 current_wave.append(m2)
-
-            # elif component.optional and not used_self:
-            #     # компонент опциональный, здесь его не будет
-            #     # (он не попал в нашу область),
-            #     # но матч остаётся.
-            #     current_wave.append(existing_match)
-            #     used_self = True
         return current_wave
-
 
     def filter_candidates(self, match_candidates: list[Match2d]) -> list[Match2d]:
         """ Filter given matches so all returned matches do not overlap and the combination seems to be the best.
