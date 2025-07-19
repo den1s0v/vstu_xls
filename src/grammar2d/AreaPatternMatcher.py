@@ -250,21 +250,10 @@ class AreaPatternMatcher(PatternMatcher):
                 # Записать в метаданные
                 component_match.data.parent_location[(pattern.name, pattern_component.name)] = parent_location
 
-
         # 3. Найти комбинации из паттернов всех обязательных компонентов, дающие непустой матч для area.
         # 3.1. После обязательных, добавлять в каждый матч опциональные компоненты, попавшие в "зону влияния"
         # найденной области (он не может быть опущен, если лежит внутри области,
         # обозначенной обязательными компонентами).
-
-        # TODO: пересмотреть описание ↓
-        # Каждое действие добавления нового компонента в матч носит вероятностный и ветвящийся характер.
-        #  Поэтому заводим стек для уровней/ветвей наращивания вглубь дерева принятия решений о добавлении компонентов.
-        #  На листьях дерева будут готовые, полностью заполненные матчи нашего паттерна.
-        #  На каждом уровне будем ограничивать ветвление лучшими вариантами, которые будут отбираться по принципу:
-        #  дельта показателя к лучшему варианту добавить компонент умножается на 2 (коэффициент),
-        #  это определяет порог отсечения.
-        #  В случае нулевой дельты взять порог равным 1 лишней клетке.
-        #  По отобранным кандидатам углубляемся внутрь (рекурсия).
 
         # Сортировать: все опциональные в конце, сначала внутренние, по возрастанию числа матчей
         component_matches_list.sort(key=lambda t: (
@@ -318,9 +307,10 @@ class AreaPatternMatcher(PatternMatcher):
 
     def _get_pattern_size_constraint(self) -> SizeConstraint | None:
         if self._size_constraint is ...:
-            self._size_constraint = (list(filter(lambda x: isinstance(x, SizeConstraint), self.pattern.global_constraints))
-                           or
-                           (None,))[0]
+            self._size_constraint = \
+                (list(filter(lambda x: isinstance(x, SizeConstraint), self.pattern.global_constraints))
+                 or
+                 (None,))[0]
         return self._size_constraint
 
     def _grow_match(
@@ -366,7 +356,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         # 2. вычисляем порог отсечки и фильтруем кандидатов по этой отсечке для расстояния
         # CUTOFF_COEF = 2.0
-        CUTOFF_COEF = 1   # !!!!!!! Минимум ←
+        CUTOFF_COEF = 1  # !!!!!!! Минимум ←
         CUTOFF_MIN_DIST = 1
 
         # Отсечка вдвое больше минимальной, но не меньше 1 (в случае, если минимальная равна нулю)
