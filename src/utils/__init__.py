@@ -37,6 +37,15 @@ class Checkpointer:
         return delta
 
 
+@contextmanager
+def time_report(message: str = None, ch: Checkpointer = None):
+    ch = ch or Checkpointer()
+    try:
+        yield ch
+    finally:
+        ch.hit(message)
+
+
 def reverse_if(iterable, reverse=True):
     """ Return `reversed(iterable)` if `reverse==True`, and untouched `iterable` otherwise.
     """

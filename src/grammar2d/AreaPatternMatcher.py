@@ -16,6 +16,8 @@ import grammar2d.GrammarMatcher as ns
 from grid import Region
 
 from clash import find_combinations_of_compatible_elements
+from utils import time_report
+
 
 @dataclass(slots=True)
 class MatchingPlan:
@@ -58,10 +60,14 @@ class AreaPatternMatcher(PatternMatcher):
         """
 
         # Найти все матчи-кандидаты для всех паттернов-компонентов.
-        match_candidates = self.find_match_candidates_2(_region)
+        with time_report('find_match_candidates_*') as ch:
+            match_candidates = self.find_match_candidates_3(_region)
 
         # Отсеять невозможные / конфликтующие варианты, при наличии.
-        matches = self.filter_candidates(match_candidates)
+        with time_report('filter_candidates', ch) as ch:
+            matches = self.filter_candidates(match_candidates)
+
+        logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
         return matches
 
