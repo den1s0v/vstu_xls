@@ -436,12 +436,19 @@ class AreaPatternMatcher(PatternMatcher):
         #    для последующего комбинирования.
         #   Записать в метаданные: match.data.parent_location[pattern]: RangedBox
 
+        size_constraint = self._get_pattern_size_constraint()
+
         for pattern_component, match_list in component_matches_list:
             for component_match in match_list:
                 # Получить область потенциального местонахождения родителя-area
                 parent_location = pattern_component.get_ranged_box_for_parent_location(component_match)
+
+                # Apply size constraint once here.
+                if size_constraint:
+                    parent_location = parent_location.restricted_by_size(*size_constraint)
+
                 if component_match.data.parent_location is None:
-                    # Если словарь не создан
+                    # словарь не создан
                     component_match.data.parent_location = dict()
                 # Записать в метаданные
                 component_match.data.parent_location[(pattern.name, pattern_component.name)] = parent_location
@@ -532,17 +539,17 @@ class AreaPatternMatcher(PatternMatcher):
 
             # Скомбинировать области для проверки
             rb2 = component_match.data.parent_location[(self.pattern.name, component.name)]
-            if rb1:
-                combined_rb = rb1.combine(rb2)
-            else:
+            if not rb1:
                 combined_rb = rb2
+            else:
+                combined_rb = rb1.combine(rb2)
 
-            # наложить ограничения на размеры области
-            if combined_rb and size_constraint:
-                combined_rb = combined_rb.restricted_by_size(*size_constraint)
+                # наложить ограничения на размеры объединённой области
+                if combined_rb and size_constraint:
+                    combined_rb = combined_rb.restricted_by_size(*size_constraint)
 
-            if not combined_rb:
-                continue
+                if not combined_rb:
+                    continue
 
             if existing_match and not self._check_component_relations(existing_match, (component, component_match)):
                 # не подошёл, дальше не рассматриваем
@@ -552,7 +559,7 @@ class AreaPatternMatcher(PatternMatcher):
             if existing_match:
                 distance = component.calc_distance_of_match_to_box(component_match, existing_match.box)
             else:
-                distance = 0  # constant
+                distance = 0  # constant, for sorting below
 
             distance_rb_match_list.append((distance, combined_rb, component_match))
 
