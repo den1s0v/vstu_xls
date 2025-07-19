@@ -130,7 +130,7 @@ class GrammarMatcher:
 
         ###
         logger.debug('')
-        logger.debug(f':: matches of pattern `{pattern.name}` ↓')
+        logger.debug(f':: {len(matches)} matches of pattern `{pattern.name}` ↓')
         logger.debug([
             (m.get_content(), m.box)
             for m in matches

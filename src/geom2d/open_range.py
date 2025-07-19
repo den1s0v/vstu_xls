@@ -1,3 +1,5 @@
+from typing import Self
+
 import geom2d.ranges as ns
 
 
@@ -20,7 +22,8 @@ class open_range:
     _range: range | None  # None for infinite ranges
 
     @classmethod
-    def make(cls, value: 'int | str | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range' = None) -> 'open_range':
+    def make(cls,
+             value: 'int|str | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range' = None) -> Self:
         """ Universal single-value factory method.
              If a number is given, returns a point range.
              If a str is given, parses range from it.
@@ -28,10 +31,10 @@ class open_range:
          """
         if value is None or isinstance(value, (int, float)):
             return cls(value, value)
-        if isinstance(value, str):
-            return cls.parse(value)
         if isinstance(value, open_range):
             return value  # no need to clone
+        if isinstance(value, str):
+            return cls.parse(value)
         try:
             it = iter(value)
             values = [t[0] for t in zip(it, range(2))]  # take up to 2 items
@@ -40,7 +43,7 @@ class open_range:
                 f"Expected an iterable of numeric items in open_range.make(), got {values!r}"
             return cls(*values)
         except AttributeError:
-            pass
+            raise ValueError(value)
 
     @classmethod
     def parse(cls, range_str: str):

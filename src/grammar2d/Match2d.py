@@ -21,7 +21,9 @@ class Match2d:
     data: adict = field(default_factory=safe_adict)
 
     def __post_init__(self):
-        self.recalc_box()
+        if not self.box:
+            # try to infer from components
+            self.recalc_box()
 
     def calc_precision(self, force=False) -> float:
         if self.precision is None or force:
