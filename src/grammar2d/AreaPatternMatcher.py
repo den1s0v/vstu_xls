@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from typing import Self
 
 from loguru import logger
+# # Профилирование ↓
+# # pip install profilehooks
+# from profilehooks import profile
+
 
 from constraints_2d import SizeConstraint
 # import grammar2d as pt
@@ -52,6 +56,7 @@ class AreaPatternMatcher(PatternMatcher):
     _component_relation_triples: list[tuple[PatternComponent, PatternComponent, MatchRelation]] = None
     _size_constraint: SizeConstraint = ...
 
+    # @profile(stdout=False, filename='area-find.prof')
     def find_all(self, _region: Region = None) -> list[Match2d]:
         """ Find all matches within whole document.
 
