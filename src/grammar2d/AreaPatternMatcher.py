@@ -541,7 +541,8 @@ class AreaPatternMatcher(PatternMatcher):
             if combined_rb and size_constraint:
                 combined_rb = combined_rb.restricted_by_size(*size_constraint)
 
-            if not combined_rb: continue
+            if not combined_rb:
+                continue
 
             if existing_match and not self._check_component_relations(existing_match, (component, component_match)):
                 # не подошёл, дальше не рассматриваем
@@ -583,8 +584,8 @@ class AreaPatternMatcher(PatternMatcher):
         for distance, combined_rb, component_match in distance_rb_match_list:
 
             if distance > cutoff_distance:
-                # отсекаем далёкие варианты
-                continue
+                # отсекаем далёкие варианты (в отсортированном списке)
+                break
 
             # попытаться найти полный матч из текущего частичного матча
             if existing_match:
