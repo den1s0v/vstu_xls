@@ -706,25 +706,30 @@ class AreaPatternMatcher(PatternMatcher):
             self,
             partial_match: Match2d,
             new_member: tuple[PatternComponent, Match2d] = None) -> bool:
-        """ Cut off matches having excessive variant of match-to-component mapping. """
+        """ Return False for matches having excessive variant of match-to-component mapping,
+             i.e. a similar but better variant exists for this pattern. """
         if self._component_relation_triples is None:
             self._component_relation_triples = self.pattern.get_component_matches_relations()
 
         for k1, k2, rel in self._component_relation_triples:
             if new_member:
                 # Проверяем только данный компонент, ещё не записанный в матч
-                if new_member[0] is k2:
+                if new_member[0] is k1:
+                    m1 = new_member[1]
+                    m2 = partial_match.component2match.get(k2.name)
+                elif new_member[0] is k2:
+                    m1 = partial_match.component2match.get(k1.name)
                     m2 = new_member[1]
                 else:
                     # пропускаем эту пару, она не про нового кандидата
                     continue
             else:
                 # Просто проверяем всё содержимое матча
+                m1 = partial_match.component2match.get(k1.name)
                 m2 = partial_match.component2match.get(k2.name)
 
-            m1 = partial_match.component2match.get(k1.name)
-
             if m1 and m2:
+                # Both matches are known.
                 if not rel.check(m1, m2):
                     # inappropriate overlap/ordering detected
                     return False
