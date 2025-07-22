@@ -89,14 +89,21 @@ class RangedBox:
         if not other or not self:
             return None
         rx = self.rx.combine(other.rx)
+        if rx is None:
+            return None
         ry = self.ry.combine(other.ry)
-        return RangedBox(rx, ry) if rx and ry else None
+        if ry is None:
+            return None
+        return RangedBox(rx, ry)
 
     def restricted_by_size(self, hor_size: open_range, ver_size: open_range) -> Self | None:
         new_rx = self.rx.restricted_by_size(hor_size)
+        if new_rx is None:
+            # invalid range for an edge
+            return None
         new_ry = self.ry.restricted_by_size(ver_size)
-        if new_rx is None or new_ry is None:
-            # invalid range for any edge
+        if new_ry is None:
+            # invalid range for an edge
             return None
         return RangedBox(new_rx, new_ry)
 

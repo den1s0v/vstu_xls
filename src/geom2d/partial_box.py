@@ -2,6 +2,7 @@ from geom2d.box import Box
 from geom2d.point import Point
 from geom2d.size import Size
 
+
 # deprecated
 class PartialBox(Box):
     """ НЕизменяемый, но в общем случае не полностью определённый Прямоугольник на целочисленной координатной плоскости (2d).
@@ -10,6 +11,7 @@ class PartialBox(Box):
     # Dev note: using updatable list here, not tuple as parent class does.
 
     __slots__ = ('_tuple')
+
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
     def __init__(self,
@@ -28,12 +30,17 @@ class PartialBox(Box):
         return tuple(self._tuple[:4])
 
     # staff that mimics behavior of `list`:
-    def __iter__(self): return iter(self.as_tuple())
-    def __hash__(self): return hash(self.as_tuple())
+    def __iter__(self):
+        return iter(self.as_tuple())
+
+    def __hash__(self):
+        return hash(self.as_tuple())
+
     def __eq__(self, other):
         if isinstance(other, Box):
             return self.as_tuple() == other.as_tuple()
         return self.as_tuple() == tuple(other)
+
     # def __ne__(self, other): return not self == other
 
     def __setitem__(self, key, value):
@@ -42,7 +49,8 @@ class PartialBox(Box):
         #     raise RuntimeError(f'Attempt to set not-None element `{key}` of {repr(self)} !')
         if self._tuple[key] is not None:
             if self._tuple[key] != value:
-                raise ValueError(f'Attempt to change not-None element `{key}` to `{value}` within write-once {repr(self)} !')
+                raise ValueError(
+                    f'Attempt to change not-None element `{key}` to `{value}` within write-once {repr(self)} !')
             # Ignore the case of setting the same value.
         else:
             self._tuple[key] = value
@@ -59,17 +67,23 @@ class PartialBox(Box):
 
     # redefine `right` & `bottom` properties (setters: see below)
     @property
-    def right(self): return self._tuple[4]
+    def right(self):
+        return self._tuple[4]
+
     @property
-    def bottom(self): return self._tuple[5]
+    def bottom(self):
+        return self._tuple[5]
 
     def __str__(self) -> str:
         return f'[({self.x},{self.y})+{self.w}x{self.h}→({self.right},{self.bottom})]'
 
     @Box.x.setter
-    def x(self, value): self.left = value  # redirect to advanced setter (see below)
+    def x(self, value):
+        self.left = value  # redirect to advanced setter (see below)
+
     @Box.y.setter
-    def y(self, value): self.top = value  # redirect to advanced setter (see below)
+    def y(self, value):
+        self.top = value  # redirect to advanced setter (see below)
 
     @Box.w.setter
     def w(self, value):
@@ -94,7 +108,6 @@ class PartialBox(Box):
         elif self.bottom is not None:
             # self.top =
             self[1] = self.bottom - value
-
 
     @Box.left.setter
     def left(self, value):
@@ -151,7 +164,6 @@ class PartialBox(Box):
         elif self.h is not None:
             # self.top =
             self[1] = value - self.h
-
 
     @Box.position.setter
     def position(self, point: Point):

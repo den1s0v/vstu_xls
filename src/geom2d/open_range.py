@@ -17,6 +17,8 @@ class open_range:
     so use this class when checking whether a value is in an open range.
     """
 
+    __slots__ = ('start', 'stop', )
+
     start: int | None
     stop: int | None
 

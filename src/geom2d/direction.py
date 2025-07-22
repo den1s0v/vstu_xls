@@ -6,6 +6,9 @@ class Direction:
     See constants below: 0 is Right, 90 is Up, 180 is Left, 270 is Down.
     Non-right angles not supported.
     """
+
+    __slots__ = ('rotation', 'dx', 'dy', 'prop_name', )
+
     rotation: int
     dx: int
     dy: int

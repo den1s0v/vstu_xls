@@ -6,6 +6,8 @@ from geom2d.open_range import open_range
 
 class RangedSegment:
     """ Открытый отрезок. 1D segment having open_range as each end, i.e. actual range may be not clearly determined. """
+    __slots__ = ('a', 'b',)
+
     a: open_range
     b: open_range
 
@@ -133,12 +135,14 @@ class RangedSegment:
 
         lower, upper = self.a, self.b
         new_lower = (upper - size).intersect(lower)
+        if new_lower is None:
+            # invalid range for an edge
+            return None
         new_upper = (lower + size).intersect(upper)
-        if new_lower is None or new_upper is None:
-            # invalid range for any edge
+        if new_upper is None:
+            # invalid range for an edge
             return None
         return RangedSegment(new_lower, new_upper)
-
 
     def intersect(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
         """Find intersection of both definite & probable areas.
@@ -149,9 +153,12 @@ class RangedSegment:
         maximal_ranges = [rs.maximal_range() for rs in others if rs]
 
         minimal_range = self.minimal_range().intersect(*minimal_ranges)
-        maximal_range = self.maximal_range().intersect(*maximal_ranges)
+        if minimal_range is None:
+            # Empty intersection.
+            return None
 
-        if minimal_range is None or maximal_range is None:
+        maximal_range = self.maximal_range().intersect(*maximal_ranges)
+        if maximal_range is None:
             # Empty intersection.
             return None
 
@@ -162,8 +169,8 @@ class RangedSegment:
             # Empty intersection.
             return None
 
-        lower = maximal_range.start, minimal_range.start
-        upper = minimal_range.stop, maximal_range.stop
+        lower = open_range(maximal_range.start, minimal_range.start)
+        upper = open_range(minimal_range.stop, maximal_range.stop)
 
         return type(self)(lower, upper)
 
@@ -201,9 +208,12 @@ class RangedSegment:
         maximal_ranges = [rs.maximal_range() for rs in others]
 
         minimal_range = self.minimal_range().union_limited(*minimal_ranges)
-        maximal_range = self.maximal_range().intersect(*maximal_ranges)
+        if not minimal_range:
+            # Empty intersection.
+            return None
 
-        if not minimal_range or not maximal_range:
+        maximal_range = self.maximal_range().intersect(*maximal_ranges)
+        if not maximal_range:
             # Empty intersection.
             return None
 
