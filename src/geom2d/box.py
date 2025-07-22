@@ -133,6 +133,16 @@ class Box:
     def bottom(self):
         return self.y + self.h
 
+    @property
+    def rx(self):
+        """ Horizontal projection: range by X """
+        return self.project('h')
+
+    @property
+    def ry(self):
+        """ Vertical projection: range by Y """
+        return self.project('v')
+
     def get_side_dy_direction(self, direction):
         return getattr(self, direction.prop_name)
 

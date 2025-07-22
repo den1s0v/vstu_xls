@@ -1,6 +1,7 @@
 # ranged_segment.py
 from typing import Self
 
+from geom1d import LinearSegment
 from geom2d.open_range import open_range
 
 
@@ -76,6 +77,11 @@ class RangedSegment:
     def is_open(self) -> bool:
         return self.a.is_open() or self.b.is_open()
 
+    def covers(self, other: Self | LinearSegment) -> bool:
+        """ Returns True iff given segment completely lies within area defined by this segment,
+        i.e. other's ends belong to the probable area, including the borders."""
+        return self.a.includes(other.a) and self.b.includes(other.b)
+
     def __eq__(self, other):
         if isinstance(other, RangedSegment):
             return self.a == other.a and self.b == other.b
@@ -87,8 +93,8 @@ class RangedSegment:
 
     @classmethod
     def make(cls,
-             value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | RangedSegment' = None,
-             validate=True) -> 'RangedSegment':
+             value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | Self' = None,
+             validate=True) -> Self | None:
         """ Universal single-value factory method.
              If a number is given, returns a zero-length segment.
              If a range is given, returns a deterministic segment from it.
@@ -106,9 +112,9 @@ class RangedSegment:
             assert len(values) == 2, f"Expected an iterable of exactly 2 items in RangedSegment.make(), got {values!r}"
             return cls(*values, validate=validate)
         except AttributeError:
-            pass
+            return None
 
-    def with_materialized_ranges(self) -> 'RangedSegment':
+    def with_materialized_ranges(self) -> Self:
         """ Materialize inner infinite edges of ranges"""
         lower, upper = self.a, self.b
         changed = False
@@ -144,7 +150,7 @@ class RangedSegment:
             return None
         return RangedSegment(new_lower, new_upper)
 
-    def intersect(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
+    def intersect(self, *others: Self | None) -> Self | None:
         """Find intersection of both definite & probable areas.
         If nothing is found in common for definite area, `None` will be returned. """
         # others = [rs.with_materialized_ranges() for rs in others if rs]  # ???
@@ -174,7 +180,7 @@ class RangedSegment:
 
         return type(self)(lower, upper)
 
-    def union(self, *others: 'RangedSegment | None') -> 'RangedSegment':
+    def union(self, *others: Self | None) -> Self:
         """Find union of both definite & probable areas.
         If given segments do not overlap, the minimal segment covering all of them is returned. """
         others = [rs.with_materialized_ranges() for rs in others if rs]
@@ -194,7 +200,7 @@ class RangedSegment:
 
         return type(self)(lower, upper)
 
-    def combine(self, *others: 'RangedSegment | None') -> 'RangedSegment | None':
+    def combine(self, *others: Self | None) -> Self | None:
         """Find combination to obtain a more well-defined segment.
           This will try to grow definite area but shrink probable area.
         If probable areas of given segments do not overlap, `None` will be returned.

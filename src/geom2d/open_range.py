@@ -65,6 +65,20 @@ class open_range:
             return False
         return True
 
+    def includes(self, other: Self | int) -> bool:
+        """ Returns True iff given value or range completely lies within this range. """
+        if isinstance(other, int):
+            return other in self
+        if self.start is not None:
+            if other.start is None or other.start < self.start:
+                # Does not cover this end of infinity
+                return False
+        if self.stop is not None:
+            if other.stop is None or self.stop < other.stop:
+                # Does not cover this end of infinity
+                return False
+        return True
+
     def __iter__(self):
         if self.start is None or self.stop is None:
             raise ValueError(f'Cannot iterate infinite open_range')

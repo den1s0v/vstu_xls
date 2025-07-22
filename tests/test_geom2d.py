@@ -1,5 +1,6 @@
 import unittest
 
+from geom1d import LinearSegment
 from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
@@ -784,6 +785,33 @@ class RangedSegmentTestCase(unittest.TestCase):
 
         self.assertEqual(RangedSegment((9, 10), (100, 101)),
             r3.restricted_by_size(open_range(None, 91)))
+
+    def test_covers(self):
+        r1 = RangedSegment((3, 4), (6, 7))
+
+        r2 = RangedSegment((3, 4), (6, 7))
+        self.assertTrue(r1.covers(r2))
+
+        r2 = RangedSegment((3, 3), (7, 7))
+        self.assertTrue(r1.covers(r2))
+
+        r2 = LinearSegment(4, 6)
+        self.assertTrue(r1.covers(r2))
+
+        r2 = RangedSegment((None, 4), (6, 7))
+        self.assertFalse(r1.covers(r2))
+
+        r2 = RangedSegment((3, 4), (6, None))
+        self.assertFalse(r1.covers(r2))
+
+        r2 = RangedSegment((3, 3), (5, 7))
+        self.assertFalse(r1.covers(r2))
+
+        r2 = RangedSegment((3, 5), (6, 7))
+        self.assertFalse(r1.covers(r2))
+
+        r2 = LinearSegment(5, 6)
+        self.assertFalse(r1.covers(r2))
 
 
 class RangedBoxTestCase(unittest.TestCase):

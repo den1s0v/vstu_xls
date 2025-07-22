@@ -163,6 +163,11 @@ class RangedBox:
             'bottom': self.bottom,
         }
 
+    def covers(self, other: Self | Box) -> bool:
+        """ Returns True iff given box completely lies within area defined by this box,
+        i.e. other's edges belong to the probable area, including the borders."""
+        return self.rx.covers(other.rx) and self.ry.covers(other.ry)
+
     def __eq__(self, other):
         if isinstance(other, Box):
             other = self.from_box(other)
