@@ -13,7 +13,7 @@ from utils import safe_adict
 class TerminalMatcher(PatternMatcher):
     pattern: Terminal
 
-    def find_all(self, region: Box = None) -> list[Match2d]:
+    def find_all(self, region: Box = None, count_limit=None) -> list[Match2d]:
         # type_name = self.element.cell_type.name
         type_name = self.pattern.cell_type.name
         gm = self.grammar_matcher  # short alias

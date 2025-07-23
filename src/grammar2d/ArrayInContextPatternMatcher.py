@@ -13,7 +13,7 @@ from grid import Region
 @dataclass
 class ArrayInContextPatternMatcher(ArrayPatternMatcher):
 
-    def find_all(self, region: Box = None) -> list[Match2d]:
+    def find_all(self, region: Box = None, count_limit=None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region. """
         # short aliases
