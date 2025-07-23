@@ -61,6 +61,12 @@ class Pattern2d(WithCache, WithSafeCreate):
     def get_kind(cls):
         return "Base 2D pattern"
 
+    @classmethod
+    def independently_matchable(cls):
+        """ Returns True by default; False only for specific patterns that cannot be matched independently,
+        rather in a context of another pattern. """
+        return True
+
     def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
         """ Default: opaque.
         Реализация по умолчанию: Просто берём внутреннюю прямоугольную область.

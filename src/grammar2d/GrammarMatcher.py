@@ -105,8 +105,9 @@ class GrammarMatcher:
             if self.grammar.root in wave:
                 self._find_matches_of_pattern(self.grammar.root)
             else:
-                for elem in wave:
-                    self._find_matches_of_pattern(elem)
+                for ptt in wave:
+                    if ptt.independently_matchable():
+                        self._find_matches_of_pattern(ptt)
             ...
 
     def _find_matches_of_pattern(self, pattern: Pattern2d):
