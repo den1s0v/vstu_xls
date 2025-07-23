@@ -16,7 +16,9 @@ class ArrayPatternMatcher(PatternMatcher):
 
     def find_all(self, region: Box = None, count_limit=None) -> list[Match2d]:
         """ Find all matches within whole document.
-        If a region is given, find all matches within the region. """
+        If a region is given, find all matches within the region.
+        Note: `count_limit` relates to count of matches returned (not number of items in a match).
+        """
         item_occurrences = self._find_element_candidates(region)
 
         if not item_occurrences:

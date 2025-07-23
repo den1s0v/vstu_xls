@@ -25,8 +25,12 @@ from utils import sorted_list
 def find_combinations_of_compatible_elements(
         elements: Iterable,
         pair_compatibility_checker=None,
-        components_getter=None) -> list[list]:
+        components_getter=None,
+        max_elements: int = None
+    ) -> list[list]:
     """ Главная функция.
+
+    element_limit:
 
     Returns
         One or more subsets of given elements, sorted for stability.
@@ -48,7 +52,8 @@ def find_combinations_of_compatible_elements(
     # (!!!) prepare for resolve_clashes*()
     fill_clashing_elements(clashing_set)
 
-    clash_sets = resolve_clashes5(clashing_set)  # latest and best implementation
+    clash_sets = resolve_clashes5(clashing_set,
+                                  max_elements)  # latest and best implementation
     # Extract objects back
     return sorted_list(
         clash_set.get_bare_objs()
@@ -81,7 +86,8 @@ def fill_clashing_elements(universe: 'ClashingElementSet'):
 
 
 @cache
-def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElementSet']:
+def resolve_clashes5(clashing_set: 'ClashingElementSet',
+        element_limit=None) -> set['ClashingElementSet']:
     """ Нахождение всех локально оптимальных раскладок элементов, в которых они не пересекаются """
     # кластеризация накладок.
 
@@ -119,7 +125,7 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
             for alt_neighbours in rest:
                 if not alt_neighbours:
                     continue  # empty
-                # recursive call !
+                # recursive call (fork of this process) !
                 arrangements |= find_spot_arrangements(ClashingElementSet(arrangement | alt_neighbours))
 
             if not neighbours:
@@ -128,9 +134,13 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
             ok, bad = arrangement.try_add_all(neighbours)
             assert ok, bad
 
+            if element_limit is not None and len(arrangement) >= element_limit:
+                # Stop growing if unnecessary (but do not crop what was found)
+                break
+
         # Готово: пятно построено.
 
-        # ??? Выигрыша не заметно. На 1-5% может уменьшить число итоговых комбинаций. ↓
+        # ??? Работает хорошо, но и выигрыша не заметно. На 1-5% может уменьшить число итоговых комбинаций. ↓
         arrangements = retain_longest_only(arrangements)
 
         return arrangements
@@ -142,13 +152,18 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet') -> set['ClashingElement
 
         for arrangement in spot_arrangements:
 
+            ready = always_free | arrangement
+
             unresolved = arrangement.select_candidates_from(clashing_set)
 
             # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
-            sub_arrangements = resolve_clashes5(unresolved)  # recursive call !
+            # recursive call !
+            sub_arrangements = resolve_clashes5(
+                unresolved,
+                element_limit=element_limit - len(ready) if element_limit is not None else element_limit)
 
             # Полученные под-раскладки комбинируются с текущими свободными.
             for sa in sub_arrangements:
-                arrangements.add(Arrangement(always_free | arrangement | sa))
+                arrangements.add(Arrangement(ready | sa))
 
     return arrangements

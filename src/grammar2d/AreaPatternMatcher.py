@@ -71,7 +71,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         # Отсеять невозможные / конфликтующие варианты, при наличии.
         with time_report('filter_candidates', ch) as ch:
-            matches = self.filter_candidates(match_candidates)
+            matches = self.filter_candidates(match_candidates, count_limit)
 
         logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
@@ -637,7 +637,8 @@ class AreaPatternMatcher(PatternMatcher):
         # limit & return
         return complete_matches[:max_results]
 
-    def filter_candidates(self, match_candidates: list[Match2d]) -> list[Match2d]:
+    @staticmethod
+    def filter_candidates(match_candidates: list[Match2d], count_limit=None) -> list[Match2d]:
         """ Filter given matches so all returned matches do not overlap and the combination seems to be the best.
 
         Наилучшая раскладка выбирается из соображений количества совместимых совпадений
@@ -650,7 +651,9 @@ class AreaPatternMatcher(PatternMatcher):
 
         arrangements = find_combinations_of_compatible_elements(
             match_candidates,
-            components_getter=Match2d.get_occupied_points)
+            components_getter=Match2d.get_occupied_points,
+            max_elements=count_limit
+        )
 
         # Рассчитать точность (precision) для каждой комбинации-варианта,
         # получив значения точности для каждого элемента в отдельности.
