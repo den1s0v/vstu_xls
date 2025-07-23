@@ -24,6 +24,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         # cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
         cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
+        cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -130,6 +131,34 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
     def test_grid2_2(self):
         gm = GrammarMatcher(grammar=self.simple_grammar_2_2)
+
+        for g in (
+                # self.grid2_x,
+                self.grid2_t,
+                # self.grid2_x,
+        ):
+            print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            self.assertEqual((8, 9), root.box.size)
+
+            groups_3x3 = root['field'].get_children()
+            self.assertEqual(5, len(groups_3x3))
+
+            positions = [m.box.position for m in groups_3x3]
+            # Note!
+            self.assertSetEqual({
+                    Point(x=1, y=2),
+                    Point(x=1, y=5),
+                    Point(x=4, y=4),
+                    Point(x=4, y=7),
+                    Point(x=6, y=1)},
+                set(positions))
+
+    def test_grid2_3(self):
+        gm = GrammarMatcher(grammar=self.simple_grammar_2_3)
 
         for g in (
                 # self.grid2_x,
