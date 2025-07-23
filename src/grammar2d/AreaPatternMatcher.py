@@ -57,8 +57,9 @@ class AreaPatternMatcher(PatternMatcher):
     _size_constraint: SizeConstraint = ...
 
     # @profile(stdout=False, filename='area-find.prof')
-    def find_all(self, _region: Region = None) -> list[Match2d]:
+    def find_all(self, region: Region = None) -> list[Match2d]:
         """ Find all matches within whole document.
+        If a region is given, find all matches within the region.
 
         Все найденные совпадения существуют одновременно,
         т.е. они не пересекаются между собой и не мешают друг другу.
@@ -66,7 +67,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         # Найти все матчи-кандидаты для всех паттернов-компонентов.
         with time_report('find_match_candidates_*') as ch:
-            match_candidates = self.find_match_candidates_3(_region)
+            match_candidates = self.find_match_candidates_3(region)
 
         # Отсеять невозможные / конфликтующие варианты, при наличии.
         with time_report('filter_candidates', ch) as ch:
@@ -75,10 +76,6 @@ class AreaPatternMatcher(PatternMatcher):
         logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
         return matches
-
-    def match_exact_region(self, region: Region) -> list[Match2d]:
-        """ Find all matches within given region. """
-        return self.find_all(region)
 
     def find_match_candidates(self, region: Region = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.

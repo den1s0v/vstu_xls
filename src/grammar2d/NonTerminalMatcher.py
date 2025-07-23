@@ -18,5 +18,3 @@ class NonTerminalMatcher(PatternMatcher):
         but rather group its extensions under the same name. """
         return []
 
-    def match_exact_region(self, region: Region) -> list[Match2d]:
-        return []

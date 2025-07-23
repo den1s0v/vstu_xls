@@ -13,8 +13,9 @@ from grid import Region
 @dataclass
 class ArrayInContextPatternMatcher(ArrayPatternMatcher):
 
-    def find_all(self, _region: Region = None) -> list[Match2d]:
-        """ Find all matches within whole document. """
+    def find_all(self, region: Region = None) -> list[Match2d]:
+        """ Find all matches within whole document.
+        If a region is given, find all matches within the region. """
         # short aliases
         item = self.pattern.subpattern
         gm = self.grammar_matcher
@@ -45,7 +46,3 @@ class ArrayInContextPatternMatcher(ArrayPatternMatcher):
         matches = self._find_lines(item_occurrences)
 
         return matches
-
-    def match_exact_region(self, region: Region) -> list[Match2d]:
-        """ Find all matches within given region. """
-        return self.find_all(region)

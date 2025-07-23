@@ -12,13 +12,7 @@ class PatternMatcher:
     grammar_matcher: 'ns.GrammarMatcher'
 
     def find_all(self, region: Region = None) -> list[Match2d]:
-        """ Find all matches within whole document. """
-        pass
-        # raise TypeError(f"Unknown element type: {type(self.element)}")
-
-    def match_exact_region(self, region: Region) -> list[Match2d]:
-        """ Find all matches within given region. 
-        TODO: deprecate this, add optional param `region: Region = None` to find_all()
-        """
+        """ Find all matches within whole document.
+        If a region is given, find all matches within the region. """
         pass
         # raise TypeError(f"Unknown element type: {type(self.element)}")
