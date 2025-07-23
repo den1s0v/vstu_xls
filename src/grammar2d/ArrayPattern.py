@@ -16,7 +16,7 @@ VALID_ARRAY_DIRECTIONS = ('row', 'column', 'auto', 'fill')
 @PatternRegistry.register
 @dataclass(kw_only=True, repr=True)
 class ArrayPattern(NonTerminal):
-    """Массив или ряд однотипных элементов, выровненных друг относительно друга
+    """Массив или ряд однотипных элементов, выровненных друг относительно друга.
 
     `direction`:
         'row' — по горизонтали.
@@ -26,8 +26,8 @@ class ArrayPattern(NonTerminal):
         'fill' — заполнение области произвольной формы вместо прямой линии
             (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <--
              спорный момент: может быть, стоит отдельный вид агрегации выделить.?
-
     """
+
     item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
     item_count: open_range = None  # кратность элемента в массиве

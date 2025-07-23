@@ -57,7 +57,7 @@ class AreaPatternMatcher(PatternMatcher):
     _size_constraint: SizeConstraint = ...
 
     # @profile(stdout=False, filename='area-find.prof')
-    def find_all(self, region: Region = None) -> list[Match2d]:
+    def find_all(self, region: Box = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region.
 
@@ -77,7 +77,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         return matches
 
-    def find_match_candidates(self, region: Region = None) -> list[Match2d]:
+    def find_match_candidates(self, region: Box = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
          The patterns may be not applicable if they do overlap.
 
@@ -207,7 +207,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         return partial_matches
 
-    def find_match_candidates_2(self, region: Region = None) -> list[Match2d]:
+    def find_match_candidates_2(self, region: Box = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
          The patterns may be not applicable if they do overlap.
 
@@ -392,7 +392,7 @@ class AreaPatternMatcher(PatternMatcher):
                 current_wave.append(m2)
         return current_wave
 
-    def find_match_candidates_3(self, region: Region = None) -> list[Match2d]:
+    def find_match_candidates_3(self, region: Box = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
          The patterns may be not applicable if they do overlap.
 

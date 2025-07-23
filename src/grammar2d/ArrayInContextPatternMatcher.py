@@ -13,14 +13,14 @@ from grid import Region
 @dataclass
 class ArrayInContextPatternMatcher(ArrayPatternMatcher):
 
-    def find_all(self, region: Region = None) -> list[Match2d]:
+    def find_all(self, region: Box = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region. """
         # short aliases
         item = self.pattern.subpattern
         gm = self.grammar_matcher
 
-        item_occurrences = gm.get_pattern_matches(item)
+        item_occurrences = gm.get_pattern_matches(item, region)
 
         if not item_occurrences:
             return []

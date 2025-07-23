@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from geom2d import Box
 from grammar2d import Terminal
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
@@ -12,7 +13,7 @@ from utils import safe_adict
 class TerminalMatcher(PatternMatcher):
     pattern: Terminal
 
-    def find_all(self, region: Region = None) -> list[Match2d]:
+    def find_all(self, region: Box = None) -> list[Match2d]:
         # type_name = self.element.cell_type.name
         type_name = self.pattern.cell_type.name
         gm = self.grammar_matcher  # short alias
