@@ -168,6 +168,9 @@ class RangedBox:
         i.e. other's edges belong to the probable area, including the borders."""
         return self.rx.covers(other.rx) and self.ry.covers(other.ry)
 
+    def __contains__(self, other):
+        return self.maximal_box().covers(other)
+
     def __eq__(self, other):
         if isinstance(other, Box):
             other = self.from_box(other)
