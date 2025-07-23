@@ -144,9 +144,7 @@ class AreaPatternMatcher(PatternMatcher):
         ))
 
         partial_matches: list[Match2d] = []
-        size_constraint = (list(filter(lambda x: isinstance(x, SizeConstraint), pattern.global_constraints))
-                           or
-                           (SizeConstraint('* x *'),))[0]
+        size_constraint = self._get_pattern_size_constraint()
 
         for component, match_list in component_matches_list:
             current_wave: list[Match2d] = []
