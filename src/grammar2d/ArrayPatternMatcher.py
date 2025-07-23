@@ -17,13 +17,15 @@ class ArrayPatternMatcher(PatternMatcher):
     def find_all(self, region: Box = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region. """
-        # short aliases
-        item = self.pattern.subpattern
-        gm = self.grammar_matcher
-
-        item_occurrences = gm.get_pattern_matches(item)
+        item_occurrences = self._find_element_candidates(region)
 
         if not item_occurrences:
+            return []
+
+        # check expected number of items
+        n = len(item_occurrences)
+        if n < (self.pattern.item_count.start or 0):
+            # Not enough elements for even one match.
             return []
 
         matches = []
@@ -47,6 +49,13 @@ class ArrayPatternMatcher(PatternMatcher):
         matches = self._find_lines(item_occurrences)
 
         return matches
+
+    def _find_element_candidates(self, region: Region | RangedBox = None):
+        item = self.pattern.subpattern
+        gm = self.grammar_matcher
+
+        item_occurrences = gm.get_pattern_matches(item, region)
+        return item_occurrences or []
 
     def _find_lines(self, occurrences: list[Match2d], pattern_direction: str = None) -> list[Match2d]:
         if not pattern_direction:
@@ -88,13 +97,14 @@ class ArrayPatternMatcher(PatternMatcher):
         for cluster in clusters:
             if not cluster or len(cluster) not in item_count:
                 # Size of the cluster is not satisfiable for the pattern.
-                # Handle the case of "TOO MANY"
                 if item_count.stop is not None and len(cluster) > item_count.stop:
+                    # Handle the case of "TOO MANY"
                     logger.warning(f'GRAMMAR WARN: pattern `{self.pattern.name}` expects up to {
                         item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
                     # Get first N elements, drop the remaining.
                     cluster = cluster[:item_count.stop]
                 else:
+                    # The case of "TOO FEW": no match
                     continue
 
             bbox = Box.union(*cluster)  # bounding box: union of group's boxes

@@ -113,6 +113,7 @@ class GrammarMatcher:
         matcher = pattern.get_matcher(self)
         matches = matcher.find_all()
 
+        # Check the quantity of matches
         if len(matches) not in pattern.count_in_document:
             logger.warning(f'Found {len(matches)} match(es) of pattern `{pattern.name
                 }` but expected {pattern.count_in_document}.')
