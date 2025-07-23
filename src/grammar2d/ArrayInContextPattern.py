@@ -13,10 +13,13 @@ from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
 @PatternRegistry.register
 @dataclass(kw_only=True, repr=True)
-class ArrayInContext(ArrayPattern):
+class ArrayInContextPattern(ArrayPattern):
     """Массив или ряд однотипных элементов, выровненных друг относительно друга
         в контексте Area: придерживается границ Area, игнорируя подходящие элементы за его пределами.
     """
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     @classmethod
     @override
