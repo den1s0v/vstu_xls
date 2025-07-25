@@ -66,8 +66,17 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet',
             for alt_neighbours in rest:
                 if not alt_neighbours:
                     continue  # empty
-                # recursive call (fork of this process) !
-                arrangements |= find_spot_arrangements(ClashingElementSet(arrangement | alt_neighbours))
+
+                partial_arrangement = ClashingElementSet(arrangement | alt_neighbours)
+
+                if element_limit is not None and len(partial_arrangement) >= element_limit:
+                    # Add this as-is.
+                    arrangements.append(partial_arrangement)
+                    # Stop growing (reached requested limit)
+
+                else:
+                    # recursive call (fork of this process) !
+                    arrangements |= find_spot_arrangements(partial_arrangement)
 
             if not neighbours:
                 break  # empty
