@@ -1,48 +1,69 @@
-from collections import defaultdict
 from dataclasses import dataclass
 
-from loguru import logger
-
-from geom2d import Box, Direction, RIGHT, DOWN
-from grammar2d import ArrayPattern
+from geom2d import Box, RangedBox
 from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
 from grammar2d.Match2d import Match2d
-from grid import Region
 
 
 @dataclass
 class ArrayInContextPatternMatcher(ArrayPatternMatcher):
 
-    def find_all(self, region: Box = None, match_limit=None) -> list[Match2d]:
-        """ Find all matches within whole document.
-        If a region is given, find all matches within the region. """
-        # short aliases
-        item = self.pattern.subpattern
-        gm = self.grammar_matcher
+    def _find_element_candidates(self):
+        item_occurrences = super()._find_element_candidates()
 
-        item_occurrences = gm.get_pattern_matches(item, region)
+        region = self._region
 
-        if not item_occurrences:
-            return []
+        if isinstance(region, RangedBox) and not region.is_deterministic():
+            # Дополнить информацией о нахождении каждого элемента в однозначной или вероятной зоне родителя
+            key1 = 'touches_probable_zone_map'
+            max_box: RangedBox = None  # late init: see below
+            min_box: RangedBox = None
 
-        matches = []
+            for m in item_occurrences:
+                if key1 not in m.data:
+                    touches_probable_zone_map = m.data[key1] = dict()
+                else:
+                    touches_probable_zone_map = m.data[key1]
 
-        if len(item_occurrences) == 1:
-            # There is only one occurrence, no need to analyze its placement.
-            item_match = item_occurrences[0]
+                if region not in touches_probable_zone_map:
+                    # not set yet.
 
-            satisfies = self.pattern.check_constraints_for_bbox(item_match.box)
+                    if max_box is None or min_box is None:
+                        # init vars to be used
+                        max_box = region.maximal_box()
+                        min_box = region.minimal_box()
 
-            if satisfies:
-                # make a Match duplicating the only occurrence.
-                m = Match2d(self.pattern,
-                            precision=item_match.precision,
-                            box=item_match.box,
-                            component2match={0: item_match})
-                matches.append(m)
-            return matches
+                    is_in_probable_zone = max_box.covers(m.box) and not min_box.covers(m.box)
 
-        # найти ряды элементов, одинаково выровненных вдоль заданного направления
-        matches = self._find_lines(item_occurrences)
+                    touches_probable_zone_map[region] = is_in_probable_zone
+
+        return item_occurrences
+
+    def _remove_extra_matches(self, matches: list[Match2d], limit: int) -> list[Match2d]:
+        """ Логика того, как удалить лишние элементы из кластера,
+            если превышено количество элементов в кластере.
+
+            Здесь реализация исключает совпадения,
+            попавшие на вероятностную границу допустимой области ("серую зону"),
+            начиная с последних в списке, пока такие есть.
+         """
+        key1 = 'touches_probable_zone_map'
+        region = self._region
+
+        for m in reversed(matches):  ## [:] ??
+            if len(matches) <= limit:
+                break
+
+            if key1 in m.data:
+                touches_probable_zone_map = m.data[key1]
+                if region in touches_probable_zone_map:
+                    is_in_probable_zone = touches_probable_zone_map[region]
+                    if is_in_probable_zone:
+                        # Элемент в "серой зоне", его следует убрать в первую очередь.
+                        matches.remove(m)
+
+        if len(matches) > limit:
+            # Всё ещё слишком много
+            return super()._remove_extra_matches(matches, limit)
 
         return matches
