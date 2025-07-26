@@ -5,10 +5,10 @@ from typing import Self
 
 from loguru import logger
 
+import grammar2d.Grammar as ns
 import grammar2d.Pattern2d as pt
-from constraints_2d import SpatialConstraint, SizeConstraint
 from constraints_2d import LocationConstraint
-from geom1d import LinearSegment
+from constraints_2d import SpatialConstraint, SizeConstraint
 from geom2d import open_range, Box, RangedBox
 from utils import WithCache, WithSafeCreate
 from .Match2d import Match2d
