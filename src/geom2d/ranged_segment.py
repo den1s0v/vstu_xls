@@ -52,6 +52,14 @@ class RangedSegment:
 
         return lower, upper
 
+    def fix_ranges(self) -> Self:
+        """ Apply validate_ranges() updating existing instance """
+        try:
+            self.a, self.b = self.validate_ranges(self.a, self.b)
+        except ValueError:
+            pass  # ignore errors
+        return self
+
     def __bool__(self):
         """ If segment exists it should be always treated as True. """
         return True

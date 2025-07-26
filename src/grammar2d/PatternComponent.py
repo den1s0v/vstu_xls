@@ -6,7 +6,7 @@ from typing import Self
 from loguru import logger
 
 import grammar2d.Pattern2d as pt
-from constraints_2d import SpatialConstraint
+from constraints_2d import SpatialConstraint, SizeConstraint
 from constraints_2d import LocationConstraint
 from geom1d import LinearSegment
 from geom2d import open_range, Box, RangedBox
@@ -357,10 +357,9 @@ class PatternComponent(WithCache, WithSafeCreate):
 
         :param parent_partial_area: частичное совпадение родительской области
         :return: оценка положения компонента
-        """
-        ... # TODO
-        """
-         Как считать:
+
+        ----
+        Как считать:
         Для внутренних сторон:
             - заполняется та же сторона, "отняв" от границы родителя отступ ребёнка.
             - незаполненные стороны получают ограничение как с диапазоном '0+'.
@@ -369,8 +368,62 @@ class PatternComponent(WithCache, WithSafeCreate):
             - незаполненные стороны не получают ограничений вовсе ('*').
 
         На результат наложить ограничения по размеру ребёнка, если заданы.
-		"""
+        """
+        parent = parent_partial_area
 
+        # Init result as default when no constraints specified
+        if self.inner:
+            ray = open_range(0, None)
+            rbox = RangedBox(
+                rx=(parent.left + ray, parent.right - ray),
+                ry=(parent.top + ray, parent.bottom - ray),
+            )
+        else:
+            # Completely unconstrained
+            rbox = RangedBox()
+
+        size_constraints = []
+
+        # Apply constraints
+        for constraint in self.constraints:
+            if isinstance(constraint, SizeConstraint):
+                size_constraints.append(constraint)
+                continue
+            if not isinstance(constraint, LocationConstraint):
+                continue
+
+            if self.inner:
+                #  Для внутренних сторон:
+                #  заполняется та же сторона, "отняв" от границы родителя отступ ребёнка.
+                for d, gap in constraint.side_to_gap.items():
+                    side = d.prop_name
+                    if side == 'left':
+                        rbox.rx.a = parent.left + gap
+                    elif side == 'right':
+                        rbox.rx.b = parent.right - gap
+                    elif side == 'top':
+                        rbox.ry.a = parent.top + gap
+                    elif side == 'bottom':
+                        rbox.ry.b = parent.bottom - gap
+
+            else:
+                # Для внешних сторон:
+                # заполняется противолежащая сторона, "прибавив" к границе одноимённой стороны родителя отступ ребёнка.
+                for d, gap in constraint.side_to_gap.items():
+                    side = d.prop_name
+                    if side == 'left':
+                        rbox.rx.b = parent.left - gap
+                    elif side == 'right':
+                        rbox.rx.a = parent.right + gap
+                    elif side == 'top':
+                        rbox.ry.b = parent.top - gap
+                    elif side == 'bottom':
+                        rbox.ry.a = parent.bottom + gap
+
+        for sc in size_constraints:
+            rbox = rbox.restricted_by_size(*sc)
+
+        return rbox.fix_ranges()
 
     @staticmethod
     def _apply_inside_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:

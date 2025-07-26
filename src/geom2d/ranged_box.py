@@ -121,6 +121,12 @@ class RangedBox:
             # vertical
             return self.ry
 
+    def fix_ranges(self) -> Self:
+        """ Apply validate_ranges() updating existing instance """
+        self.rx.fix_ranges()
+        self.ry.fix_ranges()
+        return self
+
     # Свойства для совместимости с Box:
     @property
     def x(self): return self.left
