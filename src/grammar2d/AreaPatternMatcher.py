@@ -57,7 +57,7 @@ class AreaPatternMatcher(PatternMatcher):
     _size_constraint: SizeConstraint = ...
 
     # @profile(stdout=False, filename='area-find.prof')
-    def find_all(self, region: Box = None, count_limit=None) -> list[Match2d]:
+    def find_all(self, region: Box = None, match_limit=None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region.
 
@@ -71,7 +71,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         # Отсеять невозможные / конфликтующие варианты, при наличии.
         with time_report('filter_candidates', ch) as ch:
-            matches = self.filter_candidates(match_candidates, count_limit)
+            matches = self.filter_candidates(match_candidates, match_limit)
 
         logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
@@ -638,7 +638,7 @@ class AreaPatternMatcher(PatternMatcher):
         return complete_matches[:max_results]
 
     @staticmethod
-    def filter_candidates(match_candidates: list[Match2d], count_limit=None) -> list[Match2d]:
+    def filter_candidates(match_candidates: list[Match2d], match_limit=None) -> list[Match2d]:
         """ Filter given matches so all returned matches do not overlap and the combination seems to be the best.
 
         Наилучшая раскладка выбирается из соображений количества совместимых совпадений
@@ -652,7 +652,7 @@ class AreaPatternMatcher(PatternMatcher):
         arrangements = find_combinations_of_compatible_elements(
             match_candidates,
             components_getter=Match2d.get_occupied_points,
-            max_elements=count_limit
+            max_elements=match_limit
         )
 
         # Рассчитать точность (precision) для каждой комбинации-варианта,

@@ -111,7 +111,7 @@ class GrammarMatcher:
     def _find_matches_of_pattern(self, pattern: Pattern2d):
         """Try finding matches of element on all grid space"""
         matcher = pattern.get_matcher(self)
-        matches = matcher.find_all(count_limit=pattern.count_in_document.stop)
+        matches = matcher.find_all(match_limit=pattern.count_in_document.stop)
 
         # Check the quantity of matches
         if len(matches) not in pattern.count_in_document:

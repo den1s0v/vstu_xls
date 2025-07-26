@@ -11,10 +11,10 @@ class PatternMatcher:
     pattern: 'pt.Pattern2d'
     grammar_matcher: 'ns.GrammarMatcher'
 
-    def find_all(self, region: Box = None, count_limit: int = None) -> list[Match2d]:
+    def find_all(self, region: Box = None, match_limit: int = None) -> list[Match2d]:
         """ Find all matches within whole document.
         :param region if given, find all matches within the region.
-        :param count_limit if given, the maximum count of matches returned.
+        :param match_limit if given, the maximum count of matches returned.
         """
         pass
         # raise TypeError(f"Unknown element type: {type(self.element)}")

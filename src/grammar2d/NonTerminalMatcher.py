@@ -12,7 +12,7 @@ class NonTerminalMatcher(PatternMatcher):
 
     # _match_tree: list[list[Match2d]] = None
 
-    def find_all(self, region: Box = None, count_limit=None) -> list[Match2d]:
+    def find_all(self, region: Box = None, match_limit=None) -> list[Match2d]:
         """ NonTerminal (general pattern) is not supposed to be matched itself
         but rather group its extensions under the same name. """
         return []
