@@ -21,10 +21,13 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
         cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
 
+        cls.grid4_t = TxtGrid(Path('test_data/grid4.tsv').read_text())
+
         cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
         cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
         cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
+        cls.simple_grammar_2_4 = read_grammar('test_data/simple_grammar_2.4.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -100,7 +103,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 'letters': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']},
                 root_content)
 
-    def test_grid2(self):
+    def test_grid2_1(self):
         gm = GrammarMatcher(grammar=self.simple_grammar_2)
 
         for g in (
@@ -185,9 +188,37 @@ class GrammarMatchingTestCase(unittest.TestCase):
                     Point(x=6, y=1)},
                 set(positions))
 
+    def test_grid2_4(self):
+        gm = GrammarMatcher(grammar=self.simple_grammar_2_4)
+
+        for g in (
+                self.grid4_t,
+                # self.grid2_x,
+        ):
+            print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            # self.assertEqual((8, 9), root.box.size)
+
+            marks_array = root['field'].get_children()
+            # self.assertEqual(5, len(marks_array))
+
+            positions = [m.box.position for m in marks_array]
+            # Note!
+            self.assertSetEqual({
+                # ...
+                Point(x=1, y=2),
+                Point(x=1, y=5),
+                Point(x=4, y=4),
+                Point(x=4, y=7),
+                Point(x=6, y=1)},
+            set(positions))
+
 
 if __name__ == '__main__':
     # unittest.main()
     # GrammarMatchingTestCase._test_txt_debug(...)
     GrammarMatchingTestCase.setUpClass()
-    GrammarMatchingTestCase.test_grid2(GrammarMatchingTestCase())
+    GrammarMatchingTestCase.test_grid2_4(GrammarMatchingTestCase())

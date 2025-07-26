@@ -92,31 +92,23 @@ patterns:
   #       location: {left: 1, right: 1, top: 1, bottom: 1}
 
 
-  group_3x3_as_array:
-    description: Группа меток
-    kind: area  # массив или ряд элементов, выровненных друг относительно друга
-    size: 3 x 3  # размер в ячейках Excel
+  marks_array:
+    description: Просто массив меток
+    kind: array
+    item_pattern: mark
+    direction: fill
+    gap: 0
+    size: 4- x 4-  # размер в ячейках Excel
     # item_count: 9
-    # item_pattern: mark
-    inner:
-      marks:
-        kind: array-in-context
-        item_pattern: mark
-        direction: fill
-        size: 3 x 3  # размер в ячейках Excel
-        # gap: 0+
-        description: Метка в группе 3 x 3
-        item_count: 9
-        location: left, right, top, bottom   # полное равенство - coinside
 
   field:
     description: Все группы меток на поле
     kind: array  # массив или ряд элементов, выровненных друг относительно друга
     direction: fill
     # item_pattern: group_3x3
-    item_pattern: group_3x3_as_array
+    item_pattern: marks_array
     item_count: 2+
-    gap: 0
+    gap: 0+
     #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
   root:
