@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from loguru import logger
 
-from geom2d import Point, Box
+from geom2d import Point, Box, RangedBox
 from grammar2d import Grammar, Pattern2d
 from grammar2d.Match2d import Match2d
 from grid import GridView, CellView, Grid
@@ -26,7 +26,7 @@ class GrammarMatcher:
     # scalar info about cells
     type_to_cells: dict[str, list[CellView]] = None
 
-    def get_pattern_matches(self, pattern: Pattern2d, region: Box = None) -> list[Match2d]:
+    def get_pattern_matches(self, pattern: Pattern2d, region: Box | RangedBox = None) -> list[Match2d]:
         """ Get all currently known matches of given pattern.
         If region specified, return only matches that are within the region. """
         occurrences = self.matches_by_element[pattern] or []

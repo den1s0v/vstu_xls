@@ -14,7 +14,7 @@ from grid import Region
 class ArrayPatternMatcher(PatternMatcher):
     pattern: ArrayPattern
 
-    def find_all(self, region: Box = None, match_limit=None) -> list[Match2d]:
+    def find_all(self, region: Box | RangedBox = None, match_limit: open_range = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region.
         Note: `match_limit` relates to count of matches returned (not number of items in a match).
@@ -90,7 +90,7 @@ class ArrayPatternMatcher(PatternMatcher):
             }[pattern_direction]
             clusters = self._find_groups_along_lines(all_boxes, direction)
 
-        def matches_from_boxes(boxes):
+        def matches_from_boxes(boxes) -> list[Match2d]:
             """ "Backward" mapping keeping order """
             return [m
                     for b in boxes
