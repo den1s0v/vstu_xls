@@ -99,6 +99,9 @@ class RangedSegment:
             return self.a.point() == other.start and self.b.point() == other.stop
         return False
 
+    def __hash__(self) -> int:
+        return hash((hash(self.a), hash(self.b)))
+
     @classmethod
     def make(cls,
              value: 'int | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range | Self' = None,

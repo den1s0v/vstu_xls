@@ -27,7 +27,7 @@ class ArrayPatternMatcher(PatternMatcher):
         # check expected number of items
         n = len(item_occurrences)
         if n < (self.pattern.item_count.start or 0):
-            # Not enough elements for even one match.
+            # Not enough elements even for one match.
             return []
 
         matches = []

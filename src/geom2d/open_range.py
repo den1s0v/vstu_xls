@@ -93,6 +93,9 @@ class open_range:
         """ If range exists it should be always treated as True. """
         return True
 
+    def __hash__(self) -> int:
+        return hash((self.start, self.stop))
+
     def __eq__(self, other) -> bool:
         if isinstance(other, range):
             return self.start == other.start and self.stop == other.stop - 1

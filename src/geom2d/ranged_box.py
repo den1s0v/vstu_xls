@@ -177,6 +177,9 @@ class RangedBox:
     def __contains__(self, other):
         return self.maximal_box().covers(other)
 
+    def __hash__(self) -> int:
+        return hash((hash(self.rx), hash(self.ry)))
+
     def __eq__(self, other):
         if isinstance(other, Box):
             other = self.from_box(other)
