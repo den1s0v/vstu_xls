@@ -8,7 +8,7 @@ class VariBox(Box):
     """ Изменяемый Прямоугольник на целочисленной координатной плоскости (2d). `VariBox(x, y, w, h)`. """
     # Dev note: using updatable list here, not tuple as parent class does.
 
-    __slots__ = ('_tuple')
+    __slots__ = ('_tuple',)
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
@@ -23,7 +23,6 @@ class VariBox(Box):
     def __eq__(self, other): return self._tuple.__eq__(other._tuple)
     def __ne__(self, other): return self._tuple.__ne__(other._tuple)
 
-
     @Box.x.setter
     def x(self, value): self._tuple[0] = value
     @Box.y.setter
@@ -32,7 +31,6 @@ class VariBox(Box):
     def w(self, value): self._tuple[2] = value
     @Box.h.setter
     def h(self, value): self._tuple[3] = value
-
 
     @Box.position.setter
     def position(self, point: Point):

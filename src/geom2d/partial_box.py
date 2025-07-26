@@ -10,7 +10,7 @@ class PartialBox(Box):
         `PartialBox(left, top, w, h, right, bottom)`. All args are optional. """
     # Dev note: using updatable list here, not tuple as parent class does.
 
-    __slots__ = ('_tuple')
+    __slots__ = ('_tuple', )
 
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
