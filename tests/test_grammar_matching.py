@@ -22,6 +22,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
 
         cls.grid4_t = TxtGrid(Path('test_data/grid4.tsv').read_text())
+        cls.grid5_t = TxtGrid(Path('test_data/grid5.tsv').read_text(), sep='')
 
         cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
@@ -209,12 +210,12 @@ class GrammarMatchingTestCase(unittest.TestCase):
             # Note!
             self.assertSetEqual({
                 # ...
-                Point(x=1, y=2),
-                Point(x=1, y=5),
-                Point(x=4, y=4),
-                Point(x=4, y=7),
-                Point(x=6, y=1)},
-            set(positions))
+                    Point(x=1, y=2),
+                    Point(x=1, y=5),
+                    Point(x=4, y=4),
+                    Point(x=4, y=7),
+                    Point(x=6, y=1)},
+                set(positions))
 
 
 if __name__ == '__main__':
