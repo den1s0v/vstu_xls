@@ -15,13 +15,13 @@ from grammar2d import read_grammar, GrammarMatcher
 class GrammarMatchingTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
-        # cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
+        cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
+        cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
 
         cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
         cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
 
-        # cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
+        cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
         cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
         cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
