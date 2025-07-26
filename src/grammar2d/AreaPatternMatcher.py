@@ -85,6 +85,31 @@ class AreaPatternMatcher(PatternMatcher):
                  (None,))[0]
         return self._size_constraint
 
+    def get_component_matches(
+            self,
+            component: PatternComponent,
+            region: RangedBox = None,
+            match_limit: int = None) -> list[Match2d]:
+        """
+        :param component: area's component.
+        :param region: if set, limits location for matches.
+        :param match_limit: -1 means to search for all matches required for this component
+           in one match of parent area (usually 1).
+        """
+        if match_limit == -1 and component.count and component.count.stop is not None:
+            match_limit = component.count.stop
+
+        subpattern: Pattern2d = component.subpattern
+        gm = self.grammar_matcher
+        matches = gm.get_pattern_matches(subpattern, region, match_limit)
+
+        # Убрать совпадения паттерна, слишком неточные для этого компонента
+        matches = list(filter(
+            lambda m: m.precision >= component.precision_threshold,
+            matches))
+
+        return matches
+
     def find_match_candidates_3(self, region: Box = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
          The patterns may be not applicable if they do overlap.
@@ -96,9 +121,7 @@ class AreaPatternMatcher(PatternMatcher):
          Идея была брать x2 от минимального найденного расстояния,
           но за приемлемое время работает только с x1 (т.е. только лучшее расстояние + 1 единица длины на запас)
         """
-
         pattern = self.pattern
-        gm = self.grammar_matcher
 
         # 1. Найти все матчи-кандидаты для всех паттернов-компонентов.
         # Включая потенциально пустые наборы матчей для опциональных компонентов.
@@ -106,17 +129,15 @@ class AreaPatternMatcher(PatternMatcher):
         component_matches_list: list[tuple[PatternComponent, list[Match2d]]] = []
 
         for pattern_component in pattern.components:
-            occurrences = gm.get_pattern_matches(pattern_component.subpattern, region)
 
-            if not occurrences and not pattern_component.optional:
+            occurrences = self.get_component_matches(pattern_component, region=None)
+
+            if (not occurrences
+                    and not pattern_component.optional
+                    and pattern_component.subpattern.independently_matchable()):
                 logger.info(f'''NO MATCH: pattern `{self.pattern.name
                 }` cannot have any matches since its required component `{pattern_component.name}` has no matches.''')
                 return []
-
-            # Убрать совпадения паттерна, слишком неточные для этого компонента
-            occurrences = list(filter(
-                lambda m: m.precision >= pattern_component.precision_threshold,
-                occurrences))
 
             component_matches_list.append((pattern_component, occurrences))
 
@@ -213,12 +234,27 @@ class AreaPatternMatcher(PatternMatcher):
         ### logger.debug(f'_best_matches: entered with component `{component.name}` at pos {plan_pos.component_i}, ' f'requested {max_results} max_results.')
         ###
 
+        rb1 = existing_match.data.ranged_box if existing_match else None
+
+        if not match_list and component.subpattern.independently_matchable():
+            # Только сейчас стало возможно искать компонент,
+            # когда часть компонентов уже известна и может подсказать расположение этого
+            if existing_match:
+                # Infer expectation for component
+                region = component.get_ranged_box_for_component_location(rb1)
+            else:
+                region = None
+            match_list = self.get_component_matches(
+                component,
+                region=region,
+                match_limit=1,
+            )
+
         # 1. ранжируем всех кандидатов по расположению относительно текущего матча
         # 1.1. Получить расстояние от текущей позиции
         # и записать её в каждый match компонента под ключом в виде box текущей позиции.
         # 1.2. Проранжироать и найти лучшую дельту.
 
-        rb1 = existing_match.data.ranged_box if existing_match else None
         size_constraint = self._get_pattern_size_constraint()
 
         distance_rb_match_list: list[tuple[float, RangedBox, Match2d]] = []
