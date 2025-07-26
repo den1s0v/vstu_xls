@@ -12,7 +12,8 @@ class TxtGrid(Grid, AbstractGridBuilder):
     def _load_cells(self, data: str):
         lines = data.splitlines()
         for y, line in enumerate(lines):
-            for x, content in enumerate(line.split(self._sep)):
+            items = line.split(self._sep) if self._sep else line
+            for x, content in enumerate(items):
                 if not content:
                     continue
                 cell = Cell(self, Point(x, y), content=content)
