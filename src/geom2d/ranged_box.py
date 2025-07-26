@@ -20,11 +20,11 @@ class RangedBox:
         self.ry = RangedSegment.make(ry)
 
     # @classmethod
-    # def from_ranges(cls, x_range, y_range) -> 'RangedBox':
+    # def from_ranges(cls, x_range, y_range) -> Self:
     #     return cls(RangedSegment(x_range), RangedSegment(y_range))
 
     @classmethod
-    def from_box(cls, box: Box) -> 'RangedBox':
+    def from_box(cls, box: Box) -> Self:
         return cls(
             (box.left, box.right),
             (box.top, box.bottom),
@@ -50,7 +50,7 @@ class RangedBox:
     def is_deterministic(self) -> bool:
         return self.rx.is_deterministic() and self.ry.is_deterministic()
 
-    def minimal_box(self) -> 'RangedBox':
+    def minimal_box(self) -> Self:
         return RangedBox(
             RangedSegment(
                 open_range(self.rx.a.stop, self.rx.a.stop),
@@ -62,7 +62,7 @@ class RangedBox:
             )
         )
 
-    def maximal_box(self) -> 'RangedBox':
+    def maximal_box(self) -> Self:
         return RangedBox(
             RangedSegment(
                 open_range(self.rx.a.start, self.rx.a.start),
@@ -74,18 +74,18 @@ class RangedBox:
             )
         )
 
-    def intersect(self, other: 'RangedBox') -> 'RangedBox | None':
+    def intersect(self, other: Self) -> Self | None:
         rx = self.rx.intersect(other.rx)
         ry = self.ry.intersect(other.ry)
         return RangedBox(rx, ry) if rx and ry else None
 
-    def union(self, other: 'RangedBox') -> 'RangedBox':
+    def union(self, other: Self) -> Self:
         return RangedBox(
             self.rx.union(other.rx),
             self.ry.union(other.ry),
         )
 
-    def combine(self, other: 'RangedBox') -> 'RangedBox | None':
+    def combine(self, other: Self) -> Self | None:
         if not other or not self:
             return None
         rx = self.rx.combine(other.rx)
@@ -107,7 +107,7 @@ class RangedBox:
             return None
         return RangedBox(new_rx, new_ry)
 
-    def combine_many(self, *others: 'RangedBox') -> 'RangedBox | None':
+    def combine_many(self, *others: Self) -> Self | None:
         # f = RangedBox.combine
         f = type(self).combine
         return reduce(f, others, self)

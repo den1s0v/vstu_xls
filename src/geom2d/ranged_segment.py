@@ -13,8 +13,8 @@ class RangedSegment:
     b: open_range
 
     def __init__(self,
-                 lower: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
-                 upper: 'open_range | int | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
+                 lower: 'open_range | int | str | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
+                 upper: 'open_range | int | str | list[Optional[int]] | tuple[Optional[int], Optional[int]]' = None,
                  validate=True):
         lower = open_range.make(lower)
         upper = open_range.make(upper)

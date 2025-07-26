@@ -174,7 +174,7 @@ class GrammarTestCase(unittest.TestCase):
     def test_get_ranged_box_for_parent_location_inner_3x3(self):
 
         #
-        m_box =  RangedBox(rx=(2, 3), ry=(1, 2)).to_box()
+        m_box = RangedBox(rx=(2, 3), ry=(1, 2)).to_box()
         self.assertEqual(Box(2,1, 1,1), m_box)
         component_match = Match2d(box=m_box, pattern="dummy str instead of pattern")
 
