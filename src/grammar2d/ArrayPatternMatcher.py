@@ -14,12 +14,18 @@ from grid import Region
 class ArrayPatternMatcher(PatternMatcher):
     pattern: ArrayPattern
 
+    _region: Box | RangedBox = None
+
     def find_all(self, region: Box | RangedBox = None, match_limit: open_range = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region.
         Note: `match_limit` relates to count of matches returned (not number of items in a match).
         """
-        item_occurrences = self._find_element_candidates(region)
+        # Dev WARN: setting this param as instance property may be thread-unsafe
+        #  (if one matcher instance is used to match different regions at once).
+        self._region = region
+
+        item_occurrences = self._find_element_candidates()
 
         if not item_occurrences:
             return []
@@ -52,12 +58,19 @@ class ArrayPatternMatcher(PatternMatcher):
 
         return matches
 
-    def _find_element_candidates(self, region: Region | RangedBox = None):
+    def _find_element_candidates(self):
         item = self.pattern.subpattern
         gm = self.grammar_matcher
 
-        item_occurrences = gm.get_pattern_matches(item, region)
+        item_occurrences = gm.get_pattern_matches(item, self._region)
         return item_occurrences or []
+
+    def _remove_extra_matches(self, matches: list[Match2d], limit: int) -> list[Match2d]:
+        """ Логика того, как удалить лишние элементы из кластера,
+            если превышено количество элементов в кластере.
+            (Здесь реализация тривиальная, см. подклассы.)
+             """
+        return matches[:limit]
 
     def _find_clusters(self,
                        occurrences: list[Match2d],
@@ -109,9 +122,10 @@ class ArrayPatternMatcher(PatternMatcher):
                 if item_count.stop is not None and len(cluster) > item_count.stop:
                     # Handle the case of "TOO MANY"
                     logger.warning(f'GRAMMAR WARN: pattern `{self.pattern.name}` expects up to {
-                        item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
+                    item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
                     # Get first N elements, drop the remaining.
-                    cluster = cluster[:item_count.stop]
+                    matches_subset = self._remove_extra_matches(matches_from_boxes(cluster), item_count.stop)
+                    cluster = [m.box for m in matches_subset]
                 else:
                     # The case of "TOO FEW": no match
                     continue
