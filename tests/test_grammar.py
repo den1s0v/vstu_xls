@@ -1,5 +1,6 @@
 import unittest
 
+from constraints_2d import SizeConstraint
 from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
@@ -11,7 +12,7 @@ from grammar2d import read_grammar
 
 from grammar2d.PatternComponent import PatternComponent
 from constraints_2d.LocationConstraint import LocationConstraint
-from geom2d import Box, RangedBox
+from geom2d import Box, RangedBox, LEFT, RIGHT, UP, DOWN
 from geom2d import Direction, open_range, RangedSegment
 from grammar2d.Match2d import Match2d
 from grammar2d.Pattern2d import Pattern2d
@@ -300,6 +301,96 @@ class GrammarTestCase(unittest.TestCase):
                 ('4-', '2+'),
                 validate=False))
         self.assertEqual(expected, result)
+
+    def test_get_ranged_box_for_component_location_inner_1(self):
+
+        #
+        parent_box = RangedBox(rx=(20, 30), ry=(10, 15))
+        self.assertEqual(Box(20,10, 10,5), parent_box)
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=True,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range(1, 1),
+                    'left': open_range(0, 0),
+                    # 'right': open_range(0, None),
+                    'bottom': open_range(1, 1)})])
+        """  |¯ ¯ ¯~
+             |◘    ~
+             |_ _ _~   """
+        result = pattern_component.get_ranged_box_for_component_location(parent_box)
+        expected = RangedBox(rx=(20, '20..30'),
+                             ry=(11, 14))
+        self.assertEqual(expected, result)
+
+    def test_get_ranged_box_for_component_location_inner_2(self):
+
+        #
+        parent_box = RangedBox(rx=(20, 30), ry=(10, 15))
+        self.assertEqual(Box(20,10, 10,5), parent_box)
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=True,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range(1, 1),
+                    'left': open_range(0, 0),
+                    # 'right': open_range(0, None),
+                    'bottom': open_range(1, 1)}),
+                SizeConstraint('4+ x 1..20'),
+            ])
+        """  |¯ ¯ ¯~
+             |◘    ~
+             |_ _ _~   """
+        result = pattern_component.get_ranged_box_for_component_location(parent_box)
+        expected = RangedBox(rx=(20, '24..30'),
+                             ry=(11, 14))
+        self.assertEqual(expected, result)
+
+    def test_get_ranged_box_for_component_location_outer_1(self):
+
+        #
+        parent_box = RangedBox(rx=(20, 30), ry=(10, 15))
+        self.assertEqual(Box(20,10, 10,5), parent_box)
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=False,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range.parse('0-'),
+                    'left': open_range(5, 7),
+                    # 'right': open_range(0, None),
+                    'bottom': open_range.parse('0-'),},
+                    inside=False,
+                ),
+            ])
+        """  |¯ ¯ ¯|
+          ◘  |     |
+             |_ _ _|   """
+        result = pattern_component.get_ranged_box_for_component_location(parent_box)
+        expected = RangedBox(rx=('*', '13..15'),
+                             ry=RangedSegment('15-', '10+', validate=False))
+        self.assertEqual(expected, result)
+
+    def test_location_constraint_outer(self):
+        lc = LocationConstraint(side_to_gap={
+            'left': open_range(5, 7),
+            'top': open_range.parse('0-'),
+            # 'right': open_range(0, None),
+            'bottom': open_range.parse('0-'),},
+            inside=False,
+        )
+
+        self.assertDictEqual({
+            LEFT: open_range(5, 7),
+            UP:  open_range.parse('0-'),
+            # RIGHT: open_range(None, None),
+            DOWN: open_range.parse('0-'),
+        }, lc.side_to_gap)
 
 
 if __name__ == '__main__':
