@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from loguru import logger
 
-from geom2d import Box, Direction, RIGHT, DOWN, RangedBox
+from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range
 from grammar2d import ArrayPattern
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
@@ -92,10 +92,13 @@ class ArrayPatternMatcher(PatternMatcher):
 
         def matches_from_boxes(boxes) -> list[Match2d]:
             """ "Backward" mapping keeping order """
-            return [m
-                    for b in boxes
-                    for m in occurrences
-                    if m.box == b]
+            matches = []
+            for b in boxes:
+                for m in occurrences:
+                    if m.box == b:
+                        matches.append(m)
+                        break
+            return matches
 
         item_count = self.pattern.item_count
         matches = []
