@@ -2,24 +2,21 @@ from dataclasses import dataclass
 from typing import Self
 
 from loguru import logger
+
 # # Профилирование ↓
 # # pip install profilehooks
 # from profilehooks import profile
 
-
+import grammar2d.GrammarMatcher as ns
+from clash import find_combinations_of_compatible_elements
 from constraints_2d import SizeConstraint
-# import grammar2d as pt
-from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range
-# from grammar2d import AreaPattern, PatternComponent
+from geom2d import Box, RangedBox
 from grammar2d.AreaPattern import AreaPattern
+from grammar2d.Match2d import Match2d
 from grammar2d.MatchRelation import MatchRelation
+from grammar2d.Pattern2d import Pattern2d
 from grammar2d.PatternComponent import PatternComponent
 from grammar2d.PatternMatcher import PatternMatcher
-from grammar2d.Match2d import Match2d
-import grammar2d.GrammarMatcher as ns
-from grid import Region
-
-from clash import find_combinations_of_compatible_elements
 from utils import time_report
 
 
@@ -27,10 +24,10 @@ from utils import time_report
 class MatchingPlan:
     component_matches_list: list[tuple[PatternComponent, list[Match2d]]]
 
-    def get_position(self, component_i: int = 0):
+    def get_position(self, component_i: int = 0) -> 'PositionInMatchingPlan':
         return PositionInMatchingPlan(self, component_i)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> tuple[PatternComponent, list[Match2d]]:
         return self.component_matches_list[item]
 
     def __len__(self):
@@ -50,6 +47,7 @@ class PositionInMatchingPlan:
 
 @dataclass
 class AreaPatternMatcher(PatternMatcher):
+
     pattern: AreaPattern
     grammar_matcher: 'ns.GrammarMatcher'
     _similar_component_pairs: list[tuple[PatternComponent, PatternComponent]] = None
@@ -57,7 +55,7 @@ class AreaPatternMatcher(PatternMatcher):
     _size_constraint: SizeConstraint = ...
 
     # @profile(stdout=False, filename='area-find.prof')
-    def find_all(self, region: Box = None, match_limit=None) -> list[Match2d]:
+    def find_all(self, region: Box = None, match_limit: int = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region.
 
