@@ -48,7 +48,7 @@ class ArrayPatternMatcher(PatternMatcher):
             return matches
 
         # найти ряды элементов, одинаково выровненных вдоль заданного направления
-        matches = self._find_lines(item_occurrences)
+        matches = self._find_clusters(item_occurrences, match_limit=match_limit)
 
         return matches
 
@@ -59,13 +59,17 @@ class ArrayPatternMatcher(PatternMatcher):
         item_occurrences = gm.get_pattern_matches(item, region)
         return item_occurrences or []
 
-    def _find_lines(self, occurrences: list[Match2d], pattern_direction: str = None) -> list[Match2d]:
+    def _find_clusters(self,
+                       occurrences: list[Match2d],
+                       pattern_direction: str = None,
+                       match_limit: open_range = None,
+                       ) -> list[Match2d]:
         if not pattern_direction:
             if self.pattern.direction == 'auto':
                 # Ряд в любом направлении,
                 # т.е. автоматический выбор из 'row' или 'column', — что оптимальнее (даёт меньше разрывных областей).
-                matches_as_rows = self._find_lines(occurrences, 'row')
-                matches_as_columns = self._find_lines(occurrences, 'column')
+                matches_as_rows = self._find_clusters(occurrences, 'row')
+                matches_as_columns = self._find_clusters(occurrences, 'column')
                 # exclude any empty variant
                 variants: list[list[Match2d]] = list(filter(None, [matches_as_rows, matches_as_columns]))
                 # get the variant having less clusters
@@ -207,4 +211,3 @@ class ArrayPatternMatcher(PatternMatcher):
                 groups.append(current_group)
 
         return groups
-
