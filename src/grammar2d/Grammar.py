@@ -12,12 +12,16 @@ from string_matching import CellType, read_cell_types
 from utils import WithCache
 
 
-# @dataclass
+TARGET_MODES = ('root', 'all')
+
+
+@dataclass
 class Grammar(WithCache):
     """Грамматика описывает весь документ, начиная от корня"""
 
     cell_types: dict[str, CellType]
-    patterns: dict[str, Pattern2d]
+    # can be initialized with list but normally is dict
+    patterns: dict[str, Pattern2d] | list[Pattern2d]
     root_name: str = None
 
     # root: оптимизировать процесс для корневого, all: искать все подряд
@@ -25,11 +29,15 @@ class Grammar(WithCache):
 
     _root: Pattern2d = None
 
-    def __init__(self, cell_types: dict[str, CellType], patterns: list[Pattern2d]):
-        self.cell_types = cell_types
+    def __post_init__(self):
+        if self.target_mode not in TARGET_MODES:
+            raise ValueError(f'Grammar\'s `target_mode` must be one of `{TARGET_MODES
+            }`, but got: `{self.target_mode}`.')
+
         # init patterns
-        self.patterns = {}
-        for pt in patterns:
+        pattern_list = self.patterns if isinstance(self.patterns, list) else self.patterns.values()
+        self.patterns = {}  # dict
+        for pt in pattern_list:
             self._register_pattern(pt)
 
     def _register_pattern(self, pattern: Pattern2d):
