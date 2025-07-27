@@ -171,7 +171,7 @@ class ArrayPatternMatcher(PatternMatcher):
                     # For each of current cluster members
                     for member in reversed(current_cluster):
                         # If candidate is close enough to a member
-                        if member.manhattan_distance_to_touch(candidate) in gap:
+                        if member.manhattan_distance_to_contact(candidate) in gap:
                             current_cluster.append(candidate)
                             all_boxes.remove(candidate)
                             added_anything = True
@@ -217,7 +217,7 @@ class ArrayPatternMatcher(PatternMatcher):
             else:
                 current_group = [line[0]]
                 for box1, box2 in zip(line[:-1], line[1:]):
-                    distance = box1.manhattan_distance_to_touch(box2)
+                    distance = box1.manhattan_distance_to_contact(box2)
                     if distance in gap:
                         current_group.append(box2)
                     else:
