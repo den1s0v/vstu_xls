@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 import yaml
+from loguru import logger
 
 from grammar2d.Pattern2d import Pattern2d, read_pattern
 from grammar2d.NonTerminal import NonTerminal
@@ -115,7 +116,7 @@ class Grammar(WithCache):
 
             # check root
             if (n := len(waves[-1])) > 1:
-                print(f'WARNING: grammar defines several ({n}) top-level patterns!')
+                logger.warning(f'WARNING: grammar defines several ({n}) top-level patterns!')
                 if not self.root_name:
                     raise ValueError(
                         f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
@@ -123,9 +124,9 @@ class Grammar(WithCache):
                 top_elem = waves[-1][0]
                 self.root_name = top_elem.name
                 self._root = top_elem
-                print('INFO: Grammar root inferred automatically:', self.root_name)
+                logger.info('INFO: Grammar root inferred automatically:', self.root_name)
             elif self.root not in waves[-1]:
-                print('WARNING: `root` of grammar is not the top-level pattern!')
+                logger.warning('WARNING: `root` of grammar is not the top-level pattern!')
 
             self._cache.dependency_waves = waves
 
