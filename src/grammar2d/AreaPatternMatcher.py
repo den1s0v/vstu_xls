@@ -128,7 +128,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         for pattern_component in pattern.components:
 
-            occurrences = self.get_component_matches(pattern_component, region=None)
+            occurrences = self.get_component_matches(pattern_component, region=region)
 
             if (not occurrences
                     and not pattern_component.optional
@@ -239,13 +239,13 @@ class AreaPatternMatcher(PatternMatcher):
             # когда часть компонентов уже известна и может подсказать расположение этого
             if existing_match:
                 # Infer expectation for component
-                region = component.get_ranged_box_for_component_location(rb1)
+                child_region = component.get_ranged_box_for_component_location(rb1)
             else:
-                region = None
+                child_region = None
             match_list = self.get_component_matches(
                 component,
-                region=region,
-                match_limit=1,
+                region=child_region,
+                match_limit=1,  # TODO: handle if multiple??
             )
 
         # 1. ранжируем всех кандидатов по расположению относительно текущего матча

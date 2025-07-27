@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
-from constraints_2d import SpatialConstraint
-from constraints_2d import BoolExprRegistry
+from constraints_2d import BoolExprRegistry, SpatialConstraint, SizeConstraint, LocationConstraint
 import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
 import grammar2d.PatternComponent as pc
@@ -151,7 +150,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         """ Ex. precision = score / max_score """
         raise NotImplementedError(type(self))
 
-    def score_of_match(self, match: 'grammar2d.Match2d') -> float:
+    def score_of_match(self, match: 'm2.Match2d') -> float:
         """ Calc score for given match """
         raise NotImplementedError(type(self))
 
