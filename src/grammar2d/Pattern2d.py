@@ -29,6 +29,7 @@ class Pattern2d(WithCache, WithSafeCreate):
     constraints: list[SpatialConstraint] = ()
 
     _grammar: 'ns.Grammar' = None
+    _size_constraint: SizeConstraint = ...
 
     name_for_constraints = 'element'
 
@@ -159,6 +160,14 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def get_matcher(self, grammar_matcher) -> 'pm.PatternMatcher':
         raise NotImplementedError()
+
+    def get_size_constraint(self) -> SizeConstraint | None:
+        if self._size_constraint is ...:
+            self._size_constraint = \
+                (list(filter(lambda x: isinstance(x, SizeConstraint), self.global_constraints))
+                 or
+                 (None,))[0]
+        return self._size_constraint
 
 
 class PatternRegistry:

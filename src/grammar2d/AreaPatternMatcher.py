@@ -52,7 +52,6 @@ class AreaPatternMatcher(PatternMatcher):
     grammar_matcher: 'ns.GrammarMatcher'
     _similar_component_pairs: list[tuple[PatternComponent, PatternComponent]] = None
     _component_relation_triples: list[tuple[PatternComponent, PatternComponent, MatchRelation]] = None
-    _size_constraint: SizeConstraint = ...
 
     # @profile(stdout=False, filename='area-find.prof')
     def find_all(self, region: Box = None, match_limit: int = None) -> list[Match2d]:
@@ -74,14 +73,6 @@ class AreaPatternMatcher(PatternMatcher):
         logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
         return matches
-
-    def _get_pattern_size_constraint(self) -> SizeConstraint | None:
-        if self._size_constraint is ...:
-            self._size_constraint = \
-                (list(filter(lambda x: isinstance(x, SizeConstraint), self.pattern.global_constraints))
-                 or
-                 (None,))[0]
-        return self._size_constraint
 
     def get_component_matches(
             self,
@@ -143,7 +134,7 @@ class AreaPatternMatcher(PatternMatcher):
         #    для последующего комбинирования.
         #   Записать в метаданные: match.data.parent_location[pattern]: RangedBox
 
-        size_constraint = self._get_pattern_size_constraint()
+        size_constraint = self.pattern.get_size_constraint()
 
         for pattern_component, match_list in component_matches_list:
             for component_match in match_list:
@@ -253,7 +244,7 @@ class AreaPatternMatcher(PatternMatcher):
         # и записать её в каждый match компонента под ключом в виде box текущей позиции.
         # 1.2. Проранжироать и найти лучшую дельту.
 
-        size_constraint = self._get_pattern_size_constraint()
+        size_constraint = self.pattern.get_size_constraint()
 
         distance_rb_match_list: list[tuple[float, RangedBox, Match2d]] = []
 
