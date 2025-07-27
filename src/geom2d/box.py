@@ -221,7 +221,7 @@ class Box:
                     self.iterate_corners(),
                     other.iterate_corners())
             )
-        return None
+        raise TypeError(other)
 
     def manhattan_distance_to_touch(self, other: Union[Point, 'Box'], per_axis=False) -> int | ManhattanDistance:
         """ Целочисленное расстояние до ближайшего касания:
@@ -246,7 +246,45 @@ class Box:
             dx = max(0, rel_h.outer_gap)
             dy = max(0, rel_v.outer_gap)
             return ManhattanDistance(dx, dy) if per_axis else dx + dy
-        return None
+        raise TypeError(other)
+
+    def manhattan_distance_to_contact(self, other: Union[Point, 'Box'], per_axis=False) -> int | ManhattanDistance:
+        """ Целочисленное расстояние до ближайшего совмещения пары сторон, т.е. касания не углами, а целыми сторонами:
+            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу прямоугольника.
+            Для прямоугольника: 0, если:
+                либо прямоугольники вложены,
+                либо в одной проекции прямоугольники касаются, а в другой максимально перекрываются,
+                иначе минимальное количество единичных перемещений,
+                чтобы одна из сторон прямоугольника полностью совместилась с другой.
+        Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости."""
+        if isinstance(other, Point):
+            return other.manhattan_distance_to(self, per_axis=per_axis)
+
+        if isinstance(other, Box):
+            if other in self or self in other:
+                return ManhattanDistance(0, 0) if per_axis else 0
+
+            px1 = self.rx
+            py1 = self.ry
+            px2 = other.rx
+            py2 = other.ry
+            rel_h = LinearRelation(px1, px2)
+            rel_v = LinearRelation(py1, py2)
+            # Внешний зазор
+            gx = max(0, rel_h.outer_gap)
+            gy = max(0, rel_v.outer_gap)
+            # Расстояние до полного перекрытия:
+            # = разность между меньшей стороной и длиной общей части (если перекрываются)
+            # = сумма меньшей стороны и зазора (если не перекрываются)
+            side_x = min(px1.size, px2.size)
+            side_y = min(py1.size, py2.size)
+            mx = side_x + (gx if gx > 0 else -rel_h.intersection().size)
+            my = side_y + (gy if gy > 0 else -rel_v.intersection().size)
+            d1 = gx + my
+            d2 = gy + mx
+            d, dx, dy = (d1, gx, my) if d1 < d2 else (d2, gy, mx)
+            return ManhattanDistance(dx, dy) if per_axis else d
+        raise TypeError(other)
 
     def iterate_corners(self):
         yield Point(self.x, self.y)

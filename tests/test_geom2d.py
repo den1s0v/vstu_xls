@@ -46,7 +46,7 @@ class BoxTestCase(unittest.TestCase):
         self.assertTrue(b.overlaps(r))
         self.assertTrue(r.overlaps(b))
 
-    def test_point_dist(self):
+    def test_point_dist_0(self):
         # triangle: 2 * (3, 4, 5)
         a = Point(-4, -3)
         b = Point(4, 3)
@@ -61,6 +61,7 @@ class BoxTestCase(unittest.TestCase):
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 2 * 7)
         self.assertEqual(b.manhattan_distance_to_touch(a), 2 * 7 - 2)
+        self.assertEqual(b.manhattan_distance_to_contact(a), 2 * 7 - 1)
 
     def test_box_dist_2(self):
         a = Box(4, 1, 1, 1)
@@ -68,6 +69,7 @@ class BoxTestCase(unittest.TestCase):
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 2)
         self.assertEqual(b.manhattan_distance_to_touch(a), 1)
+        self.assertEqual(b.manhattan_distance_to_contact(a), 1)
 
     def test_box_dist_3(self):
         # inside
@@ -76,6 +78,7 @@ class BoxTestCase(unittest.TestCase):
 
         self.assertEqual(b.manhattan_distance_to_overlap(a), 0)
         self.assertEqual(b.manhattan_distance_to_touch(a), 0)
+        self.assertEqual(b.manhattan_distance_to_contact(a), 0)
 
     def test_box_dist_4(self):
         # overlaps and (1, 1) is outside
@@ -85,6 +88,7 @@ class BoxTestCase(unittest.TestCase):
         self.assertEqual(b.manhattan_distance_to_overlap(a), 1 + 1)
 
         self.assertEqual(b.manhattan_distance_to_touch(a), 0)
+        self.assertEqual(b.manhattan_distance_to_contact(a), 1)
 
     def test_box_dist_5(self):
         # overlaps and (1, 1) is outside
@@ -94,6 +98,7 @@ class BoxTestCase(unittest.TestCase):
         self.assertEqual(b.manhattan_distance_to_overlap(a, True), (1, 1))
 
         self.assertEqual(b.manhattan_distance_to_touch(a, True), (0, 0))
+        self.assertEqual(b.manhattan_distance_to_contact(a, True), (0, 1))
 
     def test_box_dist_6(self):
         # triangle: 2 * (3, 4, 5)
@@ -102,8 +107,19 @@ class BoxTestCase(unittest.TestCase):
 
         self.assertEqual(b.manhattan_distance_to_overlap(a, True), 2 * 7)
         self.assertEqual(b.manhattan_distance_to_overlap(a, True), (8, 6))
+        # equals to sum
         self.assertEqual(b.manhattan_distance_to_touch(a, True), 2 * 7 - 2)
         self.assertEqual(b.manhattan_distance_to_touch(a, True), ManhattanDistance(7, 5))
+
+    def test_box_dist_7(self):
+        # gap: 4 * 3
+        a = Box(-10, -10, 10, 10)
+        b = Box(4, 3, 8, 8)
+
+        self.assertEqual(b.manhattan_distance_to_overlap(a), 7 + 8 * 2)
+        self.assertEqual(b.manhattan_distance_to_overlap(a, True), (12, 11))
+        self.assertEqual(b.manhattan_distance_to_touch(a), 7)
+        self.assertEqual(b.manhattan_distance_to_contact(a), 7 + 8)
 
     def test_intersect_overlap(self):
         a = Box.from_2points(0, 0, 10, 10)
