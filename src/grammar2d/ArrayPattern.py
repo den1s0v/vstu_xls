@@ -56,8 +56,14 @@ class ArrayPattern(NonTerminal):
         if not isinstance(self.gap, open_range):
             self.gap = open_range.parse(str(self.gap))
 
-        if not isinstance(self.item_count, open_range):
-            self.item_count = open_range.parse(str(self.item_count)) if self.item_count is not None else open_range(1, None)
+        if self.item_count is None:
+            self.item_count = open_range.parse('1+')
+
+        given_range = open_range.make(self.item_count)
+        self.item_count = given_range.intersect(open_range.parse('1+'))
+        if self.item_count is None:
+            raise ValueError(f"Array pattern `{self.name
+                }` defines invalid range for item count: {given_range}")
 
         if not isinstance(self.direction, str):
             self.direction = 'auto'
