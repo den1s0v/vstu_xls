@@ -120,6 +120,13 @@ class ArrayPatternMatcher(PatternMatcher):
                 # Size of the cluster is not satisfiable for the pattern.
                 if item_count.stop is not None and len(cluster) > item_count.stop:
                     # Handle the case of "TOO MANY"
+                    # Too large cluster to be accepted as-is.
+                    if not self.pattern.allow_breakdown:
+                        # Cannot split & cannot accept.
+                        continue
+
+                    # TODO: try to split large the cluster.
+
                     logger.warning(f'GRAMMAR WARN: pattern `{self.pattern.name}` expects up to {
                     item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
                     # Get first N elements, drop the remaining.

@@ -37,6 +37,10 @@ class ArrayPattern(NonTerminal):
     # по умолчанию нулевой
     gap: open_range = field(default_factory=lambda: open_range(0, 0))
 
+    # Если найденное пятно превышает item_count или выходит за пределы size,
+    # то при allow_breakdown==True область совпадения может быть разбита на части;
+    # иначе (False) такое пятно не считается совпадением (целиком).
+    allow_breakdown: bool = False
     distance_kind: str = 'corner'
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
