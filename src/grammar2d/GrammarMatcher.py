@@ -112,7 +112,8 @@ class GrammarMatcher:
             if verbose:
                 logger.debug('WAVE:')
                 logger.debug([p.name for p in wave])
-            if self.grammar.root in wave:
+
+            if self.grammar.target_mode == 'root' and self.grammar.root in wave:
                 self._find_matches_of_pattern(self.grammar.root)
             else:
                 for ptt in wave:

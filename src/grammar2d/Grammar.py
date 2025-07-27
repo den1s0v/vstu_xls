@@ -20,6 +20,9 @@ class Grammar(WithCache):
     patterns: dict[str, Pattern2d]
     root_name: str = None
 
+    # root: оптимизировать процесс для корневого, all: искать все подряд
+    target_mode: str = 'root'  # или 'all'
+
     _root: Pattern2d = None
 
     def __init__(self, cell_types: dict[str, CellType], patterns: list[Pattern2d]):
@@ -114,19 +117,23 @@ class Grammar(WithCache):
 
             assert waves, 'Cannot infer any matching stages for the grammar!'
 
-            # check root
-            if (n := len(waves[-1])) > 1:
-                logger.warning(f'WARNING: grammar defines several ({n}) top-level patterns!')
-                if not self.root_name:
-                    raise ValueError(
-                        f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
-            elif not self.root_name:
-                top_elem = waves[-1][0]
-                self.root_name = top_elem.name
-                self._root = top_elem
-                logger.info('INFO: Grammar root inferred automatically:', self.root_name)
-            elif self.root not in waves[-1]:
-                logger.warning('WARNING: `root` of grammar is not the top-level pattern!')
+            if self.target_mode == 'root':
+                # check root
+                if (n := len(waves[-1])) > 1:
+                    logger.warning(f'WARNING: grammar defines several ({n}) top-level patterns!')
+                    if not self.root_name:
+                        raise ValueError(
+                            f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
+                elif not self.root_name:
+                    top_elem = waves[-1][0]
+                    self.root_name = top_elem.name
+                    self._root = top_elem
+                    logger.info(f'INFO: Grammar root inferred automatically: {self.root_name}')
+                elif self.root not in waves[-1]:
+                    logger.warning('WARNING: `root` of grammar is not the top-level pattern!')
+
+                # Optimize waves (drop unnecessary patterns)
+                ... # TODO
 
             self._cache.dependency_waves = waves
 
