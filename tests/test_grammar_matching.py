@@ -193,7 +193,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         gm = GrammarMatcher(grammar=self.simple_grammar_2_4)
 
         for g in (
-                self.grid4_t,
+                self.grid5_t,
                 # self.grid2_x,
         ):
             print('using grid:', g)

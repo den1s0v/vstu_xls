@@ -97,8 +97,8 @@ patterns:
     kind: array
     item_pattern: mark
     direction: fill
-    gap: 0
-    size: 4- x 4-  # размер в ячейках Excel
+    gap: 0..1
+    # size: 4- x 4-  # размер в ячейках Excel
     # item_count: 9
 
   field:
