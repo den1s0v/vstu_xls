@@ -32,8 +32,11 @@ class ArrayPattern(NonTerminal):
     item_pattern: str  # повторяемый элемент
     direction: str = None  # направление
     item_count: open_range = None  # кратность элемента в массиве
-    gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве,
+
+    # зазор между элементами в массиве,
     # по умолчанию нулевой
+    gap: open_range = field(default_factory=lambda: open_range(0, 0))
+
     distance_kind: str = 'corner'
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики

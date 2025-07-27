@@ -7,7 +7,6 @@ from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range
 from grammar2d import ArrayPattern
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
-from grid import Region
 
 
 @dataclass
