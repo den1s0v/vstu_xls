@@ -147,6 +147,13 @@ class ArrayPatternMatcher(PatternMatcher):
                 matches.append(m)
         return matches
 
+    def calc_distance(self, box1: Box, box2: Box) -> int:
+        if self.pattern.distance_kind == 'corner':
+            return box1.manhattan_distance_to_touch(box2)
+        if self.pattern.distance_kind == 'side':
+            return box1.manhattan_distance_to_contact(box2)
+        raise NotImplementedError(f'Unknown distance_kind: {self.pattern.distance_kind}')
+
     def _find_fill_groups(self, boxes: list[Box]) -> list[list[Box]]:
         """ Find connected clusters of arbitrary form without restriction on direction
         (a cluster may look like an oval or a snake, for instance).
@@ -171,7 +178,7 @@ class ArrayPatternMatcher(PatternMatcher):
                     # For each of current cluster members
                     for member in reversed(current_cluster):
                         # If candidate is close enough to a member
-                        if member.manhattan_distance_to_contact(candidate) in gap:
+                        if self.calc_distance(member, candidate) in gap:
                             current_cluster.append(candidate)
                             all_boxes.remove(candidate)
                             added_anything = True
@@ -217,7 +224,7 @@ class ArrayPatternMatcher(PatternMatcher):
             else:
                 current_group = [line[0]]
                 for box1, box2 in zip(line[:-1], line[1:]):
-                    distance = box1.manhattan_distance_to_contact(box2)
+                    distance = self.calc_distance(box1, box2)
                     if distance in gap:
                         current_group.append(box2)
                     else:

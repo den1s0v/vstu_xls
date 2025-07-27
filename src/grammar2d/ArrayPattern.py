@@ -11,6 +11,7 @@ from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
 
 VALID_ARRAY_DIRECTIONS = ('row', 'column', 'auto', 'fill')
+DISTANCE_KINDS = ('corner', 'side')
 
 
 @PatternRegistry.register
@@ -33,11 +34,16 @@ class ArrayPattern(NonTerminal):
     item_count: open_range = None  # кратность элемента в массиве
     gap: open_range = field(default_factory=lambda: open_range(0, 0))  # зазор между элементами в массиве,
     # по умолчанию нулевой
+    distance_kind: str = 'corner'
 
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
 
     def __post_init__(self):
         super().__post_init__()
+
+        if self.distance_kind not in DISTANCE_KINDS:
+            raise ValueError(f'ArrayPattern\'s `distance_kind` must be one of `{DISTANCE_KINDS
+            }`, but got: `{self.distance_kind}`.')
 
         # convert attributes to usable types
         if not isinstance(self.gap, open_range):

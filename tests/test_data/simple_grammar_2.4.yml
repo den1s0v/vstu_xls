@@ -98,6 +98,7 @@ patterns:
     item_pattern: mark
     direction: fill
     gap: 0..1
+    distance_kind: side
     # size: 4- x 4-  # размер в ячейках Excel
     # item_count: 9
 
