@@ -9,7 +9,6 @@ import grammar2d.Match2d as m2
 from grammar2d.NonTerminal import NonTerminal
 from grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
-
 VALID_ARRAY_DIRECTIONS = ('row', 'column', 'auto', 'fill')
 DISTANCE_KINDS = ('corner', 'side')
 
@@ -63,11 +62,12 @@ class ArrayPattern(NonTerminal):
         self.item_count = given_range.intersect(open_range.parse('1+'))
         if self.item_count is None:
             raise ValueError(f"Array pattern `{self.name
-                }` defines invalid range for item count: {given_range}")
+            }` defines invalid range for item count: {given_range}")
 
         if not isinstance(self.direction, str):
             self.direction = 'auto'
-            logger.info(f'Assuming the default value `{self.direction}` for direction of ArrayPattern with name `{self.name}`.')
+            logger.info(
+                f'Assuming the default value `{self.direction}` for direction of ArrayPattern with name `{self.name}`.')
         elif self.direction not in VALID_ARRAY_DIRECTIONS:
             msg = f'ArrayPattern with name `{self.name}` has direction set to `{self.direction}`, but expected one of `{VALID_ARRAY_DIRECTIONS}`.'
             logger.critical(msg)
@@ -109,7 +109,6 @@ class ArrayPattern(NonTerminal):
         if not self._subpattern:
             self._subpattern = self._grammar[self.item_pattern]
         return self._subpattern
-
 
     @override
     def dependencies(self, recursive=False) -> list[Pattern2d]:
