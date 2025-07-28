@@ -340,8 +340,8 @@ class ArrayPatternMatcher(PatternMatcher):
 
         # все комбинации размеров ячеек сетки (начиная с максимума)
         grid_cell_size_list = list(product(
-            reversed(iter(width_range)),
-            reversed(iter(height_range)),
+            reversed(list(width_range)),
+            reversed(list(height_range)),
         ))
         if grid_cell_size_list[0] == bbox.size:
             # отбросим первую комбинацию, которая равняется размерам кластера
