@@ -128,9 +128,10 @@ class ArrayPattern(NonTerminal):
 
     def score_of_match(self, match: m2.Match2d) -> float:
         """ Calc score for given match """
-        raise NotImplementedError(type(self))
-
-    ...
+        return sum(
+            m.precision
+            for m in match.component2match.values()
+        ) / max(1, len(match.component2match))
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher

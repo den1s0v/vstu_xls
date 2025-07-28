@@ -1,9 +1,11 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from itertools import product
 
 from loguru import logger
 
-from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range
+from clash import find_combinations_of_compatible_elements, trivial_components_getter
+from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range, Point
 from grammar2d import ArrayPattern
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
@@ -92,16 +94,6 @@ class ArrayPatternMatcher(PatternMatcher):
         # Подготовка областей
         all_boxes = [m.box for m in occurrences]
 
-        if self.pattern.direction == 'fill':
-            clusters = self._find_fill_groups(all_boxes)
-        else:
-            # Направление просмотра
-            direction = {
-                'row': RIGHT,
-                'column': DOWN,
-            }[pattern_direction]
-            clusters = self._find_groups_along_lines(all_boxes, direction)
-
         def matches_from_boxes(boxes) -> list[Match2d]:
             """ "Backward" mapping keeping order """
             matches = []
@@ -112,45 +104,68 @@ class ArrayPatternMatcher(PatternMatcher):
                         break
             return matches
 
-        item_count = self.pattern.item_count
+        if self.pattern.direction == 'fill':
+            clusters = self._find_fill_groups(all_boxes)
+        else:
+            # Направление просмотра
+            direction = {
+                'row': RIGHT,
+                'column': DOWN,
+            }[pattern_direction]
+            clusters = self._find_groups_along_lines(all_boxes, direction)
+
+        item_count = self.pattern.item_count  # ???
         matches = []
 
         for cluster in clusters:
-            if not cluster or len(cluster) not in item_count:
-                # Size of the cluster is not satisfiable for the pattern.
-                if item_count.stop is not None and len(cluster) > item_count.stop:
-                    # Handle the case of "TOO MANY"
-                    # Too large cluster to be accepted as-is.
-                    if not self.pattern.allow_breakdown:
-                        # Cannot split & cannot accept.
-                        continue
-
-                    # TODO: try to split large the cluster.
-
-                    logger.warning(f'GRAMMAR WARN: pattern `{self.pattern.name}` expects up to {
-                    item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
-                    # Get first N elements, drop the remaining.
-                    matches_subset = self._remove_extra_matches(matches_from_boxes(cluster), item_count.stop)
-                    cluster = [m.box for m in matches_subset]
-                else:
-                    # The case of "TOO FEW": no match
-                    continue
-
-            bbox = Box.union(*cluster)  # bounding box: union of group's boxes
-
-            satisfies = self.pattern.check_constraints_for_bbox(bbox)
-
-            if satisfies:
-                # Make a Match for the cluster.
-                sub_matches = matches_from_boxes(cluster)
-                assert sub_matches, f"Failed to get back matches for boxes: {cluster}"
-                mean_precision = sum(m.precision for m in sub_matches) / len(sub_matches)
-
+            subclusters = self.try_breakdown_cluster(cluster)
+            for subcluster in subclusters:
+                item_matches = matches_from_boxes(subcluster)
                 m = Match2d(self.pattern,
-                            precision=mean_precision,
-                            box=bbox,
-                            component2match=dict(enumerate(sub_matches)))
+                            component2match=dict(enumerate(item_matches)))
+                # recalc precision
+                m.calc_precision(force=True)
                 matches.append(m)
+
+        # for cluster in clusters:
+        #     if not cluster or len(cluster) not in item_count:
+        #         # Size of the cluster is not satisfiable for the pattern.
+        #         if item_count.stop is not None and len(cluster) > item_count.stop:
+        #             # Handle the case of "TOO MANY"
+        #             # Too large cluster to be accepted as-is.
+        #             if not self.pattern.allow_breakdown:
+        #                 # Cannot split & cannot accept.
+        #                 continue
+        #
+        #             # TODO: try to split large the cluster.
+        #
+        #             logger.warning(f'GRAMMAR WARN: pattern `{self.pattern.name}` expects up to {
+        #             item_count.stop} items, so sequence of {len(cluster)} elements has been cropped.')
+        #             # Get first N elements, drop the remaining.
+        #             matches_subset = self._remove_extra_matches(matches_from_boxes(cluster), item_count.stop)
+        #             cluster = [m.box for m in matches_subset]
+        #         else:
+        #             # The case of "TOO FEW": no match
+        #             continue
+        #
+        #     bbox = Box.union(*cluster)  # bounding box: union of group's boxes
+        #
+        #     satisfies = self.pattern.check_constraints_for_bbox(bbox)
+        #
+        #     if satisfies:
+        #         # Make a Match for the cluster.
+        #         sub_matches = matches_from_boxes(cluster)
+        #         assert sub_matches, f"Failed to get back matches for boxes: {cluster}"
+        #         # mean_precision = sum(m.precision for m in sub_matches) / len(sub_matches)
+        #
+        #         m = Match2d(self.pattern,
+        #                     # precision=mean_precision,
+        #                     # box=bbox,
+        #                     component2match=dict(enumerate(sub_matches)))
+        #         # recalc precision
+        #         m.calc_precision(force=True)
+        #         matches.append(m)
+
         return matches
 
     def calc_distance(self, box1: Box, box2: Box) -> int:
@@ -242,7 +257,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         return groups
 
-    def breakdown_cluster(self, cluster: list[Box]) -> list[list[Box]]:
+    def try_breakdown_cluster(self, cluster: list[Box]) -> list[list[Box]]:
         """ Разделить крупный кластер на составляющие,
             удовлетворяющие ограничениям численности и размера.
 
@@ -253,7 +268,7 @@ class ArrayPatternMatcher(PatternMatcher):
             - оба варианта
         2) Выполнить перебор вариантов разделить кластер прямоугольной сеткой на равные части,
             смещая сетку по координатам и поэтапно уменьшая размер ячейки сетки.
-           Размер ячейки сетки должен всегда оставаться в пределах требуемого диапазона размера (size),
+           Размер ячейки (квадранта) сетки должен всегда оставаться в пределах требуемого диапазона размера (size),
             но не меньше 1x1 и не больше размера собственно нашего крупного кластера.
            Каждая примерка ячейки сетки к кластеру даёт подмножество элементов,
             которое может быть пустым, подходить или не подходить по числу элементов.
@@ -263,8 +278,162 @@ class ArrayPatternMatcher(PatternMatcher):
         3) Все допустимые совпадения, обнаруженные до сих пор, собрать в одно множество,
              и выполнить для них разрешение накладок (resolve clashes).
         """
+        # Параметры нашего кластера
         bbox = Box.union(*cluster)  # bounding box: union of group's boxes
+        cluster_count = len(cluster)
+
+        need_breakdown = False
+
+        # Ограничения
+        count_range = self.pattern.item_count
+
+        # 1) Подготовка.
+        if cluster_count in count_range:
+            pass  # desired_count = cluster_count  # ???
+        else:
+            if cluster_count < count_range:
+                # В кластере слишком мало элементов, делить нечего.
+                return []
+            elif not self.pattern.allow_breakdown:
+                # Cannot split & cannot accept.
+                return []
+            need_breakdown = True
+
+        sc = self.pattern.get_size_constraint()
+        width_range, height_range = sc.size_range_tuple if sc else (open_range.parse('1+'), ) * 2
+
+        if bbox.w in width_range:
+            # Диапазон c одним (текущим) значением
+            width_range = open_range(bbox.w, bbox.w)
+        else:
+            # Ограничим ожидаемые диапазоны максимумом — размерами данного кластера
+            width_range = width_range.intersect(open_range(1, bbox.w))
+            if width_range is None:
+                # Ширина кластера слишком мала, делить нечего.
+                return []
+            need_breakdown = True
+
+        if bbox.h in height_range:
+            # Диапазон c одним (текущим) значением
+            height_range = open_range(bbox.h, bbox.h)
+        else:
+            # Ограничим ожидаемые диапазоны максимумом — размерами данного кластера
+            height_range = height_range.intersect(open_range(1, bbox.h))
+            if height_range is None:
+                # Ширина кластера слишком мала, делить нечего.
+                return []
+            need_breakdown = True
+
+        # satisfies = self.pattern.check_constraints_for_bbox(bbox)
+        # if not satisfies:
+        #     need_breakdown = True
+
+        if not need_breakdown:
+            # The cluster is OK.
+            return [cluster]
+
+        if not self.pattern.allow_breakdown:
+            # Cannot accept & cannot split.
+            return []
+
+        # 2.1) Инициализация сетки, накладываемой на область кластера.
+
+        # все комбинации размеров ячеек сетки (начиная с максимума)
+        grid_cell_size_list = list(product(
+            reversed(iter(width_range)),
+            reversed(iter(height_range)),
+        ))
+        if grid_cell_size_list[0] == bbox.size:
+            # отбросим первую комбинацию, которая равняется размерам кластера
+            del grid_cell_size_list[0]
+
+        # упорядочим по убыванию общего размера
+        grid_cell_size_list.sort(key=sum, reverse=True)
+
+        # 2.2) Перебор вариантов сетки.
+
+        x0 = bbox.x
+        y0 = bbox.y
+
+        def point_quadrant(point: Point) -> tuple[int, int]:
+            x = point.x - dx
+            y = point.y - dy
+            return (x - x0) // gw, (y - y0) // gh
+
+        def box_quadrant(box: Box) -> tuple[int, int] | None:
+            corner1_q, corner2_q = (
+                point_quadrant(corner)
+                for corner in box.iterate_corners('diagonal')
+            )
+            if corner1_q == corner2_q:
+                return corner1_q
+            else:
+                # Крайние точки попадают в разные квадранты, попадания нет.
+                return None
+
+        q2boxes: dict[tuple[int, int], set[Box]] = defaultdict(set)
+
+        for gw, gh in grid_cell_size_list:
+            for dx, dy in product(range(0, -gw, -1), range(0, -gh, -1)):
+                # for dx in range(0, -gw, -1):
+                #     for dy in range(0, -gh, -1):
+                # Перебираем все компоненты, отслеживая, в какой квадрант сетки он попадает
+                not_suited = 0
+
+                for box in cluster:
+                    q = box_quadrant(box)
+                    if q is None:
+                        not_suited += 1
+                        continue
+
+                    # Подошёл, записываем в нужный квадрант
+                    q2boxes[q].add(box)
+
+                if not_suited == 0:
+                    # удалось уложить все элементы кластера
+                    break
+            else:
+                continue
+            break
+
+        # Отсеять те, что не попадают теперь по количеству элементов
+        for k in list(q2boxes.keys()):
+            delete = False
+
+            count = len(q2boxes[k])
+            if count not in count_range:
+                delete = True
+
+            bbox = Box.union(*cluster)  # bounding box: union of group's boxes
+            satisfies = self.pattern.check_constraints_for_bbox(bbox)
+            if not satisfies:
+                delete = True
+
+            if delete:
+                del q2boxes[k]
 
 
+        # 3.1) Все допустимые совпадения собрать в одно множество, и выполнить для них разрешение накладок.
 
+        subclusters = [
+            list(boxes)
+            for boxes in q2boxes.values()
+        ]
 
+        arrangements: list[list[list[Box]]] = find_combinations_of_compatible_elements(
+            subclusters,
+            components_getter=trivial_components_getter,
+            max_elements=count_range.stop
+        )
+
+        # 3.2) Проранжировать итоговые кластеры —
+        # оставить максимальное покрытие и наиболее крупные (меньше по количеству самих кластеров)
+        best_subclusters = max(
+            arrangements,
+            key=lambda subcluster: (
+                sum(len(item) for item in subcluster),  # ↑ покрытие
+                -len(subcluster),  # ↓ фрагментированность
+            ),
+            default=[])
+
+        return best_subclusters
