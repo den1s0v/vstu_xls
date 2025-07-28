@@ -286,11 +286,15 @@ class Box:
             return ManhattanDistance(dx, dy) if per_axis else d
         raise TypeError(other)
 
-    def iterate_corners(self):
-        yield Point(self.x, self.y)
-        yield Point(self.right, self.top)
-        yield Point(self.right, self.bottom)
-        yield Point(self.left, self.bottom)
+    def iterate_corners(self, mode='clockwise'):
+        if mode == 'clockwise':
+            yield Point(self.x, self.y)
+            yield Point(self.right, self.top)
+            yield Point(self.right, self.bottom)
+            yield Point(self.left, self.bottom)
+        elif mode == 'diagonal':
+            yield Point(self.x, self.y)
+            yield Point(self.right, self.bottom)
 
     def iterate_points0(self, per='rows', reverse=False, exclude_top_left=False):
         along_row = adict(range=(self.x, self.right), index=0)
