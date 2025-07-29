@@ -361,22 +361,25 @@ class ArrayPatternMatcher(PatternMatcher):
             return (x - x0) // gw, (y - y0) // gh
 
         def box_quadrant(box: Box) -> tuple[int, int] | None:
-            corner1_q, corner2_q = (
-                point_quadrant(corner)
-                for corner in box.iterate_corners('diagonal')
-            )
+            corner1, corner2 = box.iterate_corners('diagonal')
+            # Сдвинуть правый нижний угол внутрь области
+            # (иначе она попадёт на следующий квадрант)
+            corner2 = Point(corner2.x - 1, corner2.y - 1,)
+            corner1_q = point_quadrant(corner1)
+            if corner1 == corner2:
+                return corner1_q  # Если размер box: 1х1 (раннее завершение)
+
+            corner2_q = point_quadrant(corner2)
             if corner1_q == corner2_q:
                 return corner1_q
             else:
                 # Крайние точки попадают в разные квадранты, попадания нет.
                 return None
 
-        q2boxes: dict[tuple[int, int], set[Box]] = defaultdict(set)
+        q2boxes: dict[tuple[int, int, int, int], set[Box]] = defaultdict(set)
 
         for gw, gh in grid_cell_size_list:
             for dx, dy in product(range(0, -gw, -1), range(0, -gh, -1)):
-                # for dx in range(0, -gw, -1):
-                #     for dy in range(0, -gh, -1):
                 # Перебираем все компоненты, отслеживая, в какой квадрант сетки он попадает
                 not_suited = 0
 
@@ -387,7 +390,8 @@ class ArrayPatternMatcher(PatternMatcher):
                         continue
 
                     # Подошёл, записываем в нужный квадрант
-                    q2boxes[q].add(box)
+                    k = (*q, gw, gh)  # уникальный набор для каждой комбинации размеров
+                    q2boxes[k].add(box)
 
                 if not_suited == 0:
                     # удалось уложить все элементы кластера
@@ -400,12 +404,14 @@ class ArrayPatternMatcher(PatternMatcher):
         for k in list(q2boxes.keys()):
             delete = False
 
-            count = len(q2boxes[k])
+            new_cluster = q2boxes[k]
+
+            count = len(new_cluster)
             if count not in count_range:
                 delete = True
 
-            bbox = Box.union(*cluster)  # bounding box: union of group's boxes
-            satisfies = self.pattern.check_constraints_for_bbox(bbox)
+            new_bbox = Box.union(*new_cluster)  # bounding box: union of group's boxes
+            satisfies = self.pattern.check_constraints_for_bbox(new_bbox)
             if not satisfies:
                 delete = True
 
@@ -413,14 +419,16 @@ class ArrayPatternMatcher(PatternMatcher):
                 del q2boxes[k]
 
         # 3.1) Все допустимые совпадения собрать в одно множество, и выполнить для них разрешение накладок.
+        #  Берём именно уникальные наборы, т.к. в разные квадранты разного размера
+        #  могли попасть одинаковые наборы элементов.
 
-        subclusters = [
-            list(boxes)
+        subcluster_set = {
+            tuple(sorted(boxes))
             for boxes in q2boxes.values()
-        ]
+        }
 
         arrangements: list[list[list[Box]]] = find_combinations_of_compatible_elements(
-            subclusters,
+            subcluster_set,
             components_getter=trivial_components_getter,
             max_elements=count_range.stop
         )
