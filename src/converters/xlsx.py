@@ -14,6 +14,10 @@ from grid import Cell, CellStyle, Grid
 from utils.openpyxl_colorconvert import theme_and_tint_to_rgb, get_theme_colors
 
 
+COORD_PAD = 1  # Use to turn Excel's 1-based coordinates to 0-based indices.
+# COORD_PAD = 0  # Use to keep coordinates as-is.
+
+
 def get_rgb(color: Color, wb: Workbook) -> Optional[str]:
     """
     Получить RGB цвет из объекта Color openpyxl.
@@ -82,8 +86,8 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 if is_merged:
                     continue
 
-                x = excel_cell.column
-                y = excel_cell.row
+                x = excel_cell.column - COORD_PAD
+                y = excel_cell.row - COORD_PAD
 
                 # Create CellStyle from openpyxl cell properties
                 style = self._create_cell_style(excel_cell)
@@ -92,7 +96,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 cell = Cell(
                     grid=self,
                     point=Point(x, y),
-                    size=Size(1, 1),  # Default size; merged cells handled below
+                    size=Size(1, 1),  # Default size; merged cells are handled below
                     content=str(excel_cell.value),
                     style=style,
                 )
@@ -165,7 +169,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 merged_range.max_row,
             )
 
-            x, y = min_col, min_row
+            x, y = min_col - COORD_PAD, min_row - COORD_PAD
             point = Point(x, y)
 
             # Calculate size of the merged cell
