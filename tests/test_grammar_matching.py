@@ -1,6 +1,6 @@
 import unittest
 
-from geom2d import Point
+from geom2d import Point, Box
 from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
@@ -22,13 +22,16 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
 
         cls.grid4_t = TxtGrid(Path('test_data/grid4.tsv').read_text())
+
         cls.grid5_t = TxtGrid(Path('test_data/grid5.tsv').read_text(), sep='')
+        cls.grid5_x = ExcelGrid.read_xlsx(Path('test_data/grid5.xlsx'))
 
         cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
         cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
         cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
         cls.simple_grammar_2_4 = read_grammar('test_data/simple_grammar_2.4.yml')
+        cls.simple_grammar_2_5 = read_grammar('test_data/simple_grammar_2.5.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -206,16 +209,61 @@ class GrammarMatchingTestCase(unittest.TestCase):
             marks_array = root['field'].get_children()
             # self.assertEqual(5, len(marks_array))
 
-            positions = [m.box.position for m in marks_array]
+            positions = [m.box for m in marks_array]
             # Note!
             self.assertSetEqual({
-                # ...
-                    Point(x=1, y=2),
-                    Point(x=1, y=5),
-                    Point(x=4, y=4),
-                    Point(x=4, y=7),
-                    Point(x=6, y=1)},
+                   Box(28,5, 1,12),
+                   Box(21,14, 4,4),
+                   Box(2,4, 20,11),
+                   Box(0,1, 31,1),
+                },
                 set(positions))
+
+    def test_grid2_5(self):
+        gm = GrammarMatcher(grammar=self.simple_grammar_2_5)
+
+        for g in (
+                self.grid5_t,
+                self.grid5_x,
+        ):
+            print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            # self.assertEqual((8, 9), root.box.size)
+
+            marks_array = root['field'].get_children()
+            # self.assertEqual(5, len(marks_array))
+
+            positions = [m.box for m in marks_array]
+            # Note!
+            self.assertSetEqual({
+                Box(0,1, 4,1),
+                Box(10,14, 4,1),
+                Box(10,4, 4,1),
+                Box(12,1, 4,1),
+                Box(14,13, 4,2),
+                Box(14,4, 4,2),
+                Box(16,1, 4,1),
+                Box(18,12, 2,1),
+                Box(18,6, 3,2),
+                Box(2,8, 2,4),
+                Box(20,1, 4,1),
+                Box(20,8, 2,4),
+                Box(21,14, 4,4),
+                Box(24,1, 4,1),
+                Box(28,1, 3,1),
+                Box(28,13, 1,4),
+                Box(28,5, 1,4),
+                Box(28,9, 1,4),
+                Box(3,6, 3,2),
+                Box(4,1, 4,1),
+                Box(4,12, 2,1),
+                Box(6,13, 4,2),
+                Box(6,4, 4,2),
+                Box(8,1, 4,1),
+            }, set(positions))
 
 
 if __name__ == '__main__':

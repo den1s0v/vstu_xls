@@ -300,7 +300,7 @@ class ArrayPatternMatcher(PatternMatcher):
             need_breakdown = True
 
         sc = self.pattern.get_size_constraint()
-        width_range, height_range = sc.size_range_tuple if sc else (open_range.parse('1+'), ) * 2
+        width_range, height_range = sc.size_range_tuple if sc else (open_range.parse('1+'),) * 2
 
         if bbox.w in width_range:
             # Диапазон c одним (текущим) значением
@@ -411,7 +411,6 @@ class ArrayPatternMatcher(PatternMatcher):
 
             if delete:
                 del q2boxes[k]
-
 
         # 3.1) Все допустимые совпадения собрать в одно множество, и выполнить для них разрешение накладок.
 
