@@ -720,3 +720,75 @@ class ArrayPatternMatcher(PatternMatcher):
             default=[])
 
         return best_subclusters
+
+
+
+    def _split_to_subclusters_of_desired_count(
+            self,
+            connected_cluster: list[Box] | set[Box],
+            item_count: range = None) -> list[list[
+        Box]]:
+        """ Find connected clusters of arbitrary form without restriction on direction
+
+        """
+
+        if item_count is None:
+            item_count = self.pattern.item_count
+
+        n = len(connected_cluster)
+
+        if n in item_count:
+            return [connected_cluster]
+
+        if n < item_count:
+            return []
+
+        # [<<<<<][=====][>>>>>]
+        #    x      +      ?
+
+        min_count = item_count.start
+        if min_count is None:
+            min_count = 1
+        max_count = item_count.stop
+        # if max_count is None:
+        #     max_count = n
+
+
+        if n // min_count == 1:
+            # Даже если по минимуму, 2 штуки не уместятся:
+            # единственный способ — отрезать лишние края
+            # до полноценного совпадения.
+            # Найдём все слабо связанные элементы, примыкающие к рамкам общей области.
+
+            ...
+
+
+
+        # all_boxes = list(boxes)  # Обновляемый перечень (элементы уходят по мере формирования кластеров)
+        # gap = self.pattern.gap
+        # clusters = []
+        #
+        # while all_boxes:
+        #     # init cluster
+        #     current_cluster = [all_boxes.pop(0)]
+        #
+        #     # Find more items for this cluster (complete search) ...
+        #     while all_boxes:
+        #         added_anything = False
+        #         # For each of candidates (remaining unused boxes)
+        #         for candidate in all_boxes[:]:
+        #             # For each of current cluster members
+        #             for member in reversed(current_cluster):
+        #                 # If candidate is close enough to a member
+        #                 if self.are_neighbours(member, candidate):
+        #                     current_cluster.append(candidate)
+        #                     all_boxes.remove(candidate)
+        #                     added_anything = True
+        #                     break
+        #
+        #         if not added_anything:
+        #             break
+        #
+        #     clusters.append(current_cluster)
+        #
+        return clusters
