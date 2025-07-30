@@ -32,6 +32,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
         cls.simple_grammar_2_4 = read_grammar('test_data/simple_grammar_2.4.yml')
         cls.simple_grammar_2_5 = read_grammar('test_data/simple_grammar_2.5.yml')
+        cls.simple_grammar_2_6 = read_grammar('test_data/simple_grammar_2.6.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -263,6 +264,30 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 Box(6,13, 4,2),
                 Box(6,4, 4,2),
                 Box(8,1, 4,1),
+            }, set(positions))
+
+    def test_grid2_6(self):
+        gm = GrammarMatcher(grammar=self.simple_grammar_2_6)
+
+        for g in (
+                self.grid5_t,
+                self.grid5_x,
+        ):
+            print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            # self.assertEqual((8, 9), root.box.size)
+
+            marks_array = root['field'].get_children()
+            # self.assertEqual(5, len(marks_array))
+
+            positions = [m.box for m in marks_array]
+            # Note!
+            self.assertSetEqual({
+                Box(0,1, 4,1),
+                ...
             }, set(positions))
 
 
