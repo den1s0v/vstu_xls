@@ -16,6 +16,8 @@ class ArrayPatternMatcher(PatternMatcher):
     pattern: ArrayPattern
 
     _region: Box | RangedBox = None
+    _neighbours: dict[Box, set[Box]] = None
+    _not_neighbours: dict[Box, set[Box]] = None
 
     def find_all(self, region: Box | RangedBox = None, match_limit: open_range = None) -> list[Match2d]:
         """ Find all matches within whole document.
@@ -175,6 +177,29 @@ class ArrayPatternMatcher(PatternMatcher):
             return box1.manhattan_distance_to_contact(box2)
         raise NotImplementedError(f'Unknown distance_kind: {self.pattern.distance_kind}')
 
+    def are_neighbours(self, box1: Box, box2: Box) -> bool:
+        if self._neighbours is None:
+            self._neighbours = defaultdict(set)
+            self._not_neighbours = defaultdict(set)
+
+        if box1 in self._neighbours:
+            if box2 in self._neighbours[box1]:
+                return True
+
+        if box1 in self._not_neighbours:
+            if box2 in self._not_neighbours[box1]:
+                return False
+
+        distance = self.calc_distance(box1, box2)
+        if distance in self.pattern.gap:
+            self._neighbours[box1].add(box2)
+            self._neighbours[box2].add(box1)
+            return True
+        else:
+            self._not_neighbours[box1].add(box2)
+            self._not_neighbours[box2].add(box1)
+            return False
+
     def _find_fill_groups(self, boxes: list[Box]) -> list[list[Box]]:
         """ Find connected clusters of arbitrary form without restriction on direction
         (a cluster may look like an oval or a snake, for instance).
@@ -199,7 +224,7 @@ class ArrayPatternMatcher(PatternMatcher):
                     # For each of current cluster members
                     for member in reversed(current_cluster):
                         # If candidate is close enough to a member
-                        if self.calc_distance(member, candidate) in gap:
+                        if self.are_neighbours(member, candidate):
                             current_cluster.append(candidate)
                             all_boxes.remove(candidate)
                             added_anything = True
@@ -245,8 +270,7 @@ class ArrayPatternMatcher(PatternMatcher):
             else:
                 current_group = [line[0]]
                 for box1, box2 in zip(line[:-1], line[1:]):
-                    distance = self.calc_distance(box1, box2)
-                    if distance in gap:
+                    if self.are_neighbours(box1, box2):
                         current_group.append(box2)
                     else:
                         groups.append(current_group)
