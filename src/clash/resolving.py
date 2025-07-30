@@ -55,7 +55,7 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet',
     def find_spot_arrangements(basis: 'ClashingElementSet') -> set[Arrangement]:
 
         arrangement = Arrangement(basis)
-        arrangements = {arrangement}
+        arrangements: set[Arrangement] = {arrangement}
 
         # обход в ширину: пока "пятно соседей" растёт
         while neighbour_sets := arrangement.closest_neighbour_sets_from(clashing_set):
@@ -71,7 +71,7 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet',
 
                 if element_limit is not None and len(partial_arrangement) >= element_limit:
                     # Add this as-is.
-                    arrangements.append(partial_arrangement)
+                    arrangements.add(Arrangement(partial_arrangement))
                     # Stop growing (reached requested limit)
 
                 else:
