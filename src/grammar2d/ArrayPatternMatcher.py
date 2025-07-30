@@ -116,7 +116,7 @@ class ArrayPatternMatcher(PatternMatcher):
             }[pattern_direction]
             clusters = self._find_groups_along_lines(all_boxes, direction)
 
-        item_count = self.pattern.item_count  # ???
+        # item_count = self.pattern.item_count  # ???
         matches = []
 
         for cluster in clusters:
@@ -200,7 +200,7 @@ class ArrayPatternMatcher(PatternMatcher):
             self._not_neighbours[box2].add(box1)
             return False
 
-    def _find_fill_groups(self, boxes: list[Box]) -> list[list[Box]]:
+    def _find_fill_groups(self, boxes: list[Box] | set[Box]) -> list[list[Box]]:
         """ Find connected clusters of arbitrary form without restriction on direction
         (a cluster may look like an oval or a snake, for instance).
         Pattern's `gap` determines a valid manhattan's distance between cluster's members.
@@ -208,7 +208,7 @@ class ArrayPatternMatcher(PatternMatcher):
             the gap (distance) is the only criteria.
         """
 
-        all_boxes = boxes[:]  # Обновляемый перечень (элементы уходят по мере формирования кластеров)
+        all_boxes = list(boxes)  # Обновляемый перечень (элементы уходят по мере формирования кластеров)
         gap = self.pattern.gap
         clusters = []
 
