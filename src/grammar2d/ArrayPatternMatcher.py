@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from dataclasses import dataclass
 from itertools import product
 
@@ -223,7 +223,7 @@ class ArrayPatternMatcher(PatternMatcher):
         sides_secondary.sort(key=lambda d: d.coordinate_sign)
 
         # groups of aligned boxes
-        boxes_on_lines: dict[tuple[Direction, Direction], list[Box]] = defaultdict(list)
+        boxes_on_lines: dict[tuple[int, int], list[Box]] = defaultdict(list)
 
         # Группировка совпадений по линиям
         for box in boxes:
@@ -286,6 +286,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         # Ограничения
         count_range = self.pattern.item_count
+        too_many = False
 
         # 1) Подготовка.
         if cluster_count in count_range:
@@ -298,11 +299,12 @@ class ArrayPatternMatcher(PatternMatcher):
                 # Cannot split & cannot accept.
                 return []
             need_breakdown = True
+            too_many = True
 
         sc = self.pattern.get_size_constraint()
         width_range, height_range = sc.size_range_tuple if sc else (open_range.parse('1+'),) * 2
 
-        if bbox.w in width_range:
+        if not too_many and bbox.w in width_range:
             # Диапазон c одним (текущим) значением
             width_range = open_range(bbox.w, bbox.w)
         else:
@@ -313,7 +315,7 @@ class ArrayPatternMatcher(PatternMatcher):
                 return []
             need_breakdown = True
 
-        if bbox.h in height_range:
+        if not too_many and bbox.h in height_range:
             # Диапазон c одним (текущим) значением
             height_range = open_range(bbox.h, bbox.h)
         else:
@@ -347,8 +349,15 @@ class ArrayPatternMatcher(PatternMatcher):
             # отбросим первую комбинацию, которая равняется размерам кластера
             del grid_cell_size_list[0]
 
-        # упорядочим по убыванию общего размера
-        grid_cell_size_list.sort(key=sum, reverse=True)
+        # упорядочим по площади,
+        # возрастанию разности координат (более квадратные -- в начале)
+        #  и убыванию общего размера
+        grid_cell_size_list.sort(
+            key=(lambda t: (
+                -(t[0] * t[1]),  # ↓ площадь
+                abs(t[0] - t[1]),  # ↓ вытянутость
+                -(t[0] + t[1]),  # ↓ размер
+            )))
 
         # 2.2) Перебор вариантов сетки.
 
@@ -382,6 +391,7 @@ class ArrayPatternMatcher(PatternMatcher):
             for dx, dy in product(range(0, -gw, -1), range(0, -gh, -1)):
                 # Перебираем все компоненты, отслеживая, в какой квадрант сетки он попадает
                 not_suited = 0
+                counter = Counter(())
 
                 for box in cluster:
                     q = box_quadrant(box)
@@ -392,6 +402,15 @@ class ArrayPatternMatcher(PatternMatcher):
                     # Подошёл, записываем в нужный квадрант
                     k = (*q, gw, gh)  # уникальный набор для каждой комбинации размеров
                     q2boxes[k].add(box)
+                    counter.update((k,))
+
+                # Проверить численность добавленных в квадранты под-кластеров
+                # (далее она меняться уже не будет)
+                # Отсеять те кластеры-проекции, что не попадают теперь по количеству элементов.
+                for k, n in counter.items():
+                    if n not in count_range:
+                        not_suited += 1
+                        del q2boxes[k]
 
                 if not_suited == 0:
                     # удалось уложить все элементы кластера
@@ -406,9 +425,9 @@ class ArrayPatternMatcher(PatternMatcher):
 
             new_cluster = q2boxes[k]
 
-            count = len(new_cluster)
-            if count not in count_range:
-                delete = True
+            # count = len(new_cluster)
+            # if count not in count_range:
+            #     delete = True
 
             new_bbox = Box.union(*new_cluster)  # bounding box: union of group's boxes
             satisfies = self.pattern.check_constraints_for_bbox(new_bbox)

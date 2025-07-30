@@ -21,7 +21,7 @@ class Box:
     def __init__(self, x: int, y: int, w: int, h: int):
         self._tuple = (x, y, w, h)
 
-    def as_tuple(self):
+    def as_tuple(self) -> tuple[int, int, int, int]:
         return self._tuple
 
     def as_dict(self) -> dict:
@@ -35,8 +35,8 @@ class Box:
     def __len__(self):
         return 4
 
-    def __getitem__(self, key):
-        return self._tuple[key]
+    def __getitem__(self, idx) -> int:
+        return self._tuple[idx]
 
     def __iter__(self):
         return iter(self._tuple)
@@ -73,19 +73,19 @@ class Box:
         return NotImplemented
 
     @property
-    def x(self):
+    def x(self) -> int:
         return self._tuple[0]
 
     @property
-    def y(self):
+    def y(self) -> int:
         return self._tuple[1]
 
     @property
-    def w(self):
+    def w(self) -> int:
         return self._tuple[2]
 
     @property
-    def h(self):
+    def h(self) -> int:
         return self._tuple[3]
 
     # other stuff.
@@ -110,40 +110,40 @@ class Box:
         )
 
     @property
-    def position(self):
+    def position(self) -> Point:
         return Point(self.x, self.y)
 
     @property
-    def size(self):
+    def size(self) -> Size:
         return Size(self.w, self.h)
 
     @property
-    def left(self):
+    def left(self) -> int:
         return self.x
 
     @property
-    def right(self):
+    def right(self) -> int:
         return self.x + self.w
 
     @property
-    def top(self):
+    def top(self) -> int:
         return self.y
 
     @property
-    def bottom(self):
+    def bottom(self) -> int:
         return self.y + self.h
 
     @property
-    def rx(self):
+    def rx(self) -> LinearSegment:
         """ Horizontal projection: range by X """
         return self.project('h')
 
     @property
-    def ry(self):
+    def ry(self) -> LinearSegment:
         """ Vertical projection: range by Y """
         return self.project('v')
 
-    def get_side_dy_direction(self, direction):
+    def get_side_dy_direction(self, direction: Direction) -> int:
         return getattr(self, direction.prop_name)
 
     def __str__(self) -> str:
@@ -167,7 +167,7 @@ class Box:
             )
         return False
 
-    def overlaps(self, other):
+    def overlaps(self, other: Self | Point) -> bool:
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return any(p in self for p in other.iterate_corners()) or \
                 other in self or \
