@@ -12,11 +12,10 @@ from grammar2d import read_grammar
 
 from grammar2d.PatternComponent import PatternComponent
 from constraints_2d.LocationConstraint import LocationConstraint
-from geom2d import Box, RangedBox, LEFT, RIGHT, UP, DOWN
-from geom2d import Direction, open_range, RangedSegment
+from geom2d import Box, RangedBox, LEFT, UP, DOWN
+from geom2d import open_range, RangedSegment
 from grammar2d.Match2d import Match2d
-from grammar2d.Pattern2d import Pattern2d
-
+from grammar2d.ArrayPatternMatcher import counts_for_splitting
 
 
 class UtilsTestCase(unittest.TestCase):
@@ -391,6 +390,108 @@ class GrammarTestCase(unittest.TestCase):
             # RIGHT: open_range(None, None),
             DOWN: open_range.parse('0-'),
         }, lc.side_to_gap)
+
+    def test_counts_for_splitting(self):
+        min_part_size, max_part_size = 3, 5
+        self.assertEqual(
+            [],
+            counts_for_splitting(2, min_part_size, max_part_size))
+        self.assertEqual(
+            [3],
+            counts_for_splitting(3, min_part_size, max_part_size))
+        self.assertEqual(
+            [4],
+            counts_for_splitting(4, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],
+            counts_for_splitting(5, min_part_size, max_part_size))
+        self.assertEqual(
+            [3, 3],
+            counts_for_splitting(6, min_part_size, max_part_size))
+        self.assertEqual(
+            [4, 3],
+            counts_for_splitting(7, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 3],
+            counts_for_splitting(8, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 4],
+            counts_for_splitting(9, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],
+            counts_for_splitting(10, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 3, 3],
+            counts_for_splitting(11, min_part_size, max_part_size))
+
+        min_part_size, max_part_size = 4, 5
+        self.assertEqual(
+            [5],
+            counts_for_splitting(5, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(6, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(7, min_part_size, max_part_size))
+        self.assertEqual(
+            [4, 4],
+            counts_for_splitting(8, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 4],
+            counts_for_splitting(9, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],
+            counts_for_splitting(10, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],  # not covering
+            counts_for_splitting(11, min_part_size, max_part_size))
+        self.assertEqual(
+            [4, 4, 4],
+            counts_for_splitting(12, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 4, 4],
+            counts_for_splitting(13, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5, 4],
+            counts_for_splitting(14, min_part_size, max_part_size))
+
+        min_part_size, max_part_size = 5, 5
+        self.assertEqual(
+            [5],
+            counts_for_splitting(5, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(6, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(9, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],
+            counts_for_splitting(10, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],  # not covering
+            counts_for_splitting(11, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],  # not covering
+            counts_for_splitting(14, min_part_size, max_part_size))
+
+        min_part_size, max_part_size = 15, 20
+        self.assertEqual(
+            [16, 15],
+            counts_for_splitting(31, min_part_size, max_part_size))
+        self.assertEqual(
+            [18, 15],  # not covering
+            counts_for_splitting(33, min_part_size, max_part_size))
+        self.assertEqual(
+            [20, 15],  # not covering
+            counts_for_splitting(35, min_part_size, max_part_size))
+        self.assertEqual(
+            [20, 19],
+            counts_for_splitting(39, min_part_size, max_part_size))
+        self.assertEqual(
+            [20, 20, 20, 20, 20, 16, 15],
+            counts_for_splitting(131, min_part_size, max_part_size))
 
 
 if __name__ == '__main__':

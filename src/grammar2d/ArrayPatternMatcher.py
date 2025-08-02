@@ -833,3 +833,46 @@ class ArrayPatternMatcher(PatternMatcher):
             # else:
             #     ...
         return subclusters
+
+
+def counts_for_splitting(
+        total_count: int,
+        min_part_size: int,
+        max_part_size: int,
+) -> list[int]:
+    """ Раскладывает слагаемые из диапазона так, чтобы:
+        в сумме они были равны или близки к total_count,
+        слагаемых было минимальное количество,
+        они были упорядочены по убыванию.
+    """
+    if total_count < min_part_size:
+        return []
+
+    delta = max_part_size - min_part_size
+    if delta == 0:
+        return [max_part_size] * (total_count // max_part_size)
+
+    parts, rem = divmod(total_count, max_part_size)
+    if rem == 0:
+        return [max_part_size] * parts
+
+    expected_parts = parts + 1
+    extra = max_part_size - rem  # === (total_count - max_part_size * expected_parts)
+    last_parts_affected, rem2 = divmod(extra, delta)
+    if rem2 > 0:
+        last_parts_affected += 1
+        middle_elem = max_part_size - rem2
+    else:
+        middle_elem = min_part_size
+
+    if last_parts_affected > expected_parts:
+        # Уложить без остатков не получится. Берём по минимуму.
+        return [max_part_size] * parts
+        # return [min_part_size] * expected_parts
+
+    # Собираем из частей
+    return (
+            [max_part_size] * (expected_parts - last_parts_affected) +
+            [middle_elem] +
+            [min_part_size] * (last_parts_affected - 1)
+    )
