@@ -289,13 +289,12 @@ class GrammarMatchingTestCase(unittest.TestCase):
             positions = [m.box for m in marks_array]
             # Note!
             self.assertSetEqual({
-                Box(21,15, 4,3),
                 Box(0,1, 6,1),
-                Box(6,1, 5,1),
-                Box(11,1, 5,1),
-                Box(16,1, 5,1),
-                Box(21,1, 5,1),
-                Box(26,1, 5,1),
+                Box(6,1, 6,1),
+                Box(12,1, 6,1),
+                Box(18,1, 5,1),
+                Box(23,1, 4,1),
+                Box(27,1, 4,1),
                 Box(28,5, 1,6),
                 Box(28,11, 1,6),
                 Box(3,5, 6,3),
@@ -305,6 +304,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 Box(15,5, 6,3),
                 Box(12,13, 6,2),
                 Box(18,8, 4,5),
+                Box(21,15, 4,3),
             }, set(positions))
 
     def test_grid2_7(self):
@@ -327,8 +327,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
             positions = [m.box for m in marks_array]
             # Note!
             self.assertSetEqual({
-                Box(21,15, 4,3),
-                ...
+                Box(0,1, 5,1), Box(21,15, 4,2), Box(10,23, 3,3), Box(1,5, 5,1), Box(13,25, 3,2), Box(7,14, 2,4), Box(19,1, 4,1), Box(10,26, 3,2), Box(9,17, 3,3), Box(16,9, 2,2), Box(11,23, 5,1), Box(27,1, 4,1), Box(11,3, 5,1), Box(3,17, 3,2), Box(26,5, 4,1), Box(16,3, 5,1), Box(17,7, 4,1), Box(15,1, 4,1), Box(6,3, 5,1), Box(1,3, 5,1), Box(25,20, 4,1), Box(25,12, 3,2), Box(11,9, 1,5), Box(10,1, 5,1), Box(16,5, 5,1), Box(18,15, 2,4), Box(9,9, 1,4), Box(23,9, 2,3), Box(11,15, 4,2), Box(25,15, 5,1), Box(23,17, 2,4), Box(6,5, 5,1), Box(11,24, 5,1), Box(3,14, 3,2), Box(24,17, 4,2), Box(19,18, 3,3), Box(16,12, 3,2), Box(23,1, 4,1), Box(29,16, 1,5), Box(26,3, 5,1), Box(21,3, 5,1), Box(12,18, 3,3), Box(10,22, 5,1), Box(4,19, 4,2), Box(12,7, 4,1), Box(19,9, 2,3), Box(11,27, 4,1), Box(20,12, 3,2), Box(21,5, 5,1), Box(22,7, 5,1), Box(5,1, 5,1), Box(11,5, 5,1),
             }, set(positions))
 
 
