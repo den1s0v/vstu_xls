@@ -770,6 +770,7 @@ class ArrayPatternMatcher(PatternMatcher):
         subclusters: list[list[Box]] = []
         unused_boxes = set(connected_cluster)
         start_candidates: set[Box] | None = None
+        uncovered_elements = 0
 
         for desired_count in desired_counts:
 
@@ -782,7 +783,8 @@ class ArrayPatternMatcher(PatternMatcher):
             bbox = VariBox.from_box(left_top)
 
             # Наращиваем пятно до нужного размера.
-            while len(spot) < desired_count:
+            count_to_search = min(max_count, desired_count + uncovered_elements)
+            while len(spot) < count_to_search:
                 outer_neighbours = ({
                     neighbour
                     for member in spot
@@ -808,6 +810,8 @@ class ArrayPatternMatcher(PatternMatcher):
                 bbox.grow_to_cover(closest_neighbour)
 
             unused_boxes -= spot
+            # Учтём, если удалось найти меньше желаемого (плюсуется и минусуется соответственно)
+            uncovered_elements += (desired_count - len(spot))
             if len(spot) >= min_count:
                 subclusters.append(list(sorted(spot)))
 
