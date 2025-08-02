@@ -5,7 +5,7 @@ from itertools import product
 from loguru import logger
 
 from clash import find_combinations_of_compatible_elements, trivial_components_getter
-from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range, Point
+from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range, Point, VariBox
 from grammar2d import ArrayPattern
 from grammar2d.PatternMatcher import PatternMatcher
 from grammar2d.Match2d import Match2d
@@ -397,7 +397,7 @@ class ArrayPatternMatcher(PatternMatcher):
             corner1, corner2 = box.iterate_corners('diagonal')
             # Сдвинуть правый нижний угол внутрь области
             # (иначе она попадёт на следующий квадрант)
-            corner2 = Point(corner2.x - 1, corner2.y - 1,)
+            corner2 = Point(corner2.x - 1, corner2.y - 1, )
             corner1_q = point_quadrant(corner1)
             if corner1 == corner2:
                 return corner1_q  # Если размер box: 1х1 (раннее завершение)
@@ -519,6 +519,7 @@ class ArrayPatternMatcher(PatternMatcher):
         # Ограничения
         count_range = self.pattern.item_count
         too_many = False
+        too_large = False
 
         # 1) Подготовка.
         if cluster_count in count_range:
@@ -536,7 +537,8 @@ class ArrayPatternMatcher(PatternMatcher):
         sc = self.pattern.get_size_constraint()
         width_range, height_range = sc.size_range_tuple if sc else (open_range.parse('1+'),) * 2
 
-        if not too_many and bbox.w in width_range:
+        fits_width = bbox.h in height_range
+        if not too_many and fits_width:
             # Диапазон c одним (текущим) значением
             width_range = open_range(bbox.w, bbox.w)
         else:
@@ -546,8 +548,11 @@ class ArrayPatternMatcher(PatternMatcher):
                 # Ширина кластера слишком мала, делить нечего.
                 return []
             need_breakdown = True
+            if not fits_width:
+                too_large = True
 
-        if not too_many and bbox.h in height_range:
+        fits_height = bbox.h in height_range
+        if not too_many and fits_height:
             # Диапазон c одним (текущим) значением
             height_range = open_range(bbox.h, bbox.h)
         else:
@@ -557,6 +562,8 @@ class ArrayPatternMatcher(PatternMatcher):
                 # Ширина кластера слишком мала, делить нечего.
                 return []
             need_breakdown = True
+            if not fits_height:
+                too_large = True
 
         # satisfies = self.pattern.check_constraints_for_bbox(bbox)
         # if not satisfies:
@@ -569,6 +576,10 @@ class ArrayPatternMatcher(PatternMatcher):
         if not self.pattern.allow_breakdown:
             # Cannot accept & cannot split.
             return []
+
+        # 2.0) Если нет ограничений по размерам, то другой алгоритм.
+        if not too_large:
+            return self._split_to_subclusters_of_desired_count(cluster, count_range)
 
         # 2.1) Инициализация сетки, накладываемой на область кластера.
 
@@ -605,7 +616,7 @@ class ArrayPatternMatcher(PatternMatcher):
             corner1, corner2 = box.iterate_corners('diagonal')
             # Сдвинуть правый нижний угол внутрь области
             # (иначе она попадёт на следующий квадрант)
-            corner2 = Point(corner2.x - 1, corner2.y - 1,)
+            corner2 = Point(corner2.x - 1, corner2.y - 1, )
             corner1_q = point_quadrant(corner1)
             if corner1 == corner2:
                 return corner1_q  # Если размер box: 1х1 (раннее завершение)
@@ -656,7 +667,7 @@ class ArrayPatternMatcher(PatternMatcher):
                         del local_q2boxes[k]
                         # Добавим подгруппы как отдельные кластеры, ниже проверим их численность вместе со всеми.
                         for box_group in box_groups:
-                            k2 = (extra_i, )
+                            k2 = (extra_i,)
                             extra_i += 1
                             local_q2boxes[k2] = box_group
 
@@ -721,17 +732,12 @@ class ArrayPatternMatcher(PatternMatcher):
 
         return best_subclusters
 
-
-
     def _split_to_subclusters_of_desired_count(
             self,
             connected_cluster: list[Box] | set[Box],
-            item_count: range = None) -> list[list[
-        Box]]:
-        """ Find connected clusters of arbitrary form without restriction on direction
-
+            item_count: open_range | None = None) -> list[list[Box]]:
+        """ Find connected sub-clusters of desired count but without restriction on size
         """
-
         if item_count is None:
             item_count = self.pattern.item_count
 
@@ -753,42 +759,65 @@ class ArrayPatternMatcher(PatternMatcher):
         # if max_count is None:
         #     max_count = n
 
+        # Определяем размер максимально полного наложения
+        # по минимальному остатку и максимальному размеру части
+        _rem, basic_count = max((
+            (
+                # нераспределённый остаток, с понижением рейтинга при максимальном размере части и ненулевом остатке
+                # (n // i — это "штраф", превышающий возможную добавку при использовании части меньшего размера):
+                -(n % i + (n // i if i == max_count and n % i > 0 else 0)),
+                i,  # размер части
+            )
+            for i in range(min_count, max_count + 1)
+        ))
+        remaining = -_rem
+        parts = n // basic_count
 
-        if n // min_count == 1:
-            # Даже если по минимуму, 2 штуки не уместятся:
-            # единственный способ — отрезать лишние края
-            # до полноценного совпадения.
-            # Найдём все слабо связанные элементы, примыкающие к рамкам общей области.
+        # Кол-во элементов в находимых далее областях
+        desired_counts = [
+            min(max_count, basic_count + (1 if i < remaining else 0))
+            for i in range(parts)
+        ]
 
-            ...
+        # Ищем части, состоящие из заданного количества элементов.
+        # В каждую часть (под-кластер) добавляем всех ближайших соседей.
 
+        subclusters: list[list[Box]] = []
+        unused_boxes = set(connected_cluster)
 
+        for desired_count in desired_counts:
+            left_top = min(unused_boxes, key=lambda box: sum(box.position))
+            spot = {left_top}
+            bbox = VariBox.from_box(left_top)
 
-        # all_boxes = list(boxes)  # Обновляемый перечень (элементы уходят по мере формирования кластеров)
-        # gap = self.pattern.gap
-        # clusters = []
-        #
-        # while all_boxes:
-        #     # init cluster
-        #     current_cluster = [all_boxes.pop(0)]
-        #
-        #     # Find more items for this cluster (complete search) ...
-        #     while all_boxes:
-        #         added_anything = False
-        #         # For each of candidates (remaining unused boxes)
-        #         for candidate in all_boxes[:]:
-        #             # For each of current cluster members
-        #             for member in reversed(current_cluster):
-        #                 # If candidate is close enough to a member
-        #                 if self.are_neighbours(member, candidate):
-        #                     current_cluster.append(candidate)
-        #                     all_boxes.remove(candidate)
-        #                     added_anything = True
-        #                     break
-        #
-        #         if not added_anything:
-        #             break
-        #
-        #     clusters.append(current_cluster)
-        #
-        return clusters
+            while len(spot) < desired_count:
+                outer_neighbours = ({
+                    neighbour
+                    for member in spot
+                    for neighbour in self._neighbours[member]
+                } - spot) & unused_boxes
+
+                if not outer_neighbours:
+                    # Данные о соседях могли не записаться (ранее)
+                    outer_neighbours = ({
+                        box
+                        for member in spot
+                        for box in unused_boxes
+                        if self.are_neighbours(member, box)
+                    } - spot)
+
+                # ... ????
+
+                if not outer_neighbours:
+                    break
+                closest_neighbour = min(outer_neighbours, key=lambda b: self.calc_distance(b, bbox))
+
+                spot.add(closest_neighbour)
+                bbox.grow_to_cover(closest_neighbour)
+
+            unused_boxes -= spot
+            if len(spot) >= min_count:
+                subclusters.append(list(sorted(spot)))
+            # else:
+            #     ...
+        return subclusters
