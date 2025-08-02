@@ -784,12 +784,19 @@ class ArrayPatternMatcher(PatternMatcher):
 
         subclusters: list[list[Box]] = []
         unused_boxes = set(connected_cluster)
+        start_candidates: set[Box] | None = None
 
         for desired_count in desired_counts:
-            left_top = min(unused_boxes, key=lambda box: sum(box.position))
+
+            left_top = min(
+                start_candidates or unused_boxes,
+                key=lambda box: sum(box.position)
+            )
+            start_candidates = None  # Prevent subsequent usage.
             spot = {left_top}
             bbox = VariBox.from_box(left_top)
 
+            # Наращиваем пятно до нужного размера.
             while len(spot) < desired_count:
                 outer_neighbours = ({
                     neighbour
@@ -805,11 +812,11 @@ class ArrayPatternMatcher(PatternMatcher):
                         for box in unused_boxes
                         if self.are_neighbours(member, box)
                     } - spot)
-
-                # ... ????
+                # ... TODO: cache neighbours of perviously added members ↑.
 
                 if not outer_neighbours:
                     break
+
                 closest_neighbour = min(outer_neighbours, key=lambda b: self.calc_distance(b, bbox))
 
                 spot.add(closest_neighbour)
@@ -818,6 +825,11 @@ class ArrayPatternMatcher(PatternMatcher):
             unused_boxes -= spot
             if len(spot) >= min_count:
                 subclusters.append(list(sorted(spot)))
+
+                if len(outer_neighbours) > 1:
+                    # Выберем начало следующего пятна из неиспользованных соседей текущего
+                    # outer_neighbours.remove(closest_neighbour)
+                    start_candidates = outer_neighbours & unused_boxes
             # else:
             #     ...
         return subclusters
