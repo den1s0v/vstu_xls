@@ -761,23 +761,8 @@ class ArrayPatternMatcher(PatternMatcher):
 
         # Определяем размер максимально полного наложения
         # по минимальному остатку и максимальному размеру части
-        _rem, basic_count = max((
-            (
-                # нераспределённый остаток, с понижением рейтинга при максимальном размере части и ненулевом остатке
-                # (n // i — это "штраф", превышающий возможную добавку при использовании части меньшего размера):
-                -(n % i + (n // i if i == max_count and n % i > 0 else 0)),
-                i,  # размер части
-            )
-            for i in range(min_count, max_count + 1)
-        ))
-        remaining = -_rem
-        parts = n // basic_count
-
         # Кол-во элементов в находимых далее областях
-        desired_counts = [
-            min(max_count, basic_count + (1 if i < remaining else 0))
-            for i in range(parts)
-        ]
+        desired_counts = counts_for_splitting(n, min_count, max_count)
 
         # Ищем части, состоящие из заданного количества элементов.
         # В каждую часть (под-кластер) добавляем всех ближайших соседей.
