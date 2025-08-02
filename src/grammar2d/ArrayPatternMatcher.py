@@ -537,7 +537,7 @@ class ArrayPatternMatcher(PatternMatcher):
         sc = self.pattern.get_size_constraint()
         width_range, height_range = sc.size_range_tuple if sc else (open_range.parse('1+'),) * 2
 
-        fits_width = bbox.h in height_range
+        fits_width = bbox.w in width_range
         if not too_many and fits_width:
             # Диапазон c одним (текущим) значением
             width_range = open_range(bbox.w, bbox.w)
