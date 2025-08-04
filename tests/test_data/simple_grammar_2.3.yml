@@ -99,14 +99,18 @@ patterns:
     # item_count: 9
     # item_pattern: mark
     inner:
+      anchor:
+        pattern: mark
+        location: {left: 0, top: 1, bottom: 1}
       marks:
         kind: array-in-context
         item_pattern: mark
         direction: fill
-        size: 3 x 3  # размер в ячейках Excel
+        size: 2 x 3  # размер в ячейках Excel
         # gap: 0+
-        description: Метка в группе 3 x 3
-        item_count: 9
+        description: Метка в группе 2 x 3
+        item_count: 6
+        allow_breakdown: true
         location: left, right, top, bottom   # полное равенство - coinside
 
   field:
