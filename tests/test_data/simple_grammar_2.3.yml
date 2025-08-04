@@ -103,15 +103,16 @@ patterns:
         pattern: mark
         location: {left: 0, top: 1, bottom: 1}
       marks:
-        kind: array-in-context
-        item_pattern: mark
-        direction: fill
-        size: 2 x 3  # размер в ячейках Excel
-        # gap: 0+
-        description: Метка в группе 2 x 3
-        item_count: 6
-        allow_breakdown: true
-        location: left, right, top, bottom   # полное равенство - coinside
+        pattern_definition:
+          kind: array-in-context
+          item_pattern: mark
+          direction: fill
+          size: 2 x 3  # размер в ячейках Excel
+          # gap: 0+
+          description: Метка в группе 2 x 3
+          item_count: 6
+          allow_breakdown: true
+        location: [left: 1, right, top, bottom]
 
   field:
     description: Все группы меток на поле
