@@ -246,7 +246,7 @@ class AreaPatternMatcher(PatternMatcher):
             match_list = self.get_component_matches(
                 component,
                 region=child_region,
-                match_limit=1,  # TODO: handle if multiple per match??
+                match_limit=1,  # expecting only one component per match.
             )
 
         # 1. ранжируем всех кандидатов по расположению относительно текущего матча
@@ -332,7 +332,7 @@ class AreaPatternMatcher(PatternMatcher):
             m2.data.ranged_box = combined_rb
 
             if can_recurse:
-                sub_results = self._best_matches(next_pos, m2, 1)  # TODO: 1 ??  max_max_results ??
+                sub_results = self._best_matches(next_pos, m2, 1)  # 1: expecting only one component per match.
                 complete_matches.extend(sub_results)
             else:
                 # Последний компонент добавлен
@@ -354,7 +354,7 @@ class AreaPatternMatcher(PatternMatcher):
                                          )
             if can_recurse:
                 m2 = existing_match
-                sub_results = self._best_matches(next_pos, m2, 1)  # TODO: 1 ??  max_max_results ??
+                sub_results = self._best_matches(next_pos, m2, 1)  # 1: expecting only one component per match.
                 complete_matches.extend(sub_results)
             else:
                 # Последний компонент добавлен
