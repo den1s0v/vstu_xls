@@ -77,6 +77,7 @@ class PatternComponent(WithCache, WithSafeCreate):
     # def is_optional(self) -> bool:
     #     return self.weight <= 0
 
+    # deprecated
     @property
     def global_constraints(self) -> list[SpatialConstraint]:
         """ "Глобальные" ограничения — запись координат преобразована из сокращённой формы в полную:
@@ -327,17 +328,23 @@ class PatternComponent(WithCache, WithSafeCreate):
 
         # Apply constraints
         for constraint in self.constraints:
-            if not isinstance(constraint, LocationConstraint):
+            if isinstance(constraint, LocationConstraint):
+                if self.inner:
+                    rbox = self._apply_inside_constraint(rbox, constraint, mbox)
+                else:
+                    rbox = self._apply_outside_constraint(rbox, constraint, mbox)
+
+            elif isinstance(constraint, SizeConstraint):
+                # Ограничения на размер компонента не влияет на положение родителя,
+                # т.к. размеры компонента уже известны.
+                pass
+
+            else:
                 logger.warning(f'Unsupported Constraint: pattern `{self.subpattern.name
                 }` defines constraint ({constraint!r
                 }) of type {constraint.__class__.__name__
                 }  that is not supported yet.')
                 continue
-
-            if self.inner:
-                rbox = self._apply_inside_constraint(rbox, constraint, mbox)
-            else:
-                rbox = self._apply_outside_constraint(rbox, constraint, mbox)
 
         return rbox
 
