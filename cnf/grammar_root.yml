@@ -82,11 +82,12 @@ patterns:
 
     inner:  # содержимое
       groups:
-        kind: array  # массив или ряд элементов, выровненных друг относительно друга
-        direction: row  #  по горизонтали (если не указать, то в любом направлении)
-        description: учебная группа в заголовке
-        item_pattern: group_in_header
-        item_count: 1+
+        pattern_definition:
+          kind: array  # массив или ряд элементов, выровненных друг относительно друга
+          direction: row  #  по горизонтали (если не указать, то в любом направлении)
+          description: учебная группа в заголовке
+          item_pattern: group_in_header
+          item_count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
@@ -110,21 +111,23 @@ patterns:
 
     inner:  # содержимое
       month_names:
-        kind: array  # массив (ряд)
-        direction: row
-        item_pattern: month_name  # определено ниже
-        item_count: 3..5
+        pattern_definition:
+          kind: array  # массив (ряд)
+          direction: row
+          item_pattern: month_name  # определено ниже
+          item_count: 3..5
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может
           - right: 0..2  # отстоять на 0..2 ячеек (внутрь)
 
       weeks:
-        kind: array  # массив (ряд) элементов,
-        direction: column  #  выровненных по вертикали
-        item_pattern: week_datetime  # ... TODO
-        item_count: 2
-        gap: 1  # 1 ячейка между неделями
+        pattern_definition:
+          kind: array  # массив (ряд) элементов,
+          direction: column  #  выровненных по вертикали
+          item_pattern: week_datetime  # ... TODO
+          item_count: 2
+          gap: 1  # 1 ячейка между неделями
         location: left, right,  bottom
 
 
@@ -147,10 +150,11 @@ patterns:
 
     inner:  # содержимое
       days:
-        kind: array  # массив (ряд)
-        direction: column
-        item_pattern: day_datetime
-        item_count: 5..6
+        pattern_definition:
+          kind: array  # массив (ряд)
+          direction: column
+          item_pattern: day_datetime
+          item_count: 5..6
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может
@@ -168,20 +172,22 @@ patterns:
 
     inner:  # содержимое
       week_day:
-        kind: cell
-        description: день недели (ПН, ВТ, ...)
-        content_type: week_day
+        pattern_definition:
+          kind: cell
+          description: день недели (ПН, ВТ, ...)
+          content_type: week_day
         location: top, bottom
 
       month_days:
         pattern: month_days
 
       hours:
-        kind: array
-        description: столбец с указанием пар (академ. часов)
-        direction: column
-        item_pattern: hour_range
-        item_count: 2..6
+        pattern_definition:
+          kind: array
+          description: столбец с указанием пар (академ. часов)
+          direction: column
+          item_pattern: hour_range
+          item_count: 2..6
         location: top, bottom
 
 
@@ -191,9 +197,10 @@ patterns:
 
     inner:  # содержимое
       hour_range:
-        kind: cell
-        size: 1 x 2+
-        content_type: hour_range
+        pattern_definition:
+          kind: cell
+          size: 1 x 2+
+          content_type: hour_range
 
     outer:  # ограничения на контекст (!!)
       week_day:
@@ -207,9 +214,10 @@ patterns:
 
     inner: # содержимое
       month_days:
-        kind: array
-        item_pattern: month_day
-        direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить
+        pattern_definition:
+          kind: array
+          item_pattern: month_day
+          direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить... ← Пока нет.
 
     outer:  # ограничения на контекст (!!)
       week_day:
@@ -223,9 +231,10 @@ patterns:
 
     inner:  # содержимое
       month_day:
-        kind: cell
-        size: 1 x 2+
-        content_type: month_day
+        pattern_definition:
+          kind: cell
+          size: 1 x 2+
+          content_type: month_day
 
     outer:  # ограничения на контекст (!!)
       week_day:

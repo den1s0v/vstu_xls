@@ -266,12 +266,15 @@ def read_pattern_component(
 
     if 'pattern' not in data:
         # got inline pattern definition...
+        if 'pattern_definition' not in data:
+            raise ValueError(f"grammar pattern `{pattern_name}` has component `{name
+                }` that defines no 'pattern' nor 'pattern_definition'.")
 
-        # pattern_data = dict(data)
+        pattern_data = dict(data['pattern_definition'])
         # make a name for anon pattern
-        data['name'] = component_name + '[inline]'
+        pattern_data['name'] = component_name + '[inline]'
         # parse inline pattern
-        parsed_pattern = read_pattern(data)
+        parsed_pattern = read_pattern(pattern_data)
         if not parsed_pattern:
             return None  # Fail too
 
