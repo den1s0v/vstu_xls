@@ -175,7 +175,9 @@ class RangedBox:
         return self.rx.covers(other.rx) and self.ry.covers(other.ry)
 
     def __contains__(self, other):
-        return self.maximal_box().covers(other)
+        """ Returns True iff given box lies anywhere within probable area's outline """
+        mb = self.maximal_box()
+        return other.rx in mb.rx and other.ry in mb.ry
 
     def __hash__(self) -> int:
         return hash((hash(self.rx), hash(self.ry)))

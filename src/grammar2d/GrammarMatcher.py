@@ -182,7 +182,7 @@ class GrammarMatcher:
                 else:
                     # still try to find indirect matches
                     for ch_m in matched_within_regions:
-                        if region in ch_m:
+                        if ch_m and region in ch_m:
                             # Желаемый регион внутри ранее найденного.
                             # Прямая выборка из него в общем случае может быть неоптимальной
                             # (при сдвиге начала по "чётности", например).

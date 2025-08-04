@@ -90,6 +90,11 @@ class RangedSegment:
         i.e. other's ends belong to the probable area, including the borders."""
         return self.a.includes(other.a) and self.b.includes(other.b)
 
+    def __contains__(self, other: Self | LinearSegment):
+        """ Returns True iff given segment lies anywhere within probable area's ends. """
+        mr = self.maximal_range()
+        return mr.includes(other.a) and mr.includes(other.b)
+
     def __eq__(self, other):
         if isinstance(other, RangedSegment):
             return self.a == other.a and self.b == other.b
