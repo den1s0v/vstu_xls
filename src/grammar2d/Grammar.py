@@ -82,6 +82,11 @@ class Grammar(WithCache):
             pattern = self.patterns[name_or_el]
         return pattern
 
+    def __str__(self):
+        return f'Grammar[{len(self.cell_types)} cell types, {len(self.patterns)} patterns]'
+
+    __repr__ = __str__
+
     def get_effective_cell_types(self) -> dict[str, CellType]:
         """ Get cell types only used for matching, i.e. omit unused ones. """
         effective_cell_types = {}

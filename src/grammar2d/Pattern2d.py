@@ -294,7 +294,7 @@ def read_pattern_component(
     component = pc.PatternComponent.safe_create(**data)
     keys_ignored &= set(component._kwargs_ignored)
 
-    if (keys_ignored):
+    if keys_ignored:
         print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has component `{name \
             }` that defines unrecognized keys: {keys_ignored}.")
 
@@ -302,6 +302,9 @@ def read_pattern_component(
 
 
 def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:
+    """ Finds keys 'size', 'location' (so far) and parses them as `SpatialConstraint`s.
+     By the way, deletes corresponding keys from `data`!
+     """
     constraints = []
     # size
     # location
