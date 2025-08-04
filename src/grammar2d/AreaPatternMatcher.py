@@ -97,7 +97,29 @@ class AreaPatternMatcher(PatternMatcher):
             lambda m: m.precision >= component.precision_threshold,
             matches))
 
+        self._set_parent_location_to_component_matches(component, matches)
         return matches
+
+    def _set_parent_location_to_component_matches(
+            self,
+            pattern_component: PatternComponent,
+            match_list: list[Match2d]):
+
+        size_constraint = self.pattern.get_size_constraint()
+
+        for component_match in match_list:
+            # Получить область потенциального местонахождения родителя-area
+            parent_location = pattern_component.get_ranged_box_for_parent_location(component_match)
+
+            # Apply size constraint once here.
+            if size_constraint:
+                parent_location = parent_location.restricted_by_size(*size_constraint)
+
+            if component_match.data.parent_location is None:
+                # словарь не создан
+                component_match.data.parent_location = dict()
+            # Записать в метаданные
+            component_match.data.parent_location[(self.pattern.name, pattern_component.name)] = parent_location
 
     def find_match_candidates_3(self, region: Box = None) -> list[Match2d]:
         """ Find all matches no matter if they do apply simultaneously or not.
@@ -133,23 +155,7 @@ class AreaPatternMatcher(PatternMatcher):
         # 2. Получить все "развёрнутые" области потенциального местонахождения родителя-area
         #    для последующего комбинирования.
         #   Записать в метаданные: match.data.parent_location[pattern]: RangedBox
-
-        size_constraint = self.pattern.get_size_constraint()
-
-        for pattern_component, match_list in component_matches_list:
-            for component_match in match_list:
-                # Получить область потенциального местонахождения родителя-area
-                parent_location = pattern_component.get_ranged_box_for_parent_location(component_match)
-
-                # Apply size constraint once here.
-                if size_constraint:
-                    parent_location = parent_location.restricted_by_size(*size_constraint)
-
-                if component_match.data.parent_location is None:
-                    # словарь не создан
-                    component_match.data.parent_location = dict()
-                # Записать в метаданные
-                component_match.data.parent_location[(pattern.name, pattern_component.name)] = parent_location
+        # (см. _set_parent_location_to_component_matches)
 
         # 3. Найти комбинации из паттернов всех обязательных компонентов, дающие непустой матч для area.
         # 3.1. После обязательных, добавлять в каждый матч опциональные компоненты, попавшие в "зону влияния"
@@ -166,9 +172,10 @@ class AreaPatternMatcher(PatternMatcher):
         #  В случае нулевой дельты взять порог равным 1 лишней клетке. ??)
         #  По отобранным кандидатам углубляемся внутрь (рекурсия).
 
-        # Сортировать: все опциональные в конце, сначала внутренние, по возрастанию числа матчей
+        # Сортировать: все опциональные в конце, сначала независимые и внутренние, по возрастанию числа матчей
         component_matches_list.sort(key=lambda t: (
-            not t[0].optional,
+            t[0].optional,
+            not t[0].subpattern.independently_matchable(),
             not t[0].inner,
             len(t[1]),  # ↑
         ))
@@ -181,7 +188,7 @@ class AreaPatternMatcher(PatternMatcher):
         # и (?) первый (после сортировки) будет обязательным (?)
         # Запросим варианты главного совпадения по всем элементам первого компонента;
         # по остальным уровням рекурсии задано максимум 1 результат.
-        assert component_matches_list
+        assert component_matches_list  # TODO ↑
         # assert not plan[0][0].optional, plan[0]
         first_comp_matches_count = len(plan[0][1])
 
@@ -225,18 +232,20 @@ class AreaPatternMatcher(PatternMatcher):
 
         rb1 = existing_match.data.ranged_box if existing_match else None
 
-        if not match_list and component.subpattern.independently_matchable():
-            # Только сейчас стало возможно искать компонент,
-            # когда часть компонентов уже известна и может подсказать расположение этого
+        #  not match_list and
+        if not component.subpattern.independently_matchable():
+            # Только сейчас стало возможно искать зависимый компонент,
+            # когда часть компонентов уже известна и может подсказать его расположение
             if existing_match:
                 # Infer expectation for component
                 child_region = component.get_ranged_box_for_component_location(rb1)
             else:
                 child_region = None
+
             match_list = self.get_component_matches(
                 component,
                 region=child_region,
-                match_limit=1,  # TODO: handle if multiple??
+                match_limit=1,  # TODO: handle if multiple per match??
             )
 
         # 1. ранжируем всех кандидатов по расположению относительно текущего матча
