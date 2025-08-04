@@ -152,6 +152,8 @@ class AreaPatternMatcher(PatternMatcher):
 
             component_matches_list.append((pattern_component, occurrences))
 
+        assert component_matches_list  # at least one component is expected.
+
         # 2. Получить все "развёрнутые" области потенциального местонахождения родителя-area
         #    для последующего комбинирования.
         #   Записать в метаданные: match.data.parent_location[pattern]: RangedBox
@@ -186,12 +188,11 @@ class AreaPatternMatcher(PatternMatcher):
 
         # Будем считать, что компонентов ненулевое кол-во,
         # и (?) первый (после сортировки) будет обязательным (?)
-        # Запросим варианты главного совпадения по всем элементам первого компонента;
-        # по остальным уровням рекурсии задано максимум 1 результат.
-        assert component_matches_list  # TODO ↑
         # assert not plan[0][0].optional, plan[0]
-        first_comp_matches_count = len(plan[0][1])
 
+        # Запросим варианты главного совпадения по всем элементам первого компонента;
+        # по остальным компонентам (уровням рекурсии) задан максимум 1 результат.
+        first_comp_matches_count = len(plan[0][1])
         complete_matches = self._best_matches(
             plan.get_position(),
             None,
