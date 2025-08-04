@@ -227,9 +227,7 @@ class GrammarMatcher:
         ###
         logger.debug('')
         logger.debug(f':: {len(matches)} matches of DEPENDENT pattern `{pattern.name}` ↓')
-        logger.debug([
-            (m.get_content(), m.box)
-            for m in matches
-        ])
+        for m in matches:
+            logger.debug([m.box, m.get_content()])
         # ...
         return matches
