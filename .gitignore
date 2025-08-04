@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 ~$*.*
 *.prof
+tests/test_data/debug/
 
 # C extensions
 *.so
