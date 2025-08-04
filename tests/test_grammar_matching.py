@@ -181,20 +181,20 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
             self.assertEqual(1, len(matched_documents))
             root = matched_documents[0]
-            self.assertEqual((8, 9), root.box.size)
+            self.assertEqual((7, 9), root.box.size)
 
             groups_3x3 = root['field'].get_children()
             self.assertEqual(5, len(groups_3x3))
 
-            positions = [m.box.position for m in groups_3x3]
+            positions = [m.box for m in groups_3x3]
             # Note!
             self.assertSetEqual({
-                    Point(x=1, y=2),
-                    Point(x=1, y=5),
-                    Point(x=4, y=4),
-                    Point(x=4, y=7),
-                    Point(x=6, y=1)},
-                set(positions))
+                    Box(1,2, 3,3),
+                    Box(1,5, 3,3),
+                    Box(4,4, 3,3),
+                    Box(4,7, 3,3),
+                    Box(5,1, 3,3),
+            }, set(positions))
 
     def test_grid2_4(self):
         gm = GrammarMatcher(grammar=self.simple_grammar_2_4)
