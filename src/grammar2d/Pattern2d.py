@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-from constraints_2d import BoolExprRegistry, SpatialConstraint, SizeConstraint, LocationConstraint
 import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
 import grammar2d.PatternComponent as pc
 import grammar2d.PatternMatcher as pm
-from geom2d import open_range, Box
+from constraints_2d import BoolExprRegistry, SpatialConstraint, SizeConstraint
 from geom2d import Point
+from geom2d import open_range, Box
 from utils import WithCache, WithSafeCreate, sorted_list
 
 
