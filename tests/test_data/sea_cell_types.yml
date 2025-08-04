@@ -1,0 +1,22 @@
+cell_types:
+
+  - water:
+      description: вода
+      patterns:
+        - confidence: 1.00
+          pattern: '~'
+          pattern_syntax: plain
+
+  - sand:
+      description: песок
+      patterns:
+        - confidence: 1.00
+          pattern: '#'
+          pattern_syntax: plain
+
+  - tree:
+      description: пальма
+      patterns:
+        - confidence: 1.00
+          pattern: '[TТ]'  # latin, rus
+          pattern_syntax: re
