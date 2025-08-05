@@ -79,6 +79,10 @@ class RangedSegment:
     def maximal_range(self) -> open_range:
         return open_range(self.a.start, self.b.stop)
 
+    def is_point(self) -> bool:
+        """ An empty segment has zero length & can be treated as point. """
+        return self.a.is_point() and self.b.is_point() and self.a.point == self.b.point
+
     def is_deterministic(self) -> bool:
         return self.a.is_point() and self.b.is_point()
 

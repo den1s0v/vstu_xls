@@ -1,0 +1,84 @@
+cell_types_filepath: 'test_data/sea_cell_types.yml'
+
+
+patterns:
+  water:
+    description: Вода
+    kind: cell
+    content_type: water
+
+  sand:
+    description: Песок
+    kind: cell
+    content_type: sand
+    extends: [earth]
+
+  tree:
+    description: Дерево
+    kind: cell
+    content_type: tree
+    extends: [earth]
+
+  earth:
+    description: Суша
+    kind: general
+
+
+  beach:
+    description: Пляж
+    kind: general
+
+  beach-L:
+    extends: [beach]
+    description: Пляж слева
+    kind: area
+    inner:
+      sand:
+        pattern: sand
+        location: left, right, top, bottom  # coinside
+        # location: all: 0  # coinside
+    outer:
+      sea:
+        pattern: sea
+        # location: any: 0  # (OR для всех сторон) → 0
+        location: right
+
+  beach-R:
+    extends: [beach]
+    description: Пляж справа
+    kind: area
+    inner:
+      sand:
+        pattern: sand
+        location: left, right, top, bottom  # coinside
+    outer:
+      sea:
+        pattern: sea
+        location: left
+
+
+  island:
+    description: остров
+    kind: array
+    direction: fill
+    item_pattern: beach
+    # item_pattern: earth
+    item_count: 1+
+
+  field:
+    description: Все острова на поле
+    kind: array
+    direction: fill
+    item_pattern: island
+    item_count: 1+
+    gap: 2+
+
+  root:
+    description: всё поле
+    kind: area
+    root: true
+    count_in_document: 1
+
+    inner:  # содержимое
+      field:
+        pattern: field

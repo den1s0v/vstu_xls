@@ -542,6 +542,9 @@ class ArrayPatternMatcher(PatternMatcher):
             # Диапазон c одним (текущим) значением
             width_range = open_range(bbox.w, bbox.w)
         else:
+            if bbox.w < width_range:
+                # Делить нечего.
+                return []
             # Ограничим ожидаемые диапазоны максимумом — размерами данного кластера
             width_range = width_range.intersect(open_range(1, bbox.w))
             if width_range is None:
@@ -556,6 +559,9 @@ class ArrayPatternMatcher(PatternMatcher):
             # Диапазон c одним (текущим) значением
             height_range = open_range(bbox.h, bbox.h)
         else:
+            if bbox.h < height_range:
+                # Делить нечего.
+                return []
             # Ограничим ожидаемые диапазоны максимумом — размерами данного кластера
             height_range = height_range.intersect(open_range(1, bbox.h))
             if height_range is None:

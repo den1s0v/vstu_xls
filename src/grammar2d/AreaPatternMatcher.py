@@ -231,7 +231,7 @@ class AreaPatternMatcher(PatternMatcher):
         ### logger.debug(f'_best_matches: entered with component `{component.name}` at pos {plan_pos.component_i}, ' f'requested {max_results} max_results.')
         ###
 
-        rb1 = existing_match.data.ranged_box if existing_match else None
+        rb1: RangedBox = existing_match.data.ranged_box if existing_match else None
 
         #  not match_list and
         if not component.subpattern.independently_matchable():
@@ -261,7 +261,7 @@ class AreaPatternMatcher(PatternMatcher):
         for component_match in match_list:
 
             # Скомбинировать области для проверки
-            rb2 = component_match.data.parent_location[(self.pattern.name, component.name)]
+            rb2: RangedBox = component_match.data.parent_location[(self.pattern.name, component.name)]
             if not rb1:
                 combined_rb = rb2
             else:
@@ -272,6 +272,9 @@ class AreaPatternMatcher(PatternMatcher):
                     combined_rb = combined_rb.restricted_by_size(*size_constraint)
 
                 if not combined_rb:
+                    continue
+
+                if combined_rb.empty():
                     continue
 
             if existing_match and not self._check_component_relations(existing_match, (component, component_match)):

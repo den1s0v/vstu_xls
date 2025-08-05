@@ -201,3 +201,6 @@ class RangedBox:
         """ If the box exists it should be always treated as True. """
         return True
 
+    def empty(self):
+        """ The box is empty iff at least one of its projections is empty. """
+        return self.rx.is_point() or self.ry.is_point()
