@@ -350,11 +350,12 @@ class AreaPatternMatcher(PatternMatcher):
             # но матч остаётся.
 
             if not existing_match:
-                existing_match = Match2d(self.pattern,
-                                         box=None,
-                                         precision=0,
-                                         component2match={}
-                                         )
+                existing_match = Match2d(
+                    self.pattern,
+                    box=None,
+                    precision=0,
+                    component2match={}
+                )
             if can_recurse:
                 m2 = existing_match
                 sub_results = self._best_matches(next_pos, m2, 1)  # 1: expecting only one component per match.
