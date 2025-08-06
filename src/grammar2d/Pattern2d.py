@@ -25,6 +25,7 @@ class Pattern2d(WithCache, WithSafeCreate):
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
     extends: list[str] = ()
     _directly_extends_patterns: list['Pattern2d'] = None
+    _all_direct_extensions: list['Pattern2d'] = None
 
     constraints: list[SpatialConstraint] = ()
 
@@ -151,6 +152,30 @@ class Pattern2d(WithCache, WithSafeCreate):
                 seen_bases |= dict.fromkeys(sub_bases)
 
             return list(seen_bases)
+
+    def get_extending_patterns(self, recursive=False) -> list['Pattern2d']:
+        """ Instances of Pattern2d that redefine this one. """
+        if self._all_direct_extensions is None:
+            self._all_direct_extensions = [
+                p
+                for p in self._grammar.patterns.values()
+                if self.name in p.extends
+            ]
+        if not recursive:
+            return self._all_direct_extensions
+        else:
+            seen_extensions = {}  # using dict as ordered set, ignoring values.
+            for extension in self._all_direct_extensions:
+                if extension in seen_extensions:
+                    continue
+                seen_extensions[extension] = extension  # add
+                sub_extensions = extension.get_extending_patterns(recursive)
+                if self in sub_extensions:
+                    print(f"SYNTAX WARN: grammar pattern `{self.name}` is extended by pattern(s) `{seen_extensions
+                    }` some of which, in turn, are indirectly extended by this one.")
+                seen_extensions |= dict.fromkeys(sub_extensions)
+
+            return list(seen_extensions)
 
     def set_grammar(self, grammar: 'ns.Grammar'):
         self._grammar = grammar
