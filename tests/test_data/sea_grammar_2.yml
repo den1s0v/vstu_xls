@@ -39,9 +39,10 @@ patterns:
         # location: all: 0  # coinside
     outer:
       sea:
-        pattern: sea
+        pattern: water
         # location: any: 0  # (OR для всех сторон) → 0
-        location: right
+        location: left
+        # location: {left: 0}
 
   beach-R:
     extends: [beach]
@@ -53,12 +54,20 @@ patterns:
         location: left, right, top, bottom  # coinside
     outer:
       sea:
-        pattern: sea
-        location: left
+        pattern: water
+        location: right
+        # location: {right: 0}
 
 
   island:
     description: остров
+    kind: array
+    direction: fill
+    item_pattern: earth
+    item_count: 1+
+
+  coast:
+    description: берег
     kind: array
     direction: fill
     item_pattern: beach
@@ -66,10 +75,10 @@ patterns:
     item_count: 1+
 
   field:
-    description: Все острова на поле
+    description: Все области берега на поле
     kind: array
     direction: fill
-    item_pattern: island
+    item_pattern: coast
     item_count: 1+
     gap: 2+
 

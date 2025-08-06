@@ -38,9 +38,11 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.simple_grammar_2_7 = read_grammar('test_data/simple_grammar_2.7.yml')
 
         # sea
+        cls.sea_0_t = TxtGrid(Path('test_data/sea_0.tsv').read_text())
         cls.sea_1_t = TxtGrid(Path('test_data/sea_1.tsv').read_text())
 
         cls.sea_grammar_1 = read_grammar('test_data/sea_grammar_1.yml')
+        cls.sea_grammar_2 = read_grammar('test_data/sea_grammar_2.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -340,6 +342,50 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
         for g in (
                 self.sea_1_t,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            # self.assertEqual((8, 9), root.box.size)
+
+            children = root['field'].get_children()
+            self.assertEqual(1, len(children))
+
+            positions = [m.box for m in children]
+            # Note!
+            self.assertSetEqual({
+                Box(2,2, 4,3),
+            }, set(positions))
+
+    def test_grid_sea_1_2(self):
+        gm = GrammarMatcher(grammar=self.sea_grammar_2)
+
+        for g in (
+                self.sea_1_t,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            # self.assertEqual((8, 9), root.box.size)
+
+            children = root['field'].get_children()
+            self.assertEqual(1, len(children))
+
+            positions = [m.box for m in children]
+            # Note!
+            self.assertSetEqual({
+                Box(2,2, 4,3),
+            }, set(positions))
+
+    def test_grid_sea_0_2(self):
+        gm = GrammarMatcher(grammar=self.sea_grammar_2)
+
+        for g in (
+                self.sea_0_t,
         ):
             # print('using grid:', g)
             matched_documents = gm.run_match(g)
