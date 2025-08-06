@@ -28,8 +28,8 @@ class NonTerminal(Pattern2d):
          """
         return "general"  # ???
 
-    def dependencies(self, recursive=False) -> list[Pattern2d]:
-        return []
+    # def dependencies(self, recursive=False) -> list[Pattern2d]:
+    #     return super().dependencies(recursive)
 
     # def max_score(self) -> float:
     #     """ precision = score / max_score """

@@ -52,6 +52,7 @@ class AreaPattern(NonTerminal):
             # check circular dependencies
             assert self not in dependency_set, \
                 'Grammar pattern `{self.name}` has circular dependency on itself (via component `{comp.name}`) !'
+            dependency_set |= set(super().dependencies(recursive))
             self._cache.dependencies = list(sorted(dependency_set))
         return self._cache.dependencies
 

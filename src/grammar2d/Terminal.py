@@ -29,9 +29,9 @@ class Terminal(Pattern2d):
             self._cell_type = self._grammar.cell_types[self.content_type]
         return self._cell_type
 
-    @override
-    def dependencies(self, recursive=False) -> list['Pattern2d']:
-        return []
+    # @override
+    # def dependencies(self, recursive=False) -> list['Pattern2d']:
+    #     return super().dependencies(recursive)
 
     @override
     def max_score(self) -> float:

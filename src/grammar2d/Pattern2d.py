@@ -127,8 +127,16 @@ class Pattern2d(WithCache, WithSafeCreate):
         return True
 
     def dependencies(self, recursive=False) -> list['Pattern2d']:
-        """ Pattern2d must be known before this one can be matched. """
-        raise NotImplementedError(type(self))
+        """ `Pattern2d`s must be known before this one can be matched.
+            A common assumption for a pattern is to
+             let all extensions match before this one can be used.
+        """
+        # make a set & convert to list
+        return list(sorted({
+            dep
+            for extending in self.get_extending_patterns(recursive)
+            for dep in extending.dependencies(recursive)
+        }))
 
     def extends_patterns(self, recursive=False) -> list['Pattern2d']:
         """ Instances of Pattern2d redefined by this one. """

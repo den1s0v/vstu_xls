@@ -112,13 +112,16 @@ class ArrayPattern(NonTerminal):
 
     @override
     def dependencies(self, recursive=False) -> list[Pattern2d]:
+
         if not self.item_pattern:
-            return []
+            dependency_set = {}
+        elif not recursive:
+            dependency_set = {self.subpattern}
+        else:
+            dependency_set = {self.subpattern, *self.subpattern.dependencies(recursive)}
 
-        if not recursive:
-            return [self.subpattern]
-
-        return [self.subpattern, *self.subpattern.dependencies(recursive)]
+        dependency_set |= set(super().dependencies(recursive))
+        return sorted_list(dependency_set)
 
     @override
     def max_score(self) -> float:
