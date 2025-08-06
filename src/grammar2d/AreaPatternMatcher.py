@@ -156,7 +156,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         # 2. Получить все "развёрнутые" области потенциального местонахождения родителя-area
         #    для последующего комбинирования.
-        #   Записать в метаданные: match.data.parent_location[pattern]: RangedBox
+        #   Записать в метаданные: match.data.parent_location[pattern_name, component_name]: RangedBox
         # (см. _set_parent_location_to_component_matches)
 
         # 3. Найти комбинации из паттернов всех обязательных компонентов, дающие непустой матч для area.

@@ -145,7 +145,7 @@ class GrammarMatcher:
         logger.debug('')
         logger.debug(f':: {len(matches)} matches of pattern `{pattern.name}` ↓')
         for m in matches:
-            logger.debug([m.box, m.get_content()])
+            logger.debug([m.box, m.get_content(), m.get_children()])
         # ...
         # return?
 
