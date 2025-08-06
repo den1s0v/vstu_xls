@@ -24,7 +24,7 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
     extends: list[str] = ()
-    _extends_patterns: list['Pattern2d'] = None
+    _directly_extends_patterns: list['Pattern2d'] = None
 
     constraints: list[SpatialConstraint] = ()
 
@@ -131,16 +131,16 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def extends_patterns(self, recursive=False) -> list['Pattern2d']:
         """ Instances of Pattern2d redefined by this one. """
-        if self._extends_patterns is None:
-            self._extends_patterns = [
+        if self._directly_extends_patterns is None:
+            self._directly_extends_patterns = [
                 self._grammar.patterns[base_name]
                 for base_name in self.extends
             ]
         if not recursive:
-            return self._extends_patterns
+            return self._directly_extends_patterns
         else:
-            seen_bases = {}  # using as ordered set, with meaningless values
-            for base in self._extends_patterns:
+            seen_bases = {}  # using dict as ordered set, ignoring values.
+            for base in self._directly_extends_patterns:
                 if base in seen_bases:
                     continue
                 seen_bases[base] = base  # add
