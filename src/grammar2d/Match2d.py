@@ -43,10 +43,9 @@ class Match2d:
         return list(self.component2match.values()) if self.component2match else []
 
     def recalc_box(self) -> Self:
-        """ Calc box simply as union of all components """
-        if self.component2match:
-            union = Box.union(*(m.box for m in self.component2match.values()))
-            self.box = union
+        """ Calc bounding box of this match from components (Pattern-dependent).
+        Returns match itself, not Box. """
+        self.box = self.pattern.recalc_box_for_match(self)
         return self
 
     def clone(self):

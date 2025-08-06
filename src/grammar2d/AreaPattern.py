@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import override
 
-from geom2d import open_range, Point
+from geom2d import open_range, Point, Box
 import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
 from grammar2d.MatchRelation import MatchRelation, lt, ne
@@ -60,6 +60,19 @@ class AreaPattern(NonTerminal):
         super().set_grammar(grammar)
         for comp in self.components:
             comp.set_grammar(grammar)
+
+    def recalc_box_for_match(self, match: 'm2.Match2d') -> Box:
+        """ Calc bounding box as union of all inner (!) components.
+        """
+        if not match.component2match:
+            return match.box
+
+        union = Box.union(*(
+            m.box
+            for name, m in match.component2match.items()
+            if self.get_component(name).inner  # Filter.
+        ))
+        return union
 
     def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
         """ For Area: transparent if `pattern.inner_space_transparent` is True  else opaque (the default).

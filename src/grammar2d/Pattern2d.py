@@ -67,6 +67,18 @@ class Pattern2d(WithCache, WithSafeCreate):
         rather in a context of another pattern. """
         return True
 
+    def recalc_box_for_match(self, match: 'm2.Match2d') -> Box:
+        """ Calc bounding box simply as union of all components
+        """
+        if not match.component2match:
+            return match.box
+
+        union = Box.union(*(
+            m.box
+            for m in match.component2match.values()
+        ))
+        return union
+
     def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
         """ Default: opaque.
         Реализация по умолчанию: Просто берём внутреннюю прямоугольную область.
