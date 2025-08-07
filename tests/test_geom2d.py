@@ -493,6 +493,13 @@ class RangeTestCase(unittest.TestCase):
                          open_range(1, 2).intersect(open_range(None, 1)))
         self.assertEqual(open_range(1, 1),
                          open_range(None, None).intersect(open_range(1, 1)))
+        # ← →
+        self.assertEqual(None,
+                         open_range(1, 2).intersect(open_range(3, 4)))
+        self.assertEqual(None,
+                         open_range(None, 2).intersect(open_range(3, None)))
+        self.assertEqual(None,
+                         open_range(1, None).intersect(open_range(None, -1)))
         # →←
         self.assertEqual(open_range(1, 1),
                          open_range(1, None).intersect(open_range(None, 1)))
@@ -522,6 +529,13 @@ class RangeTestCase(unittest.TestCase):
                          open_range(1, 2).union(open_range(None, 1)))
         self.assertEqual(open_range(None, None),
                          open_range(None, None).union(open_range(1, 1)))
+        # ← →
+        self.assertEqual(open_range(1, 4),
+                         open_range(1, 2).union(open_range(3, 4)))
+        self.assertEqual(open_range(None, None),
+                         open_range(None, 2).union(open_range(3, None)))
+        self.assertEqual(open_range(None, None),
+                         open_range(1, None).union(open_range(None, -1)))
         # →←
         self.assertEqual(open_range(None, None),
                          open_range(1, None).union(open_range(None, 1)))
@@ -548,6 +562,13 @@ class RangeTestCase(unittest.TestCase):
                          open_range(1, 2).union_limited(open_range(None, 1)))
         self.assertEqual(open_range(1, 1),
                          open_range(None, None).union_limited(open_range(1, 1)))
+        # ← →
+        self.assertEqual(open_range(1, 4),
+                         open_range(1, 2).union_limited(open_range(3, 4)))
+        self.assertEqual(None,
+                         open_range(None, 2).union_limited(open_range(3, None)))
+        self.assertEqual(None,
+                         open_range(1, None).union_limited(open_range(None, -1)))
         # →←
         self.assertEqual(open_range(1, 1),
                          open_range(1, None).union_limited(open_range(None, 1)))
@@ -728,7 +749,6 @@ class RangedSegmentTestCase(unittest.TestCase):
         self.assertEqual(RangedSegment((0, 0), (22, 22)), r1.combine(r2))
 
     def test_intersect_union_combine_3(self):
-        # TODO
         r1 = RangedSegment((30, 40), (60, 70))
         r2 = RangedSegment((50, 50), (None, None),
                            # validate=False
@@ -742,6 +762,20 @@ class RangedSegmentTestCase(unittest.TestCase):
             r1.union(r2))
         self.assertEqual(
                 RangedSegment((50, 50), (60, 70)),
+            r1.combine(r2))
+
+    def test_intersect_union_combine_4(self):
+        r1 = RangedSegment((3, 3), (4, 4))
+        r2 = RangedSegment((None, 1), (2, None))
+
+        self.assertEqual(
+                None,
+            r1.intersect(r2))
+        self.assertEqual(
+                RangedSegment((None, 1), (4, None)),
+            r1.union(r2))
+        self.assertEqual(
+                RangedSegment((3, 3), (4, 4)),
             r1.combine(r2))
 
     def test_restricted_by_size_1(self):
@@ -1083,13 +1117,15 @@ class RangedBoxTestCase(unittest.TestCase):
                 RangedSegment((0, 0), (None, None))),
             b.union(r))
         self.assertEqual(RangedBox(
-                RangedSegment((30, 40), (60, 70)),
-                RangedSegment((5, 10), (20, 25))),
-                # RangedSegment((30, 30), (60, 70)),
-                # RangedSegment((5, 5), (20, 25))),
+                # RangedSegment((30, 40), (60, 70)),
+                # RangedSegment((5, 10), (20, 25))),
+                RangedSegment((30, 30), (60, 70)),
+                RangedSegment((5, 5), (20, 25))),
             b.combine(r))
 
     def test_intersect_union_combine_outer_cross_2(self):
+        # two far areas look outside and their looks cross
+        # look down & right
         # the look to right starts at 50, covering other area partially
         b = RangedBox(
             RangedSegment((30, 40), (60, 70)),
@@ -1108,7 +1144,7 @@ class RangedBoxTestCase(unittest.TestCase):
             b.union(r))
         self.assertEqual(RangedBox(
                 RangedSegment((50, 50), (60, 70)),
-                RangedSegment((5, 10), (20, 25))),
+                RangedSegment((5, 5), (20, 25))),
             b.combine(r))
 
         # the look to right starts at 100, not covering other area at all
