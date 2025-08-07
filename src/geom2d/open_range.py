@@ -317,8 +317,10 @@ class open_range:
             None if has_none_stop else max_stop
         )
 
-    def union_limited(self, *others: Self) -> Self:
-        """Union that ignores None (infinite) bounds"""
+    def union_limited(self, *others: Self) -> Self | None:
+        """Union that ignores None (infinite) bounds.
+            None is returned if resulting range is invalid.
+        """
         ranges = [self, *others]
 
         # Special case: single range
@@ -339,7 +341,10 @@ class open_range:
                 if max_stop is None or r.stop > max_stop:
                     max_stop = r.stop
 
-        return open_range(min_start, max_stop)
+        try:
+            return open_range(min_start, max_stop)
+        except ValueError:
+            return None
 
     def trimmed_at_left(self, value: int | None) -> Self | None:
         if value is None:

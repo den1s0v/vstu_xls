@@ -73,8 +73,14 @@ class RangedSegment:
         parseable back by direct eval """
         return f"{type(self).__name__}('{self.a}', '{self.b}')"
 
-    def minimal_range(self) -> open_range:
-        return open_range(self.a.stop, self.b.start)
+    def minimal_range(self, trim=False) -> open_range:
+        if trim:
+            r = open_range(self.a.stop, self.b.start)
+            r = r.trimmed_at_left(self.a.start)
+            r = r.trimmed_at_right(self.b.stop)
+            return r
+        else:
+            return open_range(self.a.stop, self.b.start)
 
     def maximal_range(self) -> open_range:
         return open_range(self.a.start, self.b.stop)
@@ -230,12 +236,12 @@ class RangedSegment:
         """
         # others = [rs.with_materialized_ranges() for rs in others if rs]  # ???
 
-        minimal_ranges = [rs.minimal_range() for rs in others]
+        minimal_ranges = [rs.minimal_range(trim=True) for rs in others]
         maximal_ranges = [rs.maximal_range() for rs in others]
 
-        minimal_range = self.minimal_range().union_limited(*minimal_ranges)
+        minimal_range = self.minimal_range(trim=True).union_limited(*minimal_ranges)
         if not minimal_range:
-            # Empty intersection.
+            # Empty union (See union_limited).
             return None
 
         maximal_range = self.maximal_range().intersect(*maximal_ranges)
