@@ -129,7 +129,7 @@ class PatternComponent(WithCache, WithSafeCreate):
         known_distance = distance_to_as.get(key)
 
         if known_distance is None:
-            if self.inner:
+            if True:  ### self.inner:
                 # Расстояние для внутреннего компонента
                 # равняется росту периметра области совпадения,
                 # необходимого для включения его в матч.

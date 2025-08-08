@@ -265,7 +265,14 @@ class AreaPatternMatcher(PatternMatcher):
             if not rb1:
                 combined_rb = rb2
             else:
-                combined_rb = rb1.combine(rb2)
+                if component.inner:
+                    combined_rb = rb1.combine(rb2)
+                else:
+                    # outer: strict check
+                    if not rb2.covers(rb1):
+                        continue
+
+                    combined_rb = rb1.intersect(rb2)
 
                 # наложить ограничения на размеры объединённой области
                 if combined_rb and size_constraint:
