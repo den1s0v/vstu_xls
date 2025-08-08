@@ -426,6 +426,11 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 Box(3,3, 2,1),
             }, set(positions))
 
+            self.assertEqual(1,
+                len(gm.matches_by_element[gm.grammar['beach-L']]))
+            self.assertEqual(1,
+                len(gm.matches_by_element[gm.grammar['beach-R']]))
+
 
 if __name__ == '__main__':
     # unittest.main()
