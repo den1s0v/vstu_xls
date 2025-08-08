@@ -59,12 +59,12 @@ patterns:
         location: {right: 0}
 
 
-  island:
-    description: остров
-    kind: array
-    direction: fill
-    item_pattern: earth
-    item_count: 1+
+  # island:
+  #   description: остров
+  #   kind: array
+  #   direction: fill
+  #   item_pattern: earth
+  #   item_count: 1+
 
   coast:
     description: берег
