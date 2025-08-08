@@ -194,7 +194,7 @@ class RangedBox:
 
     def __str__(self):
         if self.is_deterministic():
-            return f"RangedBox[deterministic](rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}))"
+            return f"RangedBox(rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}) [deterministic])"
         return repr(self)
 
     def __bool__(self):

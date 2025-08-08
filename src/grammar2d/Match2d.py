@@ -77,7 +77,7 @@ class Match2d:
             box=self.box,
             precision=self.precision,
             component2match=self.component2match,
-            # data=self.data,
+            data=self.data,
         )
 
     def __lt__(self, other: Self) -> bool:
