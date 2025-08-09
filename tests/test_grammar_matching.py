@@ -360,8 +360,8 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 Box(2,2, 4,3),
             }, set(positions))
 
-    def test_grid_sea_1_2(self):
-        gm = GrammarMatcher(grammar=self.sea_grammar_2)
+    def test_grid_sea_1_22(self):
+        gm = GrammarMatcher(grammar=self.sea_grammar_22)
 
         for g in (
                 self.sea_1_t,
@@ -374,13 +374,19 @@ class GrammarMatchingTestCase(unittest.TestCase):
             # self.assertEqual((8, 9), root.box.size)
 
             children = root['field'].get_children()
-            self.assertEqual(1, len(children))
+            self.assertEqual(2, len(children))
 
             positions = [m.box for m in children]
             # Note!
             self.assertSetEqual({
-                Box(2,2, 4,3),
+                Box(2,2, 1,3),
+                Box(5,2, 1,3),
             }, set(positions))
+
+            self.assertEqual(3,
+                len(gm.matches_by_element[gm.grammar['beach-L']]))
+            self.assertEqual(3,
+                len(gm.matches_by_element[gm.grammar['beach-R']]))
 
     def test_grid_sea_0_2(self):
         gm = GrammarMatcher(grammar=self.sea_grammar_2)
