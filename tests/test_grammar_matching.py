@@ -40,10 +40,14 @@ class GrammarMatchingTestCase(unittest.TestCase):
         # sea
         cls.sea_0_t = TxtGrid(Path('test_data/sea_0.tsv').read_text())
         cls.sea_1_t = TxtGrid(Path('test_data/sea_1.tsv').read_text())
+        ...
+        cls.sea_6_t = TxtGrid(Path('test_data/sea_6.tsv').read_text())
 
         cls.sea_grammar_1 = read_grammar('test_data/sea_grammar_1.yml')
         cls.sea_grammar_2 = read_grammar('test_data/sea_grammar_2.yml')
         cls.sea_grammar_22 = read_grammar('test_data/sea_grammar_2.2.yml')
+        ...
+        cls.sea_grammar_6 = read_grammar('test_data/sea_grammar_6.yml')
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -436,6 +440,33 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 len(gm.matches_by_element[gm.grammar['beach-L']]))
             self.assertEqual(1,
                 len(gm.matches_by_element[gm.grammar['beach-R']]))
+
+    def test_grid_sea_6_6(self):
+        gm = GrammarMatcher(grammar=self.sea_grammar_6)
+
+        for g in (
+                self.sea_6_t,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            # self.assertEqual((8, 9), root.box.size)
+
+            children = root['field'].get_children()
+            self.assertEqual(1, len(children))
+
+            # positions = [m.box for m in children]
+            # # Note!
+            # self.assertSetEqual({
+            #     Box(3,3, 2,1),
+            # }, set(positions))
+
+            # self.assertEqual(1,
+            #     len(gm.matches_by_element[gm.grammar['beach-L']]))
+            # self.assertEqual(1,
+            #     len(gm.matches_by_element[gm.grammar['beach-R']]))
 
 
 if __name__ == '__main__':
