@@ -45,7 +45,7 @@ class Box:
         return hash(self._tuple)
 
     def __eq__(self, other: Self):
-        if hasattr(other, '_tuple'):
+        if hasattr(other, '_tuple') or isinstance(other, Box):
             return self._tuple.__eq__(other._tuple)
         return other == self
 
