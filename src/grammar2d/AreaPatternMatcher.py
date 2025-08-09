@@ -63,7 +63,7 @@ class AreaPatternMatcher(PatternMatcher):
         """
 
         # Найти все матчи-кандидаты для всех паттернов-компонентов.
-        with time_report('find_match_candidates_*') as ch:
+        with time_report('find_match_candidates_') as ch:
             match_candidates = self.find_match_candidates_3(region)
 
         # Отсеять невозможные / конфликтующие варианты, при наличии.
@@ -272,7 +272,7 @@ class AreaPatternMatcher(PatternMatcher):
                     if not rb2.covers(rb1):
                         continue
 
-                    combined_rb = rb1.intersect(rb2)
+                    combined_rb = rb1.intersect(rb2)  # TODO: combine ?
 
                 # наложить ограничения на размеры объединённой области
                 if combined_rb and size_constraint:
