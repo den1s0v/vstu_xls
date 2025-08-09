@@ -168,13 +168,16 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 merged_range.max_col,
                 merged_range.max_row,
             )
+            x = min_col - COORD_PAD
+            y = min_row - COORD_PAD
+            x2 = max_col - COORD_PAD
+            y2 = max_row - COORD_PAD
 
-            x, y = min_col - COORD_PAD, min_row - COORD_PAD
             point = Point(x, y)
 
             # Calculate size of the merged cell
-            width = max_col - min_col + 1
-            height = max_row - min_row + 1
+            width = x2 - x + 1
+            height = y2 - y + 1
             size = Size(width, height)
 
             # Get the top-left cell from point2cell
@@ -194,16 +197,6 @@ class ExcelGrid(Grid, AbstractGridBuilder):
             else:
                 # Update existing cell's size
                 cell.size = size
-
-            # Clear any other cells in the merged range and ensure they point to the top-left cell
-            for row in range(min_row, max_row + 1):
-                for col in range(min_col, max_col + 1):
-                    if row == min_row and col == min_col:
-                        continue  # Skip the top-left cell
-                    point = Point(col, row)
-                    if point in self.point2cell:
-                        del self.point2cell[point]
-                    self.point2cell[point] = cell
 
             # Re-register the cell to update point2cell mappings
             self.register_cell(cell)
