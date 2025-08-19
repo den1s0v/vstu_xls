@@ -225,10 +225,13 @@ class open_range:
             return None
 
     def intersect(self, *others: Self) -> Self | None:
-        # Handle zero or one other ranges efficiently
+        others = tuple(filter(None, others))
+        if self is None:
+            self, *others = others
         if not others:
             return self
 
+        # Handle zero or one other ranges efficiently
         if len(others) == 1:
             other = others[0]
             # Calculate new_start
@@ -277,15 +280,30 @@ class open_range:
 
         return open_range(new_start, new_stop)
 
-    def union(self, *others: Self) -> Self:
+    def strict_union(self, *others: Self) -> Self | None:
+        """ version of union
+        that does not allow "bridging" the gap between unconnected ranges
+        and returns None for such a case.
+        Formally, no union exists for ranges iff their intersection does not exist.
+        """
+        # if self is None:
+        #     self, *others = others
+        if self.intersect(*others) is None:
+            return None
+        # Normal union.
+        return self.union(*others)
+
+    def union(self, *others: Self) -> Self | None:
         """Union of ranges:
         - If any range has None as start/stop, the result will have None for that bound
         - Otherwise takes min of starts and max of stops"""
-        ranges = [self, *others]
+        ranges = tuple(filter(None, [self, *others]))
+        if not ranges:
+            return None
 
         # Special case: single range
         if len(ranges) == 1:
-            return self
+            return ranges[0]
 
         # Flags and trackers
         has_none_start = False
@@ -321,7 +339,9 @@ class open_range:
         """Union that ignores None (infinite) bounds.
             None is returned if resulting range is invalid.
         """
-        ranges = [self, *others]
+        ranges = tuple(filter(None, [self, *others]))
+        if not ranges:
+            return None
 
         # Special case: single range
         if len(ranges) == 1:

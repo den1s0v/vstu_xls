@@ -96,6 +96,17 @@ class RangedBox:
             return None
         return RangedBox(rx, ry)
 
+    def intersect_borders(self, other: Self) -> Self | None:
+        if not other or not self:
+            return None
+        rx = self.rx.intersect_ends(other.rx)
+        if rx is None:
+            return None
+        ry = self.ry.intersect_ends(other.ry)
+        if ry is None:
+            return None
+        return RangedBox(rx, ry)
+
     def restricted_by_size(self, hor_size: open_range, ver_size: open_range) -> Self | None:
         new_rx = self.rx.restricted_by_size(hor_size)
         if new_rx is None:

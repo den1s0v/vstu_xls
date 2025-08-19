@@ -29,7 +29,37 @@ class RangedSegment:
     @staticmethod
     def validate_ranges(lower, upper) -> tuple[open_range, open_range]:
         """ Validate input ranges on RangedSegment creation.
+        The only requirement here is valid outer (maximal) range.
          Raises ValueError or adjusts ranges as needed. """
+
+        intersection = lower.intersect(upper)
+        if intersection is not None:
+            # Есть пересечение (накладка) в середине. Нужно ограничить средние границы.
+            if lower.is_double_open() or upper.is_double_open():
+                # Исключаем вариант, когда оба бесконечны (нечем ограничивать)
+                pass
+            elif lower.stop is not None and upper.start is None:
+                # (_, N), (*, _)
+                upper = upper.trimmed_at_left(lower.stop)
+            elif upper.start is not None and lower.stop is None:
+                # (_, *), (N, _)
+                lower = lower.trimmed_at_right(upper.start)
+        elif lower > upper:
+            raise ValueError(f'RangedSegment cannot be created using inverse ranges. Got: {lower!r}, {upper!r}.')
+
+        if lower.start is not None and upper.stop is not None and lower.start > upper.stop:
+            # (N, _), (_, N)
+            raise ValueError(
+                'RangedSegment cannot be created without valid outer range. '
+                f'Got: {lower!r}, {upper!r}.')
+
+        return lower, upper
+
+    @staticmethod
+    def validate_ranges_0(lower, upper) -> tuple[open_range, open_range]:
+        """ Validate input ranges on RangedSegment creation.
+         Raises ValueError if inner range is invalid,
+         or adjusts ranges to fix obvious contradictions. """
 
         intersection = lower.intersect(upper)
         if intersection is not None:
@@ -73,14 +103,16 @@ class RangedSegment:
         parseable back by direct eval """
         return f"{type(self).__name__}('{self.a}', '{self.b}')"
 
-    def minimal_range(self, trim=False) -> open_range:
-        if trim:
+    def minimal_range(self, trim=False) -> open_range | None:
+        try:
             r = open_range(self.a.stop, self.b.start)
+        except ValueError:
+            # range is invalid because there is no definite range.
+            return None
+        if trim:
             r = r.trimmed_at_left(self.a.start)
             r = r.trimmed_at_right(self.b.stop)
-            return r
-        else:
-            return open_range(self.a.stop, self.b.start)
+        return r
 
     def maximal_range(self) -> open_range:
         return open_range(self.a.start, self.b.stop)
@@ -260,3 +292,45 @@ class RangedSegment:
         upper = minimal_range.stop, maximal_range.stop
 
         return type(self)(lower, upper)
+
+    def intersect_ends(self, *others: Self | None) -> Self | None:
+        """Find intersection of both ranged ends as plain ranges.
+        If any of ends do not intersect, `None` will be returned. """
+
+        new_a = self.a.intersect(*(
+            z.a
+            for z in others
+            if z
+        ))
+        if new_a is None:
+            return None
+
+        new_b = self.b.intersect(*(
+            z.b
+            for z in others
+            if z
+        ))
+        if new_b is None:
+            return None
+        return RangedSegment(new_a, new_b, validate=False)
+
+    def strict_union_of_ends(self, *others: Self | None) -> Self | None:
+        """Find union of both ranged ends as plain ranges.
+        If any of ends do not intersect, `None` will be returned. """
+
+        new_a = self.a.strict_union(*(
+            z.a
+            for z in others
+            if z
+        ))
+        if new_a is None:
+            return None
+
+        new_b = self.b.strict_union(*(
+            z.b
+            for z in others
+            if z
+        ))
+        if new_b is None:
+            return None
+        return RangedSegment(new_a, new_b)

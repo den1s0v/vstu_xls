@@ -110,8 +110,8 @@ class GrammarMatchingTestCase(unittest.TestCase):
             self.assertEqual((1, 8), root['numbers'].box.size)
             self.assertEqual((8, 8), root['field'].box.size)
 
-            self.assertEqual(('ABCDEFGH'), ''.join(root['letters'].get_text()))
-            self.assertEqual(('87654321'), ''.join(root['numbers'].get_content()))
+            self.assertEqual('ABCDEFGH', ''.join(root['letters'].get_text()))
+            self.assertEqual('87654321', ''.join(root['numbers'].get_content()))
 
             root_content = root.get_content()
             root_content['field'] = set(root_content['field'])

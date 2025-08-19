@@ -270,6 +270,13 @@ class AreaPatternMatcher(PatternMatcher):
                 else:
                     # outer: strict check
                     if not rb2.covers(rb1):
+                        ###
+                        logger.success(f'↓ NOT covers ({component.name}):')
+                        logger.info(rb1)
+                        logger.info(rb2)
+                        # logger.info(combined_rb)
+                        ###
+
                         continue
 
                     combined_rb = rb1.intersect(rb2)  # TODO: combine ?
@@ -278,6 +285,13 @@ class AreaPatternMatcher(PatternMatcher):
                 if combined_rb and size_constraint:
                     combined_rb = combined_rb.restricted_by_size(*size_constraint)
 
+                # ###
+                # logger.success(f'↓ Combined ({component.name}):')
+                # logger.info(rb1)
+                # logger.info(rb2)
+                # logger.info(combined_rb)
+                # ###
+                #
                 if not combined_rb:
                     continue
 

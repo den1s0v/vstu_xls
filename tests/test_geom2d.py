@@ -545,6 +545,39 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(open_range(None, None),
                          open_range(None, None).union(open_range(None, None)))
 
+    def test_strict_union(self):
+        self.assertEqual(open_range(1, 1),
+                         open_range(1, 1).strict_union(open_range(1, 1)))
+        self.assertEqual(open_range(1, 2),
+                         open_range(1, 2).strict_union(open_range(1, 2)))
+
+        self.assertEqual(open_range(0, 2),
+                         open_range(1, 2).strict_union(open_range(0, 1)))
+        self.assertEqual(open_range(0, 2),
+                         open_range(0, 2).strict_union(open_range(1, 1)))
+
+        self.assertEqual(open_range(0, None),
+                         open_range(1, None).strict_union(open_range(0, 1)))
+        self.assertEqual(open_range(None, 2),
+                         open_range(1, 2).strict_union(open_range(None, 1)))
+        self.assertEqual(open_range(None, None),
+                         open_range(None, None).strict_union(open_range(1, 1)))
+        # ← → TODO !!!!!!!!!!
+        self.assertEqual(None, # open_range(1, 4),
+                         open_range(1, 2).strict_union(open_range(3, 4)))
+        self.assertEqual(None, # open_range(None, None),
+                         open_range(None, 2).strict_union(open_range(3, None)))
+        self.assertEqual(None, # open_range(None, None),
+                         open_range(1, None).strict_union(open_range(None, -1)))
+        # →←
+        self.assertEqual(open_range(None, None),
+                         open_range(1, None).strict_union(open_range(None, 1)))
+        self.assertEqual(open_range(None, None),
+                         open_range(1, None).strict_union(open_range(None, 10)))
+
+        self.assertEqual(open_range(None, None),
+                         open_range(None, None).strict_union(open_range(None, None)))
+
     def test_union_limited(self):
         self.assertEqual(open_range(1, 1),
                          open_range(1, 1).union_limited(open_range(1, 1)))
@@ -892,6 +925,7 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.intersect(r).to_box())
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.union(r).to_box())
         self.assertEqual(Box.from_2points(10, 3, 20, 5), b.combine(r).to_box())
+        self.assertEqual(Box.from_2points(10, 3, 20, 5), b.intersect_borders(r).to_box())
 
         b = RangedBox((10, 20), (3, 15))
         r = RangedBox((12, 22), (13, 25))
@@ -905,6 +939,8 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(RangedBox(
             (12, 20), (13, 15)),
             b.combine(r))
+        self.assertEqual(None,
+            b.intersect_borders(r))
 
         b = RangedBox((10, 20), (3, 15))
         r = RangedBox((20, 22), (15, 25))
@@ -918,6 +954,8 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(RangedBox(
             (20, 20), (15, 15)),
             b.combine(r))
+        self.assertEqual(None,
+            b.intersect_borders(r))
 
         b = RangedBox((10, 18), (3, 12))
         r = RangedBox((20, 22), (15, 25))
@@ -927,6 +965,24 @@ class RangedBoxTestCase(unittest.TestCase):
             (10, 22), (3, 25)),
             b.union(r))
         self.assertEqual(None, b.combine(r))
+        self.assertEqual(None, b.intersect_borders(r))
+
+    def test_intersect_union_combine_complex_TODO(self):
+        b = RangedBox(rx=('6-', '7+'), ry=('1-', '3+'))
+        r = RangedBox(rx=('4+', '*'), ry=('3-', '2+'))
+
+        self.assertEqual(RangedBox(
+            ('4..6', '7+'), ('1-', '3+')),
+            b.intersect(r))
+        # self.assertEqual(RangedBox(
+        #     ('*', '*'), RangedSegment('1-', '3+', validate=False)),
+        #     b.union(r))  # ??????
+        self.assertEqual(RangedBox(
+            ('4..6', '7+'), ('3-', '3+')),
+            b.combine(r))  # ??????
+        self.assertEqual(RangedBox(
+            ('4+', '7+'), ('3-', '3+')),
+            b.intersect_borders(r))
 
     def test_intersect_union_combine_unrestricted(self):
         # unrestricted maximal / outer / probable ranges...
