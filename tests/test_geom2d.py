@@ -967,21 +967,37 @@ class RangedBoxTestCase(unittest.TestCase):
         self.assertEqual(None, b.combine(r))
         self.assertEqual(None, b.intersect_borders(r))
 
-    def test_intersect_union_combine_complex_TODO(self):
+    def test_intersect_union_combine_complex_1(self):
         b = RangedBox(rx=('6-', '7+'), ry=('1-', '3+'))
-        r = RangedBox(rx=('4+', '*'), ry=('3-', '2+'))
+        r = RangedBox(rx=('4+', '*'), ry=('2+', '3-'))
+
+        self.assertEqual(RangedBox(
+            ('4..6', '7+'), ('2', '3')),
+            b.intersect(r))
+        self.assertEqual(RangedBox(
+            ('4-', '*'), ('1-', '3+')),
+            b.union(r))
+        self.assertEqual(RangedBox(
+            ('4', '7+'), ('2', '3')),
+            b.combine(r))
+        self.assertEqual(None,  # '1-' & '2+' do not intersect.
+            b.intersect_borders(r))
+
+    def test_intersect_union_combine_complex_2(self):
+        b = RangedBox(rx=('6-', '9+'), ry=('1-', '3+'))
+        r = RangedBox(rx=('4..5', '7+'), ry=('3-', '2+'))
 
         self.assertEqual(RangedBox(
             ('4..6', '7+'), ('1-', '3+')),
             b.intersect(r))
-        # self.assertEqual(RangedBox(
-        #     ('*', '*'), RangedSegment('1-', '3+', validate=False)),
-        #     b.union(r))  # ??????
         self.assertEqual(RangedBox(
-            ('4..6', '7+'), ('3-', '3+')),
+            ('5-', '9+'), ('1-', '3+')),
+            b.union(r))
+        self.assertEqual(RangedBox(
+            ('4..5', '9+'), ('1-', '3+')),  # ??? should 9+ be 7+ due to (outer) intersection priority ?
             b.combine(r))  # ??????
         self.assertEqual(RangedBox(
-            ('4+', '7+'), ('3-', '3+')),
+            ('4..5', '9+'), ('1-', '3+')),
             b.intersect_borders(r))
 
     def test_intersect_union_combine_unrestricted(self):
