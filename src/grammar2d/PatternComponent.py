@@ -119,7 +119,7 @@ class PatternComponent(WithCache, WithSafeCreate):
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
 
-    def calc_distance_of_match_to_box(self, match: Match2d, box: Box) -> float:
+    def calc_distance_of_match_to_box(self, match: Match2d, box: Box) -> float | tuple:
 
         # Use cache attached to match object
         distance_to_as: dict[tuple[Box, str], float] = match.data.get('distance_to_as') or dict()
@@ -147,7 +147,11 @@ class PatternComponent(WithCache, WithSafeCreate):
                 #     (pr1_y.intersect(pr2_y) or LinearSegment(0, 0)).size,
                 # )
                 # Расстояние же будем считать как минимальное из смещений по проекциям
-                known_distance = min(match.box.manhattan_distance_to_overlap(box, per_axis=True))
+                md = match.box.manhattan_distance_to_overlap(box, per_axis=True)
+                known_distance = (
+                    min(md),
+                    max(md),
+                )
             # Записать вычисленное значение в кэш
             distance_to_as[key] = known_distance
 
