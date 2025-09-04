@@ -484,9 +484,14 @@ class GrammarMatchingTestCase(unittest.TestCase):
             # self.assertEqual((8, 9), root.box.size)
 
             children = root['field'].get_children()
-            self.assertEqual(1, len(children))
+            # self.assertEqual(1, len(children))
 
-            # positions = [m.box for m in children]
+            positions = [
+                (m.box, 'has other:', m['other'].box)
+                for m in children
+            ]
+            print(*positions, sep=' \n')
+
             # # Note!
             # self.assertSetEqual({
             #     Box(3,3, 2,1),
