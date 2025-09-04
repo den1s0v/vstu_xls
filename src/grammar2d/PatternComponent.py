@@ -119,7 +119,7 @@ class PatternComponent(WithCache, WithSafeCreate):
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
 
-    def calc_distance_of_match_to_box(self, match: Match2d, box: Box) -> float | tuple:
+    def calc_distance_of_match_to_box(self, match: Match2d, box: Box) -> tuple:
 
         # Use cache attached to match object
         distance_to_as: dict[tuple[Box, str], float] = match.data.get('distance_to_as') or dict()
@@ -129,11 +129,12 @@ class PatternComponent(WithCache, WithSafeCreate):
         known_distance = distance_to_as.get(key)
 
         if known_distance is None:
-            if True:  ### self.inner:
+            # if True:  ###
+            if self.inner:
                 # Расстояние для внутреннего компонента
                 # равняется росту периметра области совпадения,
                 # необходимого для включения его в матч.
-                known_distance = match.box.manhattan_distance_to_overlap(box)
+                known_distance = (match.box.manhattan_distance_to_overlap(box), )
             else:
                 # Близость для внешнего компонента
                 # равняется длине максимального из пересечений проекций на оси.
@@ -148,9 +149,20 @@ class PatternComponent(WithCache, WithSafeCreate):
                 # )
                 # Расстояние же будем считать как минимальное из смещений по проекциям
                 md = match.box.manhattan_distance_to_overlap(box, per_axis=True)
+                # Расстояние перпендикулярно направлению взгляда
+                distance_ortho_look_ray = None
+                if loc_constraint := self.get_first_constraint():
+                    if loc_constraint.primary_direction:
+                        if loc_constraint.primary_direction.is_vertical:
+                            distance_ortho_look_ray = md.x
+                        else:
+                            distance_ortho_look_ray = md.y
+                if distance_ortho_look_ray is None:
+                    distance_ortho_look_ray = min(md)
+
                 known_distance = (
-                    min(md),
-                    max(md),
+                    distance_ortho_look_ray,
+                    int(md),
                 )
             # Записать вычисленное значение в кэш
             distance_to_as[key] = known_distance
@@ -443,6 +455,12 @@ class PatternComponent(WithCache, WithSafeCreate):
             rbox = rbox.restricted_by_size(*sc)
 
         return rbox.fix_ranges()
+
+    def get_first_constraint(self, constraint_class = LocationConstraint):
+        for constraint in self.constraints:
+            if isinstance(constraint, constraint_class):
+                return constraint
+        return None
 
     @staticmethod
     def _apply_inside_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:

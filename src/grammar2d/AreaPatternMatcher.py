@@ -256,7 +256,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         size_constraint = self.pattern.get_size_constraint()
 
-        distance_rb_match_list: list[tuple[float, RangedBox, Match2d]] = []
+        distance_rb_match_list: list[tuple[tuple[float, int], RangedBox, Match2d]] = []
 
         for component_match in match_list:
 
@@ -307,7 +307,7 @@ class AreaPatternMatcher(PatternMatcher):
             if existing_match:
                 distance = component.calc_distance_of_match_to_box(component_match, existing_match.box)
             else:
-                distance = 0  # constant, for sorting below
+                distance = (0, )  # constant, for sorting below
 
             distance_rb_match_list.append((distance, combined_rb, component_match))
 
@@ -319,7 +319,7 @@ class AreaPatternMatcher(PatternMatcher):
         ))
 
         # 2. вычисляем порог отсечки и фильтруем кандидатов по этой отсечке для расстояния
-        min_distance = min((t[0] for t in distance_rb_match_list), default=0)
+        min_distance = min((t[0][0] for t in distance_rb_match_list), default=0)
 
         # CUTOFF_COEF = 2.0
         CUTOFF_COEF = 1  # !!!!!!! Минимум ←
@@ -338,7 +338,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         for distance, combined_rb, component_match in distance_rb_match_list:
 
-            if distance > cutoff_distance:
+            if distance[0] > cutoff_distance:
                 # отсекаем далёкие варианты (в отсортированном списке)
                 break
 

@@ -20,8 +20,11 @@ class LocationConstraint(SpatialConstraint):
     def get_kind(cls):
         return "location"
 
-    inside: bool  # Направление рассмотрения
+    # Направление рассмотрения
+    inside: bool
     side_to_gap: dict['g2.Direction', 'g2.open_range']
+    # Основное направление взгляда для внешних (может быть не определено: None).
+    primary_direction: 'g2.Direction | None' = None
 
     def __init__(self,
                  sides_str: str = None,
@@ -31,6 +34,11 @@ class LocationConstraint(SpatialConstraint):
         if sides_str:
             side_to_gap = parse_sides_to_gaps(sides_str, "0" if inside else '0+')
         assert side_to_gap, side_to_gap
+        if not inside and len(side_to_gap) == 1:
+            # Точно знаем, если задана одна сторона взгляда.
+            primary_direction = next(iter(side_to_gap))
+            # TODO: В ином случае можно делать предположение о главном направлении,
+            # если по одной из осей диапазон сильно больше (или открыт).
 
         self.side_to_gap = self._prepare_side_mapping(side_to_gap, check_implicit_sides, inside)
         self.inside = bool(inside)
