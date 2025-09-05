@@ -84,7 +84,7 @@ patterns:
     direction: fill
     item_pattern: aligned-island
     item_count: 1+
-    gap: 2+
+    gap: 1+
 
   root:
     description: всё поле

@@ -481,26 +481,22 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
             self.assertEqual(1, len(matched_documents))
             root = matched_documents[0]
-            # self.assertEqual((8, 9), root.box.size)
+            self.assertEqual((15, 15), root.box.size)
 
             children = root['field'].get_children()
-            # self.assertEqual(1, len(children))
+            self.assertEqual(12, len(children))
 
             positions = [
                 (m.box, 'has other:', m['other'].box)
                 for m in children
             ]
-            print(*positions, sep=' \n')
-
-            # # Note!
-            # self.assertSetEqual({
-            #     Box(3,3, 2,1),
-            # }, set(positions))
-
-            # self.assertEqual(1,
-            #     len(gm.matches_by_element[gm.grammar['beach-L']]))
-            # self.assertEqual(1,
-            #     len(gm.matches_by_element[gm.grammar['beach-R']]))
+            # print(*positions, sep=' \n')
+            self.assertTrue(any(
+                (t[0] == Box(26,6, 3,7)
+                 and
+                 t[2] == Box(16,6, 1,3))
+                for t in positions
+            ))
 
 
 if __name__ == '__main__':
