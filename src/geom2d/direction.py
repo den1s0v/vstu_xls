@@ -16,19 +16,25 @@ class Direction:
     _instances: dict[int, 'Direction'] = {}
 
     @classmethod
-    def get(cls, rotation) -> 'Direction':
+    def make(cls, rotation) -> 'Direction':
         obj = cls._instances.get(rotation)
         if not obj:
             cls._instances[rotation] = (obj := Direction(rotation))
         return obj
 
     @classmethod
-    def get_by_name(cls, prop_name) -> 'Direction | None':
+    def get_by_name(cls, prop_name: str) -> 'Direction | None':
         # Note: this assumes that all instances have been already registered.
         for d in cls.known_instances():
             if d.prop_name == prop_name:
                 return d
         return None
+
+    @classmethod
+    def get(cls, dir_or_prop_name: 'Direction | str') -> 'Direction | None':
+        if isinstance(dir_or_prop_name, Direction):
+            return dir_or_prop_name
+        return cls.get_by_name(dir_or_prop_name)
 
     @classmethod
     def known_instances(cls) -> Iterable['Direction']:
@@ -58,10 +64,10 @@ class Direction:
         return self.dx if self.dy == 0 else self.dy
 
     def __add__(self, angle) -> 'Direction':
-        return self.get((self.rotation + angle + 360) % 360)
+        return self.make((self.rotation + angle + 360) % 360)
 
     def __sub__(self, angle) -> 'Direction':
-        return self.get((self.rotation - angle + 360) % 360)
+        return self.make((self.rotation - angle + 360) % 360)
 
     def opposite(self) -> 'Direction':
         """ Get diametrically opposite Direction """
@@ -91,7 +97,7 @@ class Direction:
 
 
 # define constants
-RIGHT= Direction.get(0)
-UP   = Direction.get(90)
-LEFT = Direction.get(180)
-DOWN = Direction.get(270)
+RIGHT= Direction.make(0)
+UP   = Direction.make(90)
+LEFT = Direction.make(180)
+DOWN = Direction.make(270)
