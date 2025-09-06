@@ -321,6 +321,8 @@ class LocationConstraintTestCase(unittest.TestCase):
             # check_implicit_sides=True
         )
 
+        # print(cs.full_mapping())
+
         parent_box = Box.from_2points(0,0, 10,10)
 
         # Does not match itself
@@ -357,6 +359,9 @@ class LocationConstraintTestCase(unittest.TestCase):
         self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
 
         # shift out horizontally (FAIL when check_implicit_sides=True)
+        box = Box.from_2points(-10,10, -1,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
         box = Box.from_2points(-10,10, 0,11)
         self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
 
