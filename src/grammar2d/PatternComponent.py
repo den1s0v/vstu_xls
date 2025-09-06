@@ -353,10 +353,7 @@ class PatternComponent(WithCache, WithSafeCreate):
         # Apply constraints
         for constraint in self.constraints:
             if isinstance(constraint, LocationConstraint):
-                if self.inner:
-                    rbox = self._apply_inside_constraint(rbox, constraint, mbox)
-                else:
-                    rbox = self._apply_outside_constraint(rbox, constraint, mbox)
+                rbox = self._apply_location_constraint(rbox, constraint, mbox)
 
             elif isinstance(constraint, SizeConstraint):
                 # Ограничения на размер компонента не влияет на положение родителя,
@@ -423,33 +420,31 @@ class PatternComponent(WithCache, WithSafeCreate):
             if not isinstance(constraint, LocationConstraint):
                 continue
 
-            if self.inner:
-                #  Для внутренних сторон:
-                #  заполняется та же сторона, "отняв" от границы родителя отступ ребёнка.
-                for d, gap in constraint.side_to_gap.items():
-                    side = d.prop_name
-                    if side == 'left':
-                        rbox.rx.a = parent.left + gap
-                    elif side == 'right':
-                        rbox.rx.b = parent.right - gap
-                    elif side == 'top':
-                        rbox.ry.a = parent.top + gap
-                    elif side == 'bottom':
-                        rbox.ry.b = parent.bottom - gap
+            #  Для внутренних сторон:
+            #  заполняется та же сторона, "отняв" от границы родителя отступ ребёнка.
+            for d, gap in constraint.side_to_padding.items():
+                side = d.prop_name
+                if side == 'left':
+                    rbox.rx.a = parent.left + gap
+                elif side == 'right':
+                    rbox.rx.b = parent.right - gap
+                elif side == 'top':
+                    rbox.ry.a = parent.top + gap
+                elif side == 'bottom':
+                    rbox.ry.b = parent.bottom - gap
 
-            else:
-                # Для внешних сторон:
-                # заполняется противолежащая сторона, "прибавив" к границе одноимённой стороны родителя отступ ребёнка.
-                for d, gap in constraint.side_to_gap.items():
-                    side = d.prop_name
-                    if side == 'left':
-                        rbox.rx.b = parent.left - gap
-                    elif side == 'right':
-                        rbox.rx.a = parent.right + gap
-                    elif side == 'top':
-                        rbox.ry.b = parent.top - gap
-                    elif side == 'bottom':
-                        rbox.ry.a = parent.bottom + gap
+            # Для внешних сторон:
+            # заполняется противолежащая сторона, "прибавив" к границе одноимённой стороны родителя отступ ребёнка.
+            for d, gap in constraint.side_to_margin.items():
+                side = d.prop_name
+                if side == 'left':
+                    rbox.rx.b = parent.left - gap
+                elif side == 'right':
+                    rbox.rx.a = parent.right + gap
+                elif side == 'top':
+                    rbox.ry.b = parent.top - gap
+                elif side == 'bottom':
+                    rbox.ry.a = parent.bottom + gap
 
         for sc in size_constraints:
             rbox = rbox.restricted_by_size(*sc)
@@ -483,6 +478,35 @@ class PatternComponent(WithCache, WithSafeCreate):
         # Apply constraints for outside location
         # Заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
         for d, gap in constraint.side_to_gap.items():
+            side = d.prop_name
+            if side == 'left':
+                ranged_box.rx.a = mbox.right + gap
+            elif side == 'right':
+                ranged_box.rx.b = mbox.left - gap
+            elif side == 'top':
+                ranged_box.ry.a = mbox.bottom + gap
+            elif side == 'bottom':
+                ranged_box.ry.b = mbox.top - gap
+        return ranged_box
+
+    @staticmethod
+    def _apply_location_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:
+        # Apply constraints for inside location
+        # Заполняется та же сторона, значение той же стороны матча плюс диапазон со знаком основной стороны.
+        for d, gap in constraint.side_to_padding.items():
+            side = d.prop_name
+            if side == 'left':
+                ranged_box.rx.a = mbox.left - gap
+            elif side == 'right':
+                ranged_box.rx.b = mbox.right + gap
+            elif side == 'top':
+                ranged_box.ry.a = mbox.top - gap
+            elif side == 'bottom':
+                ranged_box.ry.b = mbox.bottom + gap
+
+        # Apply constraints for outside location
+        # Заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
+        for d, gap in constraint.side_to_margin.items():
             side = d.prop_name
             if side == 'left':
                 ranged_box.rx.a = mbox.right + gap
