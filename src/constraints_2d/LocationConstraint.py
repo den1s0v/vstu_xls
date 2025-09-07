@@ -206,7 +206,7 @@ class LocationConstraint(SpatialConstraint):
             # 0) Check if any of ranges touch negative area — users tries to do something tricky,
             #  so we should not add anything else.
             negative_ray = g2.open_range(None, -1)
-            if any(gap.intersect(negative_ray) for gap in margins.values()):
+            if paddings or any(gap.intersect(negative_ray) for gap in margins.values()):
                 pass
             else:
                 # (Here, all gaps are positive.)
