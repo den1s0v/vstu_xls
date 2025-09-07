@@ -590,6 +590,92 @@ class LocationConstraintTestCase(unittest.TestCase):
         box = Box.from_2points(9,10, 11,11)
         self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
 
+    def test_inside_via_margins(self):
+        cs = LocationConstraint(side_to_gap={
+            'left':   '-10+',
+            'top':    '-10+',
+            'right':  '-10+',
+            'bottom': '-10+',
+        }, inside=False)
+
+        self.assertDictEqual({
+            'margin-left':   open_range(-10, None),
+            'margin-top':    open_range(-10, None),
+            'margin-right':  open_range(-10, None),
+            'margin-bottom': open_range(-10, None),
+        }, cs.full_mapping())
+
+        parent_box = Box.from_2points(0,0, 10,10)
+
+        # can match itself!
+        self.assertTrue(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # valid
+        box = Box.from_2points(1,1, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(5,5, 6,6)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(9,9, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative tests
+        box = Box.from_2points(9,9, 11,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(9,9, 10,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-1,-1, 1,1)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(-1,0, 1,1)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+    def test_inner_gaps_via_margins(self):
+        cs = LocationConstraint(side_to_gap={
+            'left':   '-10+',
+            'top':    '-10+',
+            'right':  '-10+',
+            'bottom': '-10+',
+        }, inside=False)
+
+        self.assertDictEqual({
+            'margin-left':   open_range(-10, None),
+            'margin-top':    open_range(-10, None),
+            'margin-right':  open_range(-10, None),
+            'margin-bottom': open_range(-10, None),
+        }, cs.full_mapping())
+
+        parent_box = Box.from_2points(0,0, 18,18)
+
+        # cannot match itself.
+        self.assertFalse(cs.eval_with_components(dict(this=parent_box, parent=parent_box)))
+
+        # valid
+        box = Box.from_2points(8,8, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(8,8, 9,9)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(9,9, 10,10)
+        self.assertTrue(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        # negative tests
+        box = Box.from_2points(9,9, 11,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(9,9, 10,11)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(7,7, 9,9)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
+        box = Box.from_2points(7,8, 9,10)
+        self.assertFalse(cs.eval_with_components(dict(this=box, parent=parent_box)))
+
 
 if __name__ == '__main__':
     unittest.main()
