@@ -166,7 +166,7 @@ class GrammarMatcher:
         occurrences = self.matches_by_element[pattern] or ()
         for m in occurrences:
             # Проверить, что этот матч вообще попадает в желаемую область.
-            if m.box not in region:
+            if region and m.box not in region:
                 continue
 
             # We can use a match only if we known that we'll get complete set of matches.
@@ -176,7 +176,7 @@ class GrammarMatcher:
             # тогда мы переберём все матчи этой области.
             if cache_key in m.data:
                 matched_within_regions: set[Box] = m.data[cache_key]
-                if region in matched_within_regions:
+                if not region or region in matched_within_regions:
                     # cache hit.
                     matches.append(m)
                 else:
