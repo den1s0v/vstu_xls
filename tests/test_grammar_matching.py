@@ -1,6 +1,7 @@
 import unittest
 
 from geom2d import Point, Box
+from pprint import pprint
 from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
@@ -25,8 +26,13 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
         cls.grid5_t = TxtGrid(Path('test_data/grid5.tsv').read_text(), sep='')
         cls.grid5_x = ExcelGrid.read_xlsx(Path('test_data/grid5.xlsx'))
-
         cls.grid6_x = ExcelGrid.read_xlsx(Path('test_data/grid6.xlsx'))
+
+        cls.grid_vstusched_week = ExcelGrid.read_xlsx(Path('test_data/vstusched_week.xlsx'))
+
+        cls.grid_vstu_fevt3 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+
+        cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
 
         cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
@@ -64,7 +70,6 @@ class GrammarMatchingTestCase(unittest.TestCase):
         print()
         print(grammar)
 
-        from pprint import pprint
         print()
         pprint(grammar.cell_types)
         print()
@@ -497,6 +502,43 @@ class GrammarMatchingTestCase(unittest.TestCase):
                  t[2] == Box(16,6, 1,3))
                 for t in positions
             ))
+
+    def test_grid_vstu_week(self):
+        gm = GrammarMatcher(grammar=self.vstu_grammar)
+
+        for g in (
+                self.grid_vstusched_week,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            # month_days
+            month_days_arr = gm.get_pattern_matches(gm.grammar['month_days'])
+            # pprint([
+            #     (m.pattern.name, m.get_content())
+            #     for m in month_days_arr])
+
+            self.assertEqual(12, len(month_days_arr))
+
+    def test_grid_vstu_fevt3(self):
+        gm = GrammarMatcher(grammar=self.vstu_grammar)
+
+        for g in (
+                self.grid_vstu_fevt3,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            # month_days
+            for p in gm.grammar.patterns.values():
+                matches = gm.get_pattern_matches(p)
+                print('::', p.name, ':', len(matches), '::')
+                pprint([m.get_content()
+                    for m in matches])
+                print()
+
+            pprint(matched_documents)
+            # self.assertEqual(12, len(month_days_arr))
 
 
 if __name__ == '__main__':
