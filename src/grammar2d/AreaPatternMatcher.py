@@ -115,7 +115,7 @@ class AreaPatternMatcher(PatternMatcher):
             if size_constraint:
                 parent_location = parent_location.restricted_by_size(*size_constraint)
 
-            if component_match.data.parent_location is None:
+            if 'parent_location' not in component_match.data or component_match.data.parent_location is None:
                 # словарь не создан
                 component_match.data.parent_location = dict()
             # Записать в метаданные

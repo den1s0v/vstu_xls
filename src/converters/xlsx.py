@@ -140,7 +140,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 borders.add("bottom")
 
         # Background color (convert RGB to hex if present)
-        if excel_cell.fill and excel_cell.fill.fgColor:
+        if excel_cell.fill and hasattr(excel_cell.fill, 'fgColor') and excel_cell.fill.fgColor:
             background_color = get_rgb(excel_cell.fill.fgColor, self._worksheet.parent)
 
         # Foreground color (font color)
