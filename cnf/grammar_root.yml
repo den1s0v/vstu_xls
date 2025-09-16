@@ -172,10 +172,7 @@ patterns:
 
     inner:  # содержимое
       week_day:
-        pattern_definition:
-          kind: cell
-          description: день недели (ПН, ВТ, ...)
-          content_type: week_day
+        pattern: week_day
         location: top, bottom
 
       month_days:
@@ -183,13 +180,18 @@ patterns:
 
       hours:
         pattern_definition:
-          kind: array
+          kind: array-in-context
           description: столбец с указанием пар (академ. часов)
           direction: column
           item_pattern: hour_range
           item_count: 2..6
         location: top, bottom
 
+  week_day:
+    kind: cell
+    description: день недели (ПН, ВТ, ...)
+    content_type: week_day
+    size: 1+ x 4+
 
   hour_range:
     description: академические часы дня (пара)
@@ -218,11 +220,13 @@ patterns:
           kind: array
           item_pattern: month_day
           direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить... ← Пока нет.
+          gap: 5-
 
     outer:  # ограничения на контекст (!!)
       week_day:
         pattern: week_day
-        location: right  # справа находится день недели
+        location:
+          right: '*'  # справа находится день недели
 
 
   month_day:
@@ -239,12 +243,85 @@ patterns:
     outer:  # ограничения на контекст (!!)
       week_day:
         pattern: week_day
-        location: right  # справа находится день недели
+        location:
+          right: '*..*'  # справа находится день недели
       month_name:
         pattern: month_name
         location: top  # сверху написано название месяца
 
 
+  timetable_grid:
+    kind: array
+    description: все занятия
+    direction: fill
+    item_pattern: lesson
+    gap: 0+
+    item_count: 1+
+
+
+  teacher:
+    description: преподаватель
+    kind: cell
+    content_type: teacher
+
+  room:
+    description: аудитория
+    kind: cell
+    content_type: room
+
+  discipline:
+    description: дисциплина
+    kind: cell
+    content_type: discipline
 
 
 
+  lesson:
+    description: занятие
+    kind: area
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline
+        location:
+          - top  # упаковано сверху и по бокам
+          - left
+          - right
+
+      teacher:
+        pattern: teacher
+
+      room:
+        pattern: room
+
+    outer:
+      group:  # для занятий только для одной группы
+        pattern: group_in_header
+        location:
+          - top: 0+  # упаковано сверху и по бокам
+          - left: 0
+          - right: 0
+
+      week_day:
+        pattern: week_day
+        location: left  # день недели указан слева
+
+      hour_1:  # для занятий длиной в 1 пару
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          top: 0
+          bottom: 0
+
+      # hour_begin:
+      #   pattern: hour_range
+      #   location:
+      #     left: 0+  # академ. часы указаны слева
+      #     top: 0
+      #     bottom: 0-
+      # hour_end:
+      #   pattern: hour_range
+      #   location:
+      #     left: 0+  # академ. часы указаны слева
+      #     top: 0-
+      #     bottom: 0
