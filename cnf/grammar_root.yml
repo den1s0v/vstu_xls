@@ -298,20 +298,20 @@ patterns:
       group:  # для занятий только для одной группы
         pattern: group_in_header
         location:
-          - top: 0+  # упаковано сверху и по бокам
-          - left: 0
-          - right: 0
+          - margin-top: 0+  # упаковано сверху и по бокам
+          - padding-left: 0
+          - padding-right: 0
 
       week_day:
         pattern: week_day
-        location: left  # день недели указан слева
+        location: { left: '0+' }  # день недели указан слева
 
       hour_1:  # для занятий длиной в 1 пару
         pattern: hour_range
         location:
-          left: 0+  # академ. часы указаны слева
-          top: 0
-          bottom: 0
+          margin-left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 0
 
       # hour_begin:
       #   pattern: hour_range
