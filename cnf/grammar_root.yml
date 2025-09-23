@@ -290,9 +290,17 @@ patterns:
 
       teacher:
         pattern: teacher
+        location:
+          top: 1+
+          left: 0..4
+          bottom: 0..1
 
       room:
         pattern: room
+        location:
+          top: 1+
+          right: 0..3
+          bottom: 0..2
 
     outer:
       group:  # для занятий только для одной группы
