@@ -36,8 +36,16 @@ class Match2d:
     def get_text(self) -> list[str]:
         return self.pattern.get_text_of_match(self)
 
-    def get_content(self) -> dict | list | str:
-        return self.pattern.get_content_of_match(self)
+    def get_content(self, include_position=False) -> dict | list | str:
+        if not include_position:
+            return self.pattern.get_content_of_match(self)
+        else:
+            content = self.pattern.get_content_of_match(self)
+            return {
+                '@box': self.box,
+            } | (content if isinstance(content, dict) else {
+                'content': content
+            })
 
     def get_children(self) -> list[Self]:
         return list(self.component2match.values()) if self.component2match else []
@@ -65,10 +73,10 @@ class Match2d:
         return self.component2match[item]
 
     def __str__(self) -> str:
-        return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
+        return "%s(%s)" % (type(self).__name__, repr(self.get_content(True)))
 
     def __repr__(self) -> str:
-        return str(self)
+        return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
 
     def __dict__(self) -> dict:
         """ For repr / pretty printing """

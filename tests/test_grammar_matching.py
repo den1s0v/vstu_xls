@@ -561,9 +561,9 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
             # month_days
             month_days_arr = gm.get_pattern_matches(gm.grammar['month_days'])
-            # pprint([
-            #     (m.pattern.name, m.get_content())
-            #     for m in month_days_arr])
+            pprint([
+                (m.pattern.name, m.get_content(True))
+                for m in month_days_arr])
 
             self.assertEqual(12, len(month_days_arr))
 
