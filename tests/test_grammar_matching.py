@@ -54,8 +54,9 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.sea_grammar_1 = read_grammar('test_data/sea_grammar_1.yml')
         cls.sea_grammar_2 = read_grammar('test_data/sea_grammar_2.yml')
         cls.sea_grammar_22 = read_grammar('test_data/sea_grammar_2.2.yml')
-        ...
         cls.sea_grammar_6 = read_grammar('test_data/sea_grammar_6.yml')
+        cls.sea_grammar_62 = read_grammar('test_data/sea_grammar_6.2.yml')
+        ...
 
     def _test_txt_debug(self):
         # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
@@ -500,6 +501,52 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 (t[0] == Box(26,6, 3,7)
                  and
                  t[2] == Box(16,6, 1,3))
+                for t in positions
+            ))
+
+    def test_grid_sea_9_62(self):
+        gm = GrammarMatcher(grammar=self.sea_grammar_62)
+
+        for g in (
+                self.sea_9_x,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            self.assertEqual(1, len(matched_documents))
+            root = matched_documents[0]
+            self.assertEqual((17, 15), root.box.size)
+
+            children = root['field'].get_children()
+            self.assertEqual(13, len(children))
+
+            positions = [
+                (m.box, 'has other:', m['other'].box)
+                for m in children
+            ]
+            # print(*positions, sep=' \n')
+            self.assertTrue(any(
+                (t[0] == Box(26,6, 3,7)
+                 and
+                 t[2] == Box(16,6, 1,3))
+                for t in positions
+            ))
+            self.assertTrue(any(
+                (t[0] == Box(12,7, 1,3)
+                 and
+                 t[2] == Box(16,6, 1,3))
+                for t in positions
+            ))
+            self.assertTrue(any(
+                (t[0] == Box(14,9, 1,3)
+                 and
+                 t[2] == Box(16,10, 1,3))
+                for t in positions
+            ))
+            self.assertTrue(any(
+                (t[0] == Box(24,14, 1,3)
+                 and
+                 t[2] == Box(24,2, 1,3))
                 for t in positions
             ))
 
