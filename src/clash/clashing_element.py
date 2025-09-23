@@ -1,7 +1,7 @@
 # clashing_element.py
 
 from functools import cache
-from typing import Hashable, Iterable, override
+from typing import Hashable, Iterable, override, Self
 
 from adict import adict
 
@@ -29,13 +29,6 @@ def retain_longest_only(objects: set | list | Iterable) -> set:
         top_len = with_sizes[0][0]
         objects = {t[1] for t in with_sizes if len(t[1]) == top_len}
     return objects
-
-
-def sorted_list(s: set | list | Iterable) -> list:
-    """ Make sorted list from a set """
-    arr = list(s)
-    arr.sort()
-    return arr
 
 
 class ObjWithDataWrapper(Hashable):
@@ -90,6 +83,18 @@ class ClashingElement(ObjWithDataWrapper):
         assert _pair_compatibility_checker
         return not _pair_compatibility_checker(self.obj, other.obj)
 
+    @cache
+    def coupling_with(self, other: 'ClashingElement') -> int:
+        if not isinstance(other, ClashingElement):
+            return 0
+
+        near_self = self.data.globally_clashing or set()
+        near_other = other.data.globally_clashing or set()
+        common_elements = near_self & near_other
+        if not common_elements:
+            return 0
+        return 2 * len(common_elements)
+
     def all_clashing_among(self, others) -> 'ClashingElementSet':
         """ Note: Does not clash to itself """
         if self.data.globally_clashing is not None:
@@ -99,7 +104,7 @@ class ClashingElement(ObjWithDataWrapper):
             )
         # else: fallback
         return ClashingElementSet(other for other in others if (other != self) and self.clashes_with(other))
-        # TODO: use `!=`, not `is not` ???
+        # Note: using `!=`, not `is not`.
 
     def all_independent_among(self, others) -> 'ClashingElementSet':
         """ Note: Not independent of itself """
@@ -138,6 +143,25 @@ class ClashingContainer(ClashingElement):
     def clashes_with(self, other: 'ClashingContainer') -> bool:
         assert isinstance(other, ClashingContainer), type(other)
         return any(component in other.components for component in self.components)
+
+    @cache
+    def coupling_with(self, other: 'ClashingContainer') -> int:
+        if not isinstance(other, ClashingContainer):
+            return super().coupling_with(other)
+        near_self = self.data.globally_clashing or set()
+        near_other = other.data.globally_clashing or set()
+        common_elements = near_self & near_other
+        if not common_elements:
+            return 0
+
+        coupling = max((
+                len(self.components & common_element.components) + len(other.components & common_element.components)
+                for common_element in common_elements
+                if isinstance(common_element, ClashingContainer)
+            ),
+            default=0
+        )
+        return coupling
 
     def clone(self):
         fields = {
@@ -190,13 +214,13 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
             # remove as usual
             super().remove(element)
 
-    def with_removed(self, *elements: 'ClashingElement') -> 'ClashingElementSet':
+    def with_removed(self, *elements: 'ClashingElement') -> Self:
         s = self.clone()
         s.remove(*elements)
         return s
 
     @cache
-    def free_subset(self) -> 'ClashingElementSet':
+    def free_subset(self) -> Self:
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
@@ -205,7 +229,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         return s
 
-    def get_all_clashing(self) -> 'ClashingElementSet':
+    def get_all_clashing(self) -> Self:
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
@@ -218,7 +242,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
     def make(cls,
              elements: Iterable,
              # pair_compatibility_checker=None,
-             components_getter=None) -> 'ClashingElementSet':
+             components_getter=None) -> Self:
 
         # Вспомогательное для объединения и наполнения компонентов
         hash2component: dict[int, ClashingComponent] = {}
@@ -247,7 +271,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
         return cls(clashing_elements)
 
-    def clone(self) -> 'ClashingElementSet':
+    def clone(self) -> Self:
         """Deep clone"""
         return type(self)(el.clone() for el in self)
 
@@ -372,6 +396,13 @@ class Arrangement(ClashingElementSet):
         and are "neighbours" & having the largest number on common clashes.
          """
 
+        universe_subset = self.select_neighbours_from(universe)
+
+        if not universe_subset:
+            return set()
+
+        universe = universe_subset  # update input variable !
+
         all_globally_clashing_with_this_set = {
             clashing_element
             for elem in self
@@ -381,10 +412,14 @@ class Arrangement(ClashingElementSet):
         rating_candidate_list: list[tuple[int, ClashingElement]] = []  # (count of common clashes, candidate)
 
         for ext_elem in universe:
-            ext_clashing_elements = ext_elem.data.globally_clashing or set()
-            common = all_globally_clashing_with_this_set & ext_clashing_elements
-            if common:
-                rating = len(common)
+            # max: максимально близок к одному из имеющихся элементов.
+            # sum: работает хуже! близок к нескольким сразу; это заставляет смещаться
+            rating = max(
+                elem.coupling_with(ext_elem)
+                for elem in self
+            )
+
+            if rating > 0:
                 rating_candidate_list.append((
                     rating, ext_elem
                 ))
@@ -399,18 +434,18 @@ class Arrangement(ClashingElementSet):
         candidate_list = [t[1] for t in rating_candidate_list]
         _, extra_1 = addable_arrangement.try_add_all(candidate_list)
         size_1 = len(addable_arrangement)
-        
+
         neighbour_sets = {
             self.select_candidates_from(addable_arrangement),
         }
-        
+
         if extra_1:
             # Возможны альтернативные варианты
             top_rating_sum = sum(t[0] for t in rating_candidate_list if t[1] not in extra_1)
             # try to find another combinations starting from not used (extra) elements
             for extra_elem in extra_1:
                 arrangement_2 = Arrangement()
-                _, extra_2 = arrangement_2.try_add_all([extra_elem] + candidate_list)
+                _, extra_2 = arrangement_2.try_add_all([extra_elem] + candidate_list)  # passing extra_elem first; its later occurrence will be ignored.
                 size_2 = len(arrangement_2)
                 rating_sum_2 = sum(t[0] for t in rating_candidate_list if t[1] not in extra_2)
                 if size_2 > size_1 or rating_sum_2 >= top_rating_sum:
@@ -427,7 +462,7 @@ class Arrangement(ClashingElementSet):
 
         return neighbour_sets
 
-    def clone(self) -> 'Arrangement':
+    def clone(self) -> Self:
         """Deep clone"""
         obj: Arrangement = super().clone()
         obj.incompatible = self.incompatible.clone()

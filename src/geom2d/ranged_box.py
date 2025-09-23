@@ -1,5 +1,6 @@
 # ranged_box.py
 from functools import reduce
+from typing import Self
 
 from geom2d.ranged_segment import RangedSegment
 from geom2d.open_range import open_range
@@ -12,18 +13,18 @@ class RangedBox:
     __slots__ = ("rx", "ry")
 
     def __init__(self,
-                 rx: RangedSegment | int | tuple[int | None, int | None] = None,
-                 ry: RangedSegment | int | tuple[int | None, int | None] = None
+                 rx: RangedSegment | int | tuple[int | str | None, int | str | None] = None,
+                 ry: RangedSegment | int | tuple[int | str | None, int | str | None] = None
                  ):
         self.rx = RangedSegment.make(rx)
         self.ry = RangedSegment.make(ry)
 
     # @classmethod
-    # def from_ranges(cls, x_range, y_range) -> 'RangedBox':
+    # def from_ranges(cls, x_range, y_range) -> Self:
     #     return cls(RangedSegment(x_range), RangedSegment(y_range))
 
     @classmethod
-    def from_box(cls, box: Box) -> 'RangedBox':
+    def from_box(cls, box: Box) -> Self:
         return cls(
             (box.left, box.right),
             (box.top, box.bottom),
@@ -49,7 +50,7 @@ class RangedBox:
     def is_deterministic(self) -> bool:
         return self.rx.is_deterministic() and self.ry.is_deterministic()
 
-    def minimal_box(self) -> 'RangedBox':
+    def minimal_box(self) -> Self:
         return RangedBox(
             RangedSegment(
                 open_range(self.rx.a.stop, self.rx.a.stop),
@@ -61,7 +62,7 @@ class RangedBox:
             )
         )
 
-    def maximal_box(self) -> 'RangedBox':
+    def maximal_box(self) -> Self:
         return RangedBox(
             RangedSegment(
                 open_range(self.rx.a.start, self.rx.a.start),
@@ -73,25 +74,51 @@ class RangedBox:
             )
         )
 
-    def intersect(self, other: 'RangedBox') -> 'RangedBox | None':
+    def intersect(self, other: Self) -> Self | None:
         rx = self.rx.intersect(other.rx)
         ry = self.ry.intersect(other.ry)
         return RangedBox(rx, ry) if rx and ry else None
 
-    def union(self, other: 'RangedBox') -> 'RangedBox':
+    def union(self, other: Self) -> Self:
         return RangedBox(
             self.rx.union(other.rx),
             self.ry.union(other.ry),
         )
 
-    def combine(self, other: 'RangedBox') -> 'RangedBox | None':
+    def combine(self, other: Self) -> Self | None:
         if not other or not self:
             return None
         rx = self.rx.combine(other.rx)
+        if rx is None:
+            return None
         ry = self.ry.combine(other.ry)
-        return RangedBox(rx, ry) if rx and ry else None
+        if ry is None:
+            return None
+        return RangedBox(rx, ry)
 
-    def combine_many(self, *others: 'RangedBox') -> 'RangedBox | None':
+    def intersect_borders(self, other: Self) -> Self | None:
+        if not other or not self:
+            return None
+        rx = self.rx.intersect_ends(other.rx)
+        if rx is None:
+            return None
+        ry = self.ry.intersect_ends(other.ry)
+        if ry is None:
+            return None
+        return RangedBox(rx, ry)
+
+    def restricted_by_size(self, hor_size: open_range, ver_size: open_range) -> Self | None:
+        new_rx = self.rx.restricted_by_size(hor_size)
+        if new_rx is None:
+            # invalid range for an edge
+            return None
+        new_ry = self.ry.restricted_by_size(ver_size)
+        if new_ry is None:
+            # invalid range for an edge
+            return None
+        return RangedBox(new_rx, new_ry)
+
+    def combine_many(self, *others: Self) -> Self | None:
         # f = RangedBox.combine
         f = type(self).combine
         return reduce(f, others, self)
@@ -104,6 +131,12 @@ class RangedBox:
         else:
             # vertical
             return self.ry
+
+    def fix_ranges(self) -> Self:
+        """ Apply validate_ranges() updating existing instance """
+        self.rx.fix_ranges()
+        self.ry.fix_ranges()
+        return self
 
     # Свойства для совместимости с Box:
     @property
@@ -147,6 +180,19 @@ class RangedBox:
             'bottom': self.bottom,
         }
 
+    def covers(self, other: Self | Box) -> bool:
+        """ Returns True iff given box completely lies within area defined by this box,
+        i.e. other's edges belong to the probable area, including the borders."""
+        return self.rx.covers(other.rx) and self.ry.covers(other.ry)
+
+    def __contains__(self, other):
+        """ Returns True iff given box lies anywhere within probable area's outline """
+        mb = self.maximal_box()
+        return other.rx in mb.rx and other.ry in mb.ry
+
+    def __hash__(self) -> int:
+        return hash((hash(self.rx), hash(self.ry)))
+
     def __eq__(self, other):
         if isinstance(other, Box):
             other = self.from_box(other)
@@ -157,7 +203,15 @@ class RangedBox:
     def __repr__(self):
         return f"RangedBox(rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}))"
 
+    def __str__(self):
+        if self.is_deterministic():
+            return f"RangedBox(rx=({self.left}, {self.right}), ry=({self.top}, {self.bottom}) [deterministic])"
+        return repr(self)
+
     def __bool__(self):
         """ If the box exists it should be always treated as True. """
         return True
 
+    def empty(self):
+        """ The box is empty iff at least one of its projections is empty. """
+        return self.rx.is_point() or self.ry.is_point()

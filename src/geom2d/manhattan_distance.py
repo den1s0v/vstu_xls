@@ -13,11 +13,15 @@ class ManhattanDistance:
 
     def __int__(self):
         return self.x + self.y
+
     def __str__(self):
         return f"[dx={self.x}, dy={self.y}]"
+
     __repr__ = __str__
+
     def __iter__(self):
         return iter((self.x, self.y))
+
     def __eq__(self, other: 'int|ManhattanDistance'):
         if isinstance(other, int):
             return int(self) == other
@@ -26,5 +30,6 @@ class ManhattanDistance:
 
     def __lt__(self, other: 'int|ManhattanDistance'):
         return int(self) < int(other)
+
     def __gt__(self, other: 'int|ManhattanDistance'):
         return int(self) > int(other)

@@ -82,11 +82,12 @@ patterns:
 
     inner:  # содержимое
       groups:
-        kind: array  # массив или ряд элементов, выровненных друг относительно друга
-        direction: row  #  по горизонтали (если не указать, то в любом направлении)
-        description: учебная группа в заголовке
-        item_pattern: group_in_header
-        item_count: 1+
+        pattern_definition:
+          kind: array  # массив или ряд элементов, выровненных друг относительно друга
+          direction: row  #  по горизонтали (если не указать, то в любом направлении)
+          description: учебная группа в заголовке
+          item_pattern: group_in_header
+          item_count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
@@ -110,21 +111,23 @@ patterns:
 
     inner:  # содержимое
       month_names:
-        kind: array  # массив (ряд)
-        direction: row
-        item_pattern: month_name  # определено ниже
-        item_count: 3..5
+        pattern_definition:
+          kind: array  # массив (ряд)
+          direction: row
+          item_pattern: month_name  # определено ниже
+          item_count: 3..5
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может
           - right: 0..2  # отстоять на 0..2 ячеек (внутрь)
 
       weeks:
-        kind: array  # массив (ряд) элементов,
-        direction: column  #  выровненных по вертикали
-        item_pattern: week_datetime  # ... TODO
-        item_count: 2
-        gap: 1  # 1 ячейка между неделями
+        pattern_definition:
+          kind: array  # массив (ряд) элементов,
+          direction: column  #  выровненных по вертикали
+          item_pattern: week_datetime  # ... TODO
+          item_count: 2
+          gap: 1  # 1 ячейка между неделями
         location: left, right,  bottom
 
 
@@ -147,10 +150,11 @@ patterns:
 
     inner:  # содержимое
       days:
-        kind: array  # массив (ряд)
-        direction: column
-        item_pattern: day_datetime
-        item_count: 5..6
+        pattern_definition:
+          kind: array  # массив (ряд)
+          direction: column
+          item_pattern: day_datetime
+          item_count: 5..6
         location:
           - top          # примыкает кверху,
           - left: 0..1   # слева и справа может
@@ -168,22 +172,26 @@ patterns:
 
     inner:  # содержимое
       week_day:
-        kind: cell
-        description: день недели (ПН, ВТ, ...)
-        content_type: week_day
+        pattern: week_day
         location: top, bottom
 
       month_days:
         pattern: month_days
 
       hours:
-        kind: array
-        description: столбец с указанием пар (академ. часов)
-        direction: column
-        item_pattern: hour_range
-        item_count: 2..6
+        pattern_definition:
+          kind: array-in-context
+          description: столбец с указанием пар (академ. часов)
+          direction: column
+          item_pattern: hour_range
+          item_count: 2..6
         location: top, bottom
 
+  week_day:
+    kind: cell
+    description: день недели (ПН, ВТ, ...)
+    content_type: week_day
+    size: 1+ x 4+
 
   hour_range:
     description: академические часы дня (пара)
@@ -191,9 +199,10 @@ patterns:
 
     inner:  # содержимое
       hour_range:
-        kind: cell
-        size: 1 x 2+
-        content_type: hour_range
+        pattern_definition:
+          kind: cell
+          size: 1 x 2+
+          content_type: hour_range
 
     outer:  # ограничения на контекст (!!)
       week_day:
@@ -207,14 +216,17 @@ patterns:
 
     inner: # содержимое
       month_days:
-        kind: array
-        item_pattern: month_day
-        direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить
+        pattern_definition:
+          kind: array
+          item_pattern: month_day
+          direction: fill  # fill: заполнение области произвольной формы вместо прямой линии (при этом форма самого элемента остаётся прямоугольной, охватывая всё содержимое) <-- спорный момент: может быть, стоит отдельный вид агрегации выделить... ← Пока нет.
+          gap: 5-
 
     outer:  # ограничения на контекст (!!)
       week_day:
         pattern: week_day
-        location: right  # справа находится день недели
+        location:
+          right: '*'  # справа находится день недели
 
 
   month_day:
@@ -223,19 +235,101 @@ patterns:
 
     inner:  # содержимое
       month_day:
-        kind: cell
-        size: 1 x 2+
-        content_type: month_day
+        pattern_definition:
+          kind: cell
+          size: 1 x 2+
+          content_type: month_day
 
     outer:  # ограничения на контекст (!!)
       week_day:
         pattern: week_day
-        location: right  # справа находится день недели
+        location:
+          right: '*..*'  # справа находится день недели
       month_name:
         pattern: month_name
         location: top  # сверху написано название месяца
 
 
+  timetable_grid:
+    kind: array
+    description: все занятия
+    direction: fill
+    item_pattern: lesson
+    gap: 0+
+    item_count: 1+
+
+
+  teacher:
+    description: преподаватель
+    kind: cell
+    content_type: teacher
+
+  room:
+    description: аудитория
+    kind: cell
+    content_type: room
+
+  discipline:
+    description: дисциплина
+    kind: cell
+    content_type: discipline
 
 
 
+  lesson:
+    description: занятие
+    kind: area
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline
+        location:
+          - top  # упаковано сверху и по бокам
+          - left
+          - right
+
+      teacher:
+        pattern: teacher
+        location:
+          top: 1+
+          left: 0..4
+          bottom: 0..1
+
+      room:
+        pattern: room
+        location:
+          top: 1+
+          right: 0..3
+          bottom: 0..2
+
+    outer:
+      group:  # для занятий только для одной группы
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и по бокам
+          - padding-left: 0
+          - padding-right: 0
+
+      week_day:
+        pattern: week_day
+        location: { left: '0+' }  # день недели указан слева
+
+      hour_1:  # для занятий длиной в 1 пару
+        pattern: hour_range
+        location:
+          margin-left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 0
+
+      # hour_begin:
+      #   pattern: hour_range
+      #   location:
+      #     left: 0+  # академ. часы указаны слева
+      #     top: 0
+      #     bottom: 0-
+      # hour_end:
+      #   pattern: hour_range
+      #   location:
+      #     left: 0+  # академ. часы указаны слева
+      #     top: 0-
+      #     bottom: 0

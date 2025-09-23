@@ -1,5 +1,6 @@
 import unittest
 
+from constraints_2d import SizeConstraint
 from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
@@ -11,11 +12,10 @@ from grammar2d import read_grammar
 
 from grammar2d.PatternComponent import PatternComponent
 from constraints_2d.LocationConstraint import LocationConstraint
-from geom2d.ranged_box import RangedBox
-from geom2d import Direction, open_range, RangedSegment
+from geom2d import Box, RangedBox, LEFT, UP, DOWN
+from geom2d import open_range, RangedSegment
 from grammar2d.Match2d import Match2d
-from grammar2d.Pattern2d import Pattern2d
-
+from grammar2d.ArrayPatternMatcher import counts_for_splitting
 
 
 class UtilsTestCase(unittest.TestCase):
@@ -62,7 +62,7 @@ class GrammarTestCase(unittest.TestCase):
     def test_get_ranged_box_for_parent_location_inner(self):
 
         # Example 1: {location: left}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -75,7 +75,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 2: {location: {}}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -89,7 +89,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 3: {location: left, right, bottom}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -106,7 +106,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 4: {location: right, bottom}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -122,7 +122,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 5: {location: top: 0, left: '0..1', right: '0..2'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -139,7 +139,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 6: {location: top: -2, right: '-3..3'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -155,7 +155,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 7: {location: top: '*', left: '*', right: '*', bottom: '*'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -171,16 +171,44 @@ class GrammarTestCase(unittest.TestCase):
                              ry=('*', '*'))
         self.assertEqual(expected, result)
 
+    def test_get_ranged_box_for_parent_location_inner_3x3(self):
+
+        #
+        m_box = RangedBox(rx=(2, 3), ry=(1, 2)).to_box()
+        self.assertEqual(Box(2,1, 1,1), m_box)
+        component_match = Match2d(box=m_box, pattern="dummy str instead of pattern")
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=True,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range(1, 1),
+                    'left': open_range(0, 0),
+                    'right': open_range(0, None),
+                    'bottom': open_range(1, 1)})])
+        """  |¯ ¯ ¯~
+             |◘    ~
+             |_ _ _~   """
+        result = pattern_component.get_ranged_box_for_parent_location(component_match)
+        expected = RangedBox(rx=(2, '3+'),
+                             ry=(0, 3))
+        self.assertEqual(expected, result)
+
     def test_get_ranged_box_for_parent_location_outer(self):
 
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
 
         # Example 1: {location: left}
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
-            constraints=[LocationConstraint(check_implicit_sides=False, side_to_gap={'left': open_range(0, None)})])
+            constraints=[LocationConstraint(
+                check_implicit_sides=False,
+                side_to_gap={'left': open_range(0, None)},
+                inside=False,
+            )])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('40+', '*'),
                              ry=('*', '*'))
@@ -188,7 +216,6 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 2: {location: {}}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -201,12 +228,15 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 3: {location: left: 7}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
-            constraints=[LocationConstraint(check_implicit_sides=False, side_to_gap={'top': open_range(7, 7)})])
+            constraints=[LocationConstraint(
+                check_implicit_sides=False,
+                side_to_gap={'top': open_range(7, 7)},
+                inside=False,
+            )])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '*'),
                              ry=(12 ,'*'))
@@ -214,16 +244,19 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 4: {location: top: '0..2', left: '0-', right: '0-'}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(check_implicit_sides=False, side_to_gap={
-                    'top': open_range(0, 2),
-                    'left': open_range(None, 0),
-                    'right': open_range(None, 0)})])
+                LocationConstraint(
+                    check_implicit_sides=False,
+                    side_to_gap={
+                        'top': open_range(0, 2),
+                        'left': open_range(None, 0),
+                        'right': open_range(None, 0)},
+                    inside=False,
+                )])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(
             rx=RangedSegment.make(
@@ -236,13 +269,16 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 5: {location: right}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(check_implicit_sides=False, side_to_gap={'right': open_range(0, None)})])
+                LocationConstraint(
+                    check_implicit_sides=False,
+                    side_to_gap={'right': open_range(0, None)},
+                    inside=False,
+                )])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '20-'),
                              ry=('*', '*'))
@@ -250,13 +286,16 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 6: {location: right: '3..10'}
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(check_implicit_sides=False, side_to_gap={'right': open_range(3, 10)})])
+                LocationConstraint(
+                    check_implicit_sides=False,
+                    side_to_gap={'right': open_range(3, 10)},
+                    inside=False,
+                )])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(rx=('*', '10..17'),
                              ry=('*', '*'))
@@ -264,15 +303,18 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 7: {location: top: '1-', bottom: '1-' }
-        # component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)), pattern="dummy str instead of _pattern")
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
             inner=False,
             constraints=[
-                LocationConstraint(check_implicit_sides=False, side_to_gap={
-                    'top': open_range(None, -1),
-                    'bottom': open_range(None, -1)})])
+                LocationConstraint(
+                    check_implicit_sides=False,
+                    side_to_gap={
+                        'top': open_range(None, -1),
+                        'bottom': open_range(None, -1)},
+                    inside=False,
+                )])
         result = pattern_component.get_ranged_box_for_parent_location(component_match)
         expected = RangedBox(
             rx=RangedSegment.make(
@@ -282,6 +324,200 @@ class GrammarTestCase(unittest.TestCase):
                 ('4-', '2+'),
                 validate=False))
         self.assertEqual(expected, result)
+
+    def test_get_ranged_box_for_component_location_inner_1(self):
+
+        #
+        parent_box = RangedBox(rx=(20, 30), ry=(10, 15))
+        self.assertEqual(Box(20,10, 10,5), parent_box)
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=True,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range(1, 1),
+                    'left': open_range(0, 0),
+                    # 'right': open_range(0, None),
+                    'bottom': open_range(1, 1)})])
+        """  |¯ ¯ ¯~
+             |◘    ~
+             |_ _ _~   """
+        result = pattern_component.get_ranged_box_for_component_location(parent_box)
+        expected = RangedBox(rx=(20, '20..30'),
+                             ry=(11, 14))
+        self.assertEqual(expected, result)
+
+    def test_get_ranged_box_for_component_location_inner_2(self):
+
+        #
+        parent_box = RangedBox(rx=(20, 30), ry=(10, 15))
+        self.assertEqual(Box(20,10, 10,5), parent_box)
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=True,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range(1, 1),
+                    'left': open_range(0, 0),
+                    # 'right': open_range(0, None),
+                    'bottom': open_range(1, 1)}),
+                SizeConstraint('4+ x 1..20'),
+            ])
+        """  |¯ ¯ ¯~
+             |◘    ~
+             |_ _ _~   """
+        result = pattern_component.get_ranged_box_for_component_location(parent_box)
+        expected = RangedBox(rx=(20, '24..30'),
+                             ry=(11, 14))
+        self.assertEqual(expected, result)
+
+    def test_get_ranged_box_for_component_location_outer_1(self):
+
+        #
+        parent_box = RangedBox(rx=(20, 30), ry=(10, 15))
+        self.assertEqual(Box(20,10, 10,5), parent_box)
+
+        pattern_component = PatternComponent(
+            name="child", pattern="child_pattern", inner=False,
+            constraints=[
+                LocationConstraint(side_to_gap={
+                    # {left: 0, top: 1, bottom: 1}
+                    'top': open_range.parse('0-'),
+                    'left': open_range(5, 7),
+                    # 'right': open_range(0, None),
+                    'bottom': open_range.parse('0-'),},
+                    inside=False,
+                ),
+            ])
+        """  |¯ ¯ ¯|
+          ◘  |     |
+             |_ _ _|   """
+        result = pattern_component.get_ranged_box_for_component_location(parent_box)
+        expected = RangedBox(rx=('*', '13..15'),
+                             ry=RangedSegment('15-', '10+', validate=False))
+        self.assertEqual(expected, result)
+
+    def test_location_constraint_outer(self):
+        lc = LocationConstraint(side_to_gap={
+            'left': open_range(5, 7),
+            'top': open_range.parse('0-'),
+            # 'right': open_range(0, None),
+            'bottom': open_range.parse('0-'),},
+            inside=False,
+        )
+
+        self.assertDictEqual({
+            LEFT: open_range(5, 7),
+            UP:  open_range.parse('0-'),
+            # RIGHT: open_range(None, None),
+            DOWN: open_range.parse('0-'),
+        }, lc.side_to_margin)
+
+        self.assertDictEqual({}, lc.side_to_padding)
+
+    def test_counts_for_splitting(self):
+        min_part_size, max_part_size = 3, 5
+        self.assertEqual(
+            [],
+            counts_for_splitting(2, min_part_size, max_part_size))
+        self.assertEqual(
+            [3],
+            counts_for_splitting(3, min_part_size, max_part_size))
+        self.assertEqual(
+            [4],
+            counts_for_splitting(4, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],
+            counts_for_splitting(5, min_part_size, max_part_size))
+        self.assertEqual(
+            [3, 3],
+            counts_for_splitting(6, min_part_size, max_part_size))
+        self.assertEqual(
+            [4, 3],
+            counts_for_splitting(7, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 3],
+            counts_for_splitting(8, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 4],
+            counts_for_splitting(9, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],
+            counts_for_splitting(10, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 3, 3],
+            counts_for_splitting(11, min_part_size, max_part_size))
+
+        min_part_size, max_part_size = 4, 5
+        self.assertEqual(
+            [5],
+            counts_for_splitting(5, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(6, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(7, min_part_size, max_part_size))
+        self.assertEqual(
+            [4, 4],
+            counts_for_splitting(8, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 4],
+            counts_for_splitting(9, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],
+            counts_for_splitting(10, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],  # not covering
+            counts_for_splitting(11, min_part_size, max_part_size))
+        self.assertEqual(
+            [4, 4, 4],
+            counts_for_splitting(12, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 4, 4],
+            counts_for_splitting(13, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5, 4],
+            counts_for_splitting(14, min_part_size, max_part_size))
+
+        min_part_size, max_part_size = 5, 5
+        self.assertEqual(
+            [5],
+            counts_for_splitting(5, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(6, min_part_size, max_part_size))
+        self.assertEqual(
+            [5],  # not covering
+            counts_for_splitting(9, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],
+            counts_for_splitting(10, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],  # not covering
+            counts_for_splitting(11, min_part_size, max_part_size))
+        self.assertEqual(
+            [5, 5],  # not covering
+            counts_for_splitting(14, min_part_size, max_part_size))
+
+        min_part_size, max_part_size = 15, 20
+        self.assertEqual(
+            [16, 15],
+            counts_for_splitting(31, min_part_size, max_part_size))
+        self.assertEqual(
+            [18, 15],  # not covering
+            counts_for_splitting(33, min_part_size, max_part_size))
+        self.assertEqual(
+            [20, 15],  # not covering
+            counts_for_splitting(35, min_part_size, max_part_size))
+        self.assertEqual(
+            [20, 19],
+            counts_for_splitting(39, min_part_size, max_part_size))
+        self.assertEqual(
+            [20, 20, 20, 20, 20, 16, 15],
+            counts_for_splitting(131, min_part_size, max_part_size))
 
 
 if __name__ == '__main__':

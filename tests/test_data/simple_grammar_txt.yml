@@ -48,7 +48,7 @@ patterns:
     kind: cell
     content_type: star
     extends: [mark]
-    count_in_document: 10
+    # count_in_document: 10
 
 
   col_letter:
@@ -77,7 +77,7 @@ patterns:
     kind: array  # массив или ряд элементов, выровненных друг относительно друга
   #  direction: row  #  по горизонтали (если не указать, то в любом направлении)
     item_pattern: row_number
-    item_count: 2..6
+    ### item_count: 2..6
   #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
@@ -87,7 +87,7 @@ patterns:
     direction: fill  #  по горизонтали (если не указать, то в любом направлении)
     item_pattern: mark
     item_count: 2+
-    gap: 1-
+    gap: 3-
     #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
   root:
@@ -101,4 +101,6 @@ patterns:
         pattern: field
       numbers:
         pattern: numbers
+      letters:
+        pattern: letters
 

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
+from typing import Iterable, Self
 
 from adict import adict
 
@@ -34,6 +35,15 @@ class Checkpointer:
         if hit:
             self.last = now
         return delta
+
+
+@contextmanager
+def time_report(message: str = None, ch: Checkpointer = None):
+    ch = ch or Checkpointer()
+    try:
+        yield ch
+    finally:
+        ch.hit(message)
 
 
 def reverse_if(iterable, reverse=True):
@@ -128,7 +138,7 @@ class WithSafeCreate:
         return kwargs_filtered, kwargs_ignored
 
     @classmethod
-    def safe_create(cls, **kwargs) -> type:
+    def safe_create(cls, **kwargs) -> Self:
         """ Class method to be used with dataclasses
         instead of direct instance creation
         to avoid `Unknown/unsupported keyword argument` errors in a smart way.
@@ -157,3 +167,8 @@ def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=3) 
     return None
 
 
+def sorted_list(s: set | list | Iterable) -> list:
+    """ Make sorted list from a set """
+    arr = list(s)
+    arr.sort()
+    return arr

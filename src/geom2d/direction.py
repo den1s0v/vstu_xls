@@ -6,6 +6,9 @@ class Direction:
     See constants below: 0 is Right, 90 is Up, 180 is Left, 270 is Down.
     Non-right angles not supported.
     """
+
+    __slots__ = ('rotation', 'dx', 'dy', 'prop_name', )
+
     rotation: int
     dx: int
     dy: int
@@ -13,19 +16,25 @@ class Direction:
     _instances: dict[int, 'Direction'] = {}
 
     @classmethod
-    def get(cls, rotation) -> 'Direction':
+    def make(cls, rotation) -> 'Direction':
         obj = cls._instances.get(rotation)
         if not obj:
             cls._instances[rotation] = (obj := Direction(rotation))
         return obj
 
     @classmethod
-    def get_by_name(cls, prop_name) -> 'Direction | None':
+    def get_by_name(cls, prop_name: str) -> 'Direction | None':
         # Note: this assumes that all instances have been already registered.
         for d in cls.known_instances():
             if d.prop_name == prop_name:
                 return d
         return None
+
+    @classmethod
+    def get(cls, dir_or_prop_name: 'Direction | str') -> 'Direction | None':
+        if isinstance(dir_or_prop_name, Direction):
+            return dir_or_prop_name
+        return cls.get_by_name(dir_or_prop_name)
 
     @classmethod
     def known_instances(cls) -> Iterable['Direction']:
@@ -55,10 +64,10 @@ class Direction:
         return self.dx if self.dy == 0 else self.dy
 
     def __add__(self, angle) -> 'Direction':
-        return self.get((self.rotation + angle + 360) % 360)
+        return self.make((self.rotation + angle + 360) % 360)
 
     def __sub__(self, angle) -> 'Direction':
-        return self.get((self.rotation - angle + 360) % 360)
+        return self.make((self.rotation - angle + 360) % 360)
 
     def opposite(self) -> 'Direction':
         """ Get diametrically opposite Direction """
@@ -80,9 +89,15 @@ class Direction:
     def __repr__(self) -> str:
         return f'Direction(rotation={self.rotation}, prop_name={self.prop_name})'
 
+    def __hash__(self):
+        return self.rotation
+
+    def __lt__(self, other):
+        return isinstance(other, type(self)) and self.rotation < other.rotation
+
 
 # define constants
-RIGHT= Direction.get(0)
-UP   = Direction.get(90)
-LEFT = Direction.get(180)
-DOWN = Direction.get(270)
+RIGHT= Direction.make(0)
+UP   = Direction.make(90)
+LEFT = Direction.make(180)
+DOWN = Direction.make(270)

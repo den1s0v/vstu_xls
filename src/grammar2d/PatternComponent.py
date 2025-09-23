@@ -1,16 +1,17 @@
 from dataclasses import dataclass
 from functools import reduce
 from operator import and_
+from typing import Self
 
 from loguru import logger
 
+import grammar2d.Grammar as ns
 import grammar2d.Pattern2d as pt
-from constraints_2d import SpatialConstraint
 from constraints_2d import LocationConstraint
+from constraints_2d import SpatialConstraint, SizeConstraint
 from geom2d import open_range, Box, RangedBox
 from utils import WithCache, WithSafeCreate
 from .Match2d import Match2d
-
 
 
 @dataclass
@@ -29,18 +30,26 @@ class PatternComponent(WithCache, WithSafeCreate):
     inner: bool = True  # Является ли внутренним и образующим размер родителя
 
     # "Локальные" ограничения, накладываемые на расположение этого компонента по отношению к родителю.
-        # Используются координаты текущего дочернего элемента и родительского элемента.
-        # Также могут использоваться координаты других компонентов родителя, которые были определены по списку компонентов выше этого компонента.
-        # "Локальные" означает, то для записи координат может быть использована сокращёная форма:
-        # 'x' — свой 'x', '_x' — 'x' родителя, и т.п.
+    # Используются координаты текущего дочернего элемента и родительского элемента.
+    # Также могут использоваться координаты других компонентов родителя,
+    # которые были определены по списку компонентов выше этого компонента.
+    # "Локальные" означает, то для записи координат может быть использована сокращённая форма:
+    # 'x' — свой 'x', '_x' — 'x' родителя, и т.п.
     constraints: list[
         SpatialConstraint] = ()
 
-    count: open_range = None  # кратность элемента в родителе
+    # Not implemented! Do not use!
+    # count: open_range = None  # кратность элемента в родителе
 
-    weight: float = 1  # (-∞, ∞) вес компонента для регулирования вклада в точность опредления родителя. >0: наличие желательно, 0: безразлично (компонент может быть опущен без потери точности), <0: наличие нежелательно (в этом случае должен быть опциональным!).
+    # Вес компонента (-∞, ∞) для регулирования вклада в точность определения родителя.
+    #  >0: наличие желательно,
+    #  0: безразлично (компонент может быть опущен без потери точности),
+    #  <0: наличие нежелательно (в этом случае должен быть опциональным!).
+    weight: float = 1
 
-    optional = False  # Если True, компонент считается опциональным и может отсутствовать. Если False, то его наличие обязательно требуется для существования родительского элемента.
+    # Если True, компонент считается опциональным и может отсутствовать.
+    # Если False, то его наличие обязательно требуется для существования родительского элемента.
+    optional = False
 
     # TODO: add type to be recognized as annotation
     precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого компонент считается не найденным.
@@ -76,6 +85,7 @@ class PatternComponent(WithCache, WithSafeCreate):
     # def is_optional(self) -> bool:
     #     return self.weight <= 0
 
+    # deprecated
     @property
     def global_constraints(self) -> list[SpatialConstraint]:
         """ "Глобальные" ограничения — запись координат преобразована из сокращённой формы в полную:
@@ -108,6 +118,72 @@ class PatternComponent(WithCache, WithSafeCreate):
         """ Find which other components are checked within constraints.
         This method omits 'element' as parent, and self. """
         return self.checks_components() - {pt.Pattern2d.name_for_constraints, self.name}
+
+    def calc_distance_of_match_to_box(self, match: Match2d, box: Box) -> tuple:
+
+        # Use cache attached to match object
+        distance_to_as: dict[tuple[Box, str], float] = match.data.get('distance_to_as') or dict()
+        match.data.distance_to_as = distance_to_as  # set back if created
+
+        key = (box, 'inner' if self.inner else 'outer')
+        known_distance = distance_to_as.get(key)
+
+        if known_distance is None:
+            # if True:  ###
+            if self.inner:
+                # Расстояние для внутреннего компонента
+                # равняется росту периметра области совпадения,
+                # необходимого для включения его в матч.
+                known_distance = (match.box.manhattan_distance_to_overlap(box), )
+            else:
+                # Близость для внешнего компонента
+                # равняется длине максимального из пересечений проекций на оси.
+                # Это позволяет компоненту быть далеко, но напротив.
+                # pr1_x = match.box.project('h')
+                # pr2_x = box.project('h')
+                # pr1_y = match.box.project('v')
+                # pr2_y = box.project('v')
+                # how_close = max(
+                #     (pr1_x.intersect(pr2_x) or LinearSegment(0, 0)).size,
+                #     (pr1_y.intersect(pr2_y) or LinearSegment(0, 0)).size,
+                # )
+                # Расстояние же будем считать как минимальное из смещений по проекциям
+                md = match.box.manhattan_distance_to_overlap(box, per_axis=True)
+                # Расстояние перпендикулярно направлению взгляда
+                distance_ortho_look_ray = None
+                if loc_constraint := self.get_first_constraint():
+                    if loc_constraint.primary_direction:
+                        if loc_constraint.primary_direction.is_vertical:
+                            distance_ortho_look_ray = md.x
+                        else:
+                            distance_ortho_look_ray = md.y
+                if distance_ortho_look_ray is None:
+                    distance_ortho_look_ray = min(md)
+
+                known_distance = (
+                    distance_ortho_look_ray,
+                    int(md),
+                )
+            # Записать вычисленное значение в кэш
+            distance_to_as[key] = known_distance
+
+        return known_distance
+
+    def is_similar_to(self, other: Self) -> bool:
+        """ True, если компоненты с одинаковыми ожиданиями,
+        т.е. требуемым паттерном и ограничениями.
+        """
+        if not isinstance(other, type(self)):
+            return False
+        if self.inner != other.inner:
+            return False
+        if self.pattern != other.pattern:
+            return False
+        if len(self.constraints) != len(other.constraints):
+            return False
+        if set(self.constraints) != set(other.constraints):
+            return False
+        return True
 
     def get_ranged_box_for_parent_location(self, component_match: Match2d) -> RangedBox:
         """Получить ограничения на позицию родителя
@@ -256,7 +332,7 @@ class PatternComponent(WithCache, WithSafeCreate):
             - незаполненные стороны получают ограничение как с диапазоном '0+'.
         Для внешних сторон:
             - заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
-            - незаполненные стороны не получают ограничений вовсе (*).
+            - незаполненные стороны не получают ограничений вовсе ('*').
             
         Значение LocationConstraint.inside для простоты принимаем всегда равным True.
         """
@@ -276,19 +352,110 @@ class PatternComponent(WithCache, WithSafeCreate):
 
         # Apply constraints
         for constraint in self.constraints:
-            if not isinstance(constraint, LocationConstraint):
+            if isinstance(constraint, LocationConstraint):
+                rbox = self._apply_location_constraint(rbox, constraint, mbox)
+
+            elif isinstance(constraint, SizeConstraint):
+                # Ограничения на размер компонента не влияет на положение родителя,
+                # т.к. размеры компонента уже известны.
+                pass
+
+            else:
                 logger.warning(f'Unsupported Constraint: pattern `{self.subpattern.name
                 }` defines constraint ({constraint!r
                 }) of type {constraint.__class__.__name__
                 }  that is not supported yet.')
                 continue
 
-            if self.inner:
-                rbox = self._apply_inside_constraint(rbox, constraint, mbox)
-            else:
-                rbox = self._apply_outside_constraint(rbox, constraint, mbox)
-
         return rbox
+
+    def get_ranged_box_for_component_location(self, parent_partial_area: RangedBox) -> RangedBox:
+        """Получить ограничения на позицию компонента (ребёнка)
+         по предположениям о позиции родителя и известным ограничениям на позицию ребёнка в родителе.
+
+        В отличие от предыдущего метода (get_ranged_box_for_parent_location),
+         применение ограничений компонента работает прямолинейно, но сложность в том, что
+         область родителя определена нечётко, т.к. в ней не хватает, как минимум, текущего компонента,
+         и задана нечёткими границами.
+         Будем считать, что ограничения на размер родителя уже заложены в параметр (parent_partial_area).
+
+        Реализовано пока только для LocationConstraint и SizeConstraint.
+
+        "Взаимоотношения" между компонентами в модель введены не были (на момент написания) и не рассматриваются.
+
+        :param parent_partial_area: частичное совпадение родительской области
+        :return: оценка положения компонента
+
+        ----
+        Как считать:
+        Для внутренних сторон:
+            - заполняется та же сторона, "отняв" от границы родителя отступ ребёнка.
+            - незаполненные стороны получают ограничение как с диапазоном '0+'.
+        Для внешних сторон:
+            - заполняется противолежащая сторона, "прибавив" к границе одноимённой стороны родителя отступ ребёнка.
+            - незаполненные стороны не получают ограничений вовсе ('*').
+
+        На результат наложить ограничения по размеру ребёнка, если заданы.
+        """
+        parent = parent_partial_area
+
+        # Init result as default when no constraints specified
+        if self.inner:
+            ray = open_range(0, None)
+            rbox = RangedBox(
+                rx=(parent.left + ray, parent.right - ray),
+                ry=(parent.top + ray, parent.bottom - ray),
+            )
+        else:
+            # Completely unconstrained
+            rbox = RangedBox()
+
+        size_constraints = []
+
+        # Apply constraints
+        for constraint in self.constraints:
+            if isinstance(constraint, SizeConstraint):
+                size_constraints.append(constraint)
+                continue
+            if not isinstance(constraint, LocationConstraint):
+                continue
+
+            #  Для внутренних сторон:
+            #  заполняется та же сторона, "отняв" от границы родителя отступ ребёнка.
+            for d, gap in constraint.side_to_padding.items():
+                side = d.prop_name
+                if side == 'left':
+                    rbox.rx.a = parent.left + gap
+                elif side == 'right':
+                    rbox.rx.b = parent.right - gap
+                elif side == 'top':
+                    rbox.ry.a = parent.top + gap
+                elif side == 'bottom':
+                    rbox.ry.b = parent.bottom - gap
+
+            # Для внешних сторон:
+            # заполняется противолежащая сторона, "прибавив" к границе одноимённой стороны родителя отступ ребёнка.
+            for d, gap in constraint.side_to_margin.items():
+                side = d.prop_name
+                if side == 'left':
+                    rbox.rx.b = parent.left - gap
+                elif side == 'right':
+                    rbox.rx.a = parent.right + gap
+                elif side == 'top':
+                    rbox.ry.b = parent.top - gap
+                elif side == 'bottom':
+                    rbox.ry.a = parent.bottom + gap
+
+        for sc in size_constraints:
+            rbox = rbox.restricted_by_size(*sc)
+
+        return rbox.fix_ranges()
+
+    def get_first_constraint(self, constraint_class = LocationConstraint):
+        for constraint in self.constraints:
+            if isinstance(constraint, constraint_class):
+                return constraint
+        return None
 
     @staticmethod
     def _apply_inside_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:
@@ -311,6 +478,35 @@ class PatternComponent(WithCache, WithSafeCreate):
         # Apply constraints for outside location
         # Заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
         for d, gap in constraint.side_to_gap.items():
+            side = d.prop_name
+            if side == 'left':
+                ranged_box.rx.a = mbox.right + gap
+            elif side == 'right':
+                ranged_box.rx.b = mbox.left - gap
+            elif side == 'top':
+                ranged_box.ry.a = mbox.bottom + gap
+            elif side == 'bottom':
+                ranged_box.ry.b = mbox.top - gap
+        return ranged_box
+
+    @staticmethod
+    def _apply_location_constraint(ranged_box: RangedBox, constraint: LocationConstraint, mbox: Box) -> RangedBox:
+        # Apply constraints for inside location
+        # Заполняется та же сторона, значение той же стороны матча плюс диапазон со знаком основной стороны.
+        for d, gap in constraint.side_to_padding.items():
+            side = d.prop_name
+            if side == 'left':
+                ranged_box.rx.a = mbox.left - gap
+            elif side == 'right':
+                ranged_box.rx.b = mbox.right + gap
+            elif side == 'top':
+                ranged_box.ry.a = mbox.top - gap
+            elif side == 'bottom':
+                ranged_box.ry.b = mbox.bottom + gap
+
+        # Apply constraints for outside location
+        # Заполняется та же сторона, значение противолежащей стороны матча минус диапазон со знаком основной стороны.
+        for d, gap in constraint.side_to_margin.items():
             side = d.prop_name
             if side == 'left':
                 ranged_box.rx.a = mbox.right + gap

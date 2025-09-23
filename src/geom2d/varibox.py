@@ -3,16 +3,19 @@ from geom2d.point import Point
 from geom2d.size import Size
 
 
-# deprecated
 class VariBox(Box):
     """ Изменяемый Прямоугольник на целочисленной координатной плоскости (2d). `VariBox(x, y, w, h)`. """
     # Dev note: using updatable list here, not tuple as parent class does.
 
-    __slots__ = ('_tuple')
+    __slots__ = ('_tuple',)
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
         self._tuple = [x, y, w, h]  # it's actually a list!
+
+    @classmethod
+    def from_box(cls, box: Box):
+        return cls(box.x, box.y, box.w, box.h)
 
     def as_tuple(self):
         return tuple(self._tuple)
@@ -23,7 +26,6 @@ class VariBox(Box):
     def __eq__(self, other): return self._tuple.__eq__(other._tuple)
     def __ne__(self, other): return self._tuple.__ne__(other._tuple)
 
-
     @Box.x.setter
     def x(self, value): self._tuple[0] = value
     @Box.y.setter
@@ -32,7 +34,6 @@ class VariBox(Box):
     def w(self, value): self._tuple[2] = value
     @Box.h.setter
     def h(self, value): self._tuple[3] = value
-
 
     @Box.position.setter
     def position(self, point: Point):
@@ -57,19 +58,19 @@ class VariBox(Box):
 
     @Box.top.setter
     def top(self, value):
-        """ Change position of top side. Keep hight non-negative. """
+        """ Change position of top side. Keep height non-negative. """
         new_val = min(value, self.bottom)
         self.h -= (new_val - self.top)
         self.y = new_val
 
     @Box.bottom.setter
     def bottom(self, value):
-        """ Change position of bottom side. Keep hight non-negative. """
+        """ Change position of bottom side. Keep height non-negative. """
         new_val = max(value, self.top)
         self.h += (new_val - self.bottom)
 
     def grow_to_cover(self, other: Box | Point):
-        """ Grow size so `other` box or oint is covered by this box. """
+        """ Grow size so `other` box or point is covered by this box. """
         self.left = min(self.x, other.x)
         self.top  = min(self.y, other.y)
 

@@ -1,0 +1,145 @@
+cell_types_filepath: 'test_data/simple_cell_types.yml'
+
+
+patterns:
+  mark:
+    description: Mетка
+    kind: general
+    content_type: ring
+
+  ring:
+    description: Кружок
+    kind: cell
+    content_type: ring
+    extends: [mark]
+
+  star:
+    description: Звёздочка
+    kind: cell
+    content_type: star
+    extends: [mark]
+    # count_in_document: 10
+
+  cross:
+    description: Крестик
+    kind: cell
+    content_type: cross
+    extends: [mark]
+
+
+  col_letter:
+    description: Буква столбца
+    kind: cell
+    content_type: col_letter
+
+  row_number:
+    description: Номер строки
+    kind: cell
+    content_type: row_number
+
+
+
+  # letters:
+  #   description: буквы в заголовке
+  #   kind: array  # массив или ряд элементов, выровненных друг относительно друга
+  # #  direction: row  #  по горизонтали (если не указать, то в любом направлении)
+  #   item_pattern: col_letter
+  #   item_count: 2+
+  # #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
+
+
+  # numbers:
+  #   description: числа в заголовке
+  #   kind: array  # массив или ряд элементов, выровненных друг относительно друга
+  # #  direction: row  #  по горизонтали (если не указать, то в любом направлении)
+  #   item_pattern: row_number
+  #   ### item_count: 2..6
+  # #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
+
+  # group_3x3:
+  #   description: Группа меток
+  #   kind: area  # массив или ряд элементов, выровненных друг относительно друга
+  #   size: 3 x 3  # размер в ячейках Excel
+  #   # item_count: 9
+  #   # item_pattern: mark
+  #   inner:
+  #     mark_1:
+  #       pattern: mark
+  #       location: left, top
+  #     mark_2:
+  #       pattern: mark
+  #       location: right, top
+  #     mark_3:
+  #       pattern: mark
+  #       location: left, bottom
+  #     mark_4:
+  #       pattern: mark
+  #       location: right, bottom
+  #     mark_5:
+  #       pattern: mark
+  #       location: {left: 0, top: 1, bottom: 1}
+  #     mark_6:
+  #       pattern: mark
+  #       location: {right: 0, top: 1, bottom: 1}
+  #     mark_7:
+  #       pattern: mark
+  #       location: {left: 1, right: 1, top: 0}
+  #     mark_8:
+  #       pattern: mark
+  #       location: {left: 1, right: 1, bottom: 0}
+  #     mark_9:
+  #       pattern: mark
+  #       location: {left: 1, right: 1, top: 1, bottom: 1}
+
+
+  group_3x3_unconstrained:
+    description: Группа меток
+    kind: area  # массив или ряд элементов, выровненных друг относительно друга
+    size: 3 x 3  # размер в ячейках Excel
+    # item_count: 9
+    # item_pattern: mark
+    inner:
+      mark_1:
+        pattern: mark
+      mark_2:
+        pattern: mark
+      mark_3:
+        pattern: mark
+      mark_4:
+        pattern: mark
+      mark_5:
+        pattern: mark
+      mark_6:
+        pattern: mark
+      mark_7:
+        pattern: mark
+      mark_8:
+        pattern: mark
+      mark_9:
+        pattern: mark
+
+
+  field:
+    description: Все группы меток на поле
+    kind: array  # массив или ряд элементов, выровненных друг относительно друга
+    direction: fill
+    # item_pattern: group_3x3
+    item_pattern: group_3x3_unconstrained
+    item_count: 2+
+    gap: 0
+    #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
+
+  root:
+    description: всё поле
+    kind: area
+    root: true
+    count_in_document: 1
+
+    inner:  # содержимое
+      field:
+        pattern: field
+      # numbers:
+      #   pattern: numbers
+      # letters:
+      #   pattern: letters
+

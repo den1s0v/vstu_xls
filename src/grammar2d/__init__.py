@@ -9,14 +9,6 @@ from grammar2d.PatternComponent import PatternComponent
 from grammar2d.Terminal import Terminal
 from grammar2d.AreaPattern import AreaPattern
 from grammar2d.ArrayPattern import ArrayPattern
+from grammar2d.ArrayInContextPattern import ArrayInContextPattern
 
-
-class StructureElement(NonTerminal):
-    ...
-
-
-class ArrayElement(NonTerminal):
-    ...
-
-
-
+# Note: all these imports are required since classed must be registered.

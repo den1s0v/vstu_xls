@@ -1,0 +1,51 @@
+cell_types_filepath: 'test_data/sea_cell_types.yml'
+
+
+patterns:
+  water:
+    description: Вода
+    kind: cell
+    content_type: water
+
+  sand:
+    description: Песок
+    kind: cell
+    content_type: sand
+    extends: [earth]
+
+  tree:
+    description: Дерево
+    kind: cell
+    content_type: tree
+    extends: [earth]
+
+  earth:
+    description: Суша
+    kind: general
+
+
+
+  island:
+    description: остров
+    kind: array
+    direction: fill
+    item_pattern: earth
+    item_count: 1+
+
+  field:
+    description: Все острова на поле
+    kind: array
+    direction: fill
+    item_pattern: island
+    item_count: 1+
+    gap: 2+
+
+  root:
+    description: всё поле
+    kind: area
+    root: true
+    count_in_document: 1
+
+    inner:  # содержимое
+      field:
+        pattern: field

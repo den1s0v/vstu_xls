@@ -1,4 +1,7 @@
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Self
+
+import openpyxl
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -9,6 +12,10 @@ from geom2d.point import Point
 from geom2d.size import Size
 from grid import Cell, CellStyle, Grid
 from utils.openpyxl_colorconvert import theme_and_tint_to_rgb, get_theme_colors
+
+
+COORD_PAD = 1  # Use to turn Excel's 1-based coordinates to 0-based indices.
+# COORD_PAD = 0  # Use to keep coordinates as-is.
 
 
 def get_rgb(color: Color, wb: Workbook) -> Optional[str]:
@@ -52,6 +59,13 @@ class ExcelGrid(Grid, AbstractGridBuilder):
         self._worksheet = worksheet
         self._load_cells(worksheet)
 
+    @classmethod
+    def read_xlsx(cls, filepath: str | Path, _sheet=None) -> Self:
+        """ Read Grid from the first active sheet from workbook at given path.
+         TODO: implement sheet choosing.
+         """
+        return ExcelGrid(openpyxl.load_workbook(Path(filepath)).active)
+
     def _load_cells(self, data: Worksheet) -> None:
         """Load cells from the provided worksheet, creating Cell objects and storing openpyxl cell references."""
         # Iterate through all cells in the worksheet's defined dimensions
@@ -72,8 +86,8 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 if is_merged:
                     continue
 
-                x = excel_cell.column
-                y = excel_cell.row
+                x = excel_cell.column - COORD_PAD
+                y = excel_cell.row - COORD_PAD
 
                 # Create CellStyle from openpyxl cell properties
                 style = self._create_cell_style(excel_cell)
@@ -82,7 +96,7 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 cell = Cell(
                     grid=self,
                     point=Point(x, y),
-                    size=Size(1, 1),  # Default size; merged cells handled below
+                    size=Size(1, 1),  # Default size; merged cells are handled below
                     content=str(excel_cell.value),
                     style=style,
                 )
@@ -126,11 +140,11 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 borders.add("bottom")
 
         # Background color (convert RGB to hex if present)
-        if excel_cell.fill and excel_cell.fill.fgColor:
+        if excel_cell.fill and hasattr(excel_cell.fill, 'fgColor') and excel_cell.fill.fgColor:
             background_color = get_rgb(excel_cell.fill.fgColor, self._worksheet.parent)
 
         # Foreground color (font color)
-        print(excel_cell.font.color)
+        ### print(excel_cell.font.color)
         if excel_cell.font and excel_cell.font.color:
             font_color = get_rgb(excel_cell.font.color, self._worksheet.parent)
 
@@ -154,13 +168,16 @@ class ExcelGrid(Grid, AbstractGridBuilder):
                 merged_range.max_col,
                 merged_range.max_row,
             )
+            x = min_col - COORD_PAD
+            y = min_row - COORD_PAD
+            x2 = max_col - COORD_PAD
+            y2 = max_row - COORD_PAD
 
-            x, y = min_col, min_row
             point = Point(x, y)
 
             # Calculate size of the merged cell
-            width = max_col - min_col + 1
-            height = max_row - min_row + 1
+            width = x2 - x + 1
+            height = y2 - y + 1
             size = Size(width, height)
 
             # Get the top-left cell from point2cell
@@ -180,16 +197,6 @@ class ExcelGrid(Grid, AbstractGridBuilder):
             else:
                 # Update existing cell's size
                 cell.size = size
-
-            # Clear any other cells in the merged range and ensure they point to the top-left cell
-            for row in range(min_row, max_row + 1):
-                for col in range(min_col, max_col + 1):
-                    if row == min_row and col == min_col:
-                        continue  # Skip the top-left cell
-                    point = Point(col, row)
-                    if point in self.point2cell:
-                        del self.point2cell[point]
-                    self.point2cell[point] = cell
 
             # Re-register the cell to update point2cell mappings
             self.register_cell(cell)

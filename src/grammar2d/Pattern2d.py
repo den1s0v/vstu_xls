@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 
-from constraints_2d import SpatialConstraint
-from constraints_2d import BoolExprRegistry
 import grammar2d.Grammar as ns
+import grammar2d.Match2d as m2
 import grammar2d.PatternComponent as pc
 import grammar2d.PatternMatcher as pm
+from constraints_2d import BoolExprRegistry, SpatialConstraint, SizeConstraint
+from geom2d import Point
 from geom2d import open_range, Box
-from utils import WithCache, WithSafeCreate
+from utils import WithCache, WithSafeCreate, sorted_list
 
 
 @dataclass(kw_only=True, )
@@ -23,18 +24,21 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     # Линейная иерархия переопределения базовых узлов. Перечисленные здесь элементы могут заменяться на текущий элемент.
     extends: list[str] = ()
-    _extends_patterns: list['Pattern2d'] = None
+    _directly_extends_patterns: list['Pattern2d'] = None
+    _all_direct_extensions: list['Pattern2d'] = None
 
     constraints: list[SpatialConstraint] = ()
 
     _grammar: 'ns.Grammar' = None
+    _size_constraint: SizeConstraint = ...
 
     name_for_constraints = 'element'
 
     def __post_init__(self):
         # convert attributes to usable types
         if not isinstance(self.count_in_document, open_range):
-            self.count_in_document = open_range.parse(str(self.count_in_document)) if self.count_in_document else open_range(0, None)
+            self.count_in_document = open_range.parse(
+                str(self.count_in_document)) if self.count_in_document else open_range(0, None)
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -57,6 +61,47 @@ class Pattern2d(WithCache, WithSafeCreate):
     @classmethod
     def get_kind(cls):
         return "Base 2D pattern"
+
+    @classmethod
+    def independently_matchable(cls):
+        """ Returns True by default; False only for specific patterns that cannot be matched independently,
+        rather in a context of another pattern. """
+        return True
+
+    def recalc_box_for_match(self, match: 'm2.Match2d') -> Box:
+        """ Calc bounding box simply as union of all components
+        """
+        if not match.component2match:
+            return match.box
+
+        union = Box.union(*(
+            m.box
+            for m in match.component2match.values()
+        ))
+        return union
+
+    def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
+        """ Default: opaque.
+        Реализация по умолчанию: Просто берём внутреннюю прямоугольную область.
+        """
+        return sorted_list(match.box.iterate_points())
+
+    def get_text_of_match(self, match: 'm2.Match2d') -> list[str]:
+        """ Просто всё содержимое всех ячеек.
+        """
+        return [s
+                for m in match.component2match.values()
+                for s in m.get_content()]
+
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
+        """ Компактные данные для экспорта в JSON.
+        """
+        return ({
+            '@box': match.box,
+        } if include_position else {}) | {
+            name: m.get_content()
+            for name, m in match.component2match.items()
+        }
 
     # parent: Optional['Pattern2d'] = None # родительский узел грамматики
     # components: dict[str, 'PatternComponent']
@@ -84,21 +129,29 @@ class Pattern2d(WithCache, WithSafeCreate):
         return True
 
     def dependencies(self, recursive=False) -> list['Pattern2d']:
-        """ Pattern2d must be known before this one can be matched. """
-        raise NotImplementedError(type(self))
+        """ `Pattern2d`s must be known before this one can be matched.
+            A common assumption for a pattern is to
+             let all extensions match before this one can be used.
+        """
+        # make a set & convert to list
+        return list(sorted({
+            dep
+            for extending in self.get_extending_patterns(recursive)
+            for dep in extending.dependencies(recursive)
+        }))
 
     def extends_patterns(self, recursive=False) -> list['Pattern2d']:
         """ Instances of Pattern2d redefined by this one. """
-        if self._extends_patterns is None:
-            self._extends_patterns = [
+        if self._directly_extends_patterns is None:
+            self._directly_extends_patterns = [
                 self._grammar.patterns[base_name]
                 for base_name in self.extends
             ]
         if not recursive:
-            return self._extends_patterns
+            return self._directly_extends_patterns
         else:
-            seen_bases = {}  # using as ordered set, with meaningless values
-            for base in self._extends_patterns:
+            seen_bases = {}  # using dict as ordered set, ignoring values.
+            for base in self._directly_extends_patterns:
                 if base in seen_bases:
                     continue
                 seen_bases[base] = base  # add
@@ -109,6 +162,30 @@ class Pattern2d(WithCache, WithSafeCreate):
                 seen_bases |= dict.fromkeys(sub_bases)
 
             return list(seen_bases)
+
+    def get_extending_patterns(self, recursive=False) -> list['Pattern2d']:
+        """ Instances of Pattern2d that redefine this one. """
+        if self._all_direct_extensions is None:
+            self._all_direct_extensions = [
+                p
+                for p in self._grammar.patterns.values()
+                if self.name in p.extends
+            ]
+        if not recursive:
+            return self._all_direct_extensions
+        else:
+            seen_extensions = {}  # using dict as ordered set, ignoring values.
+            for extension in self._all_direct_extensions:
+                if extension in seen_extensions:
+                    continue
+                seen_extensions[extension] = extension  # add
+                sub_extensions = extension.get_extending_patterns(recursive)
+                if self in sub_extensions:
+                    print(f"SYNTAX WARN: grammar pattern `{self.name}` is extended by pattern(s) `{seen_extensions
+                    }` some of which, in turn, are indirectly extended by this one.")
+                seen_extensions |= dict.fromkeys(sub_extensions)
+
+            return list(seen_extensions)
 
     def set_grammar(self, grammar: 'ns.Grammar'):
         self._grammar = grammar
@@ -121,7 +198,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         """ Ex. precision = score / max_score """
         raise NotImplementedError(type(self))
 
-    def score_of_match(self, match: 'grammar2d.Match2d') -> float:
+    def score_of_match(self, match: 'm2.Match2d') -> float:
         """ Calc score for given match """
         raise NotImplementedError(type(self))
 
@@ -130,6 +207,14 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def get_matcher(self, grammar_matcher) -> 'pm.PatternMatcher':
         raise NotImplementedError()
+
+    def get_size_constraint(self) -> SizeConstraint | None:
+        if self._size_constraint is ...:
+            self._size_constraint = \
+                (list(filter(lambda x: isinstance(x, SizeConstraint), self.global_constraints))
+                 or
+                 (None,))[0]
+        return self._size_constraint
 
 
 class PatternRegistry:
@@ -157,7 +242,7 @@ def read_pattern(data: dict) -> Pattern2d | None:
         kind = data['kind']
         del data['kind']
     except KeyError:
-        raise ValueError('Format error: `kind` key expected for any pattern of grammar.')
+        raise ValueError('Format error: `kind` key is expected for any pattern of a grammar.')
 
     pattern_cls = PatternRegistry.get_pattern_class_by_kind(kind)
 
@@ -228,12 +313,15 @@ def read_pattern_component(
 
     if 'pattern' not in data:
         # got inline pattern definition...
+        if 'pattern_definition' not in data:
+            raise ValueError(f"grammar pattern `{pattern_name}` has component `{name
+                }` that defines no 'pattern' nor 'pattern_definition'.")
 
-        # pattern_data = dict(data)
+        pattern_data = dict(data['pattern_definition'])
         # make a name for anon pattern
-        data['name'] = component_name + '[inline]'
+        pattern_data['name'] = component_name + '[inline]'
         # parse inline pattern
-        parsed_pattern = read_pattern(data)
+        parsed_pattern = read_pattern(pattern_data)
         if not parsed_pattern:
             return None  # Fail too
 
@@ -253,7 +341,7 @@ def read_pattern_component(
     component = pc.PatternComponent.safe_create(**data)
     keys_ignored &= set(component._kwargs_ignored)
 
-    if (keys_ignored):
+    if keys_ignored:
         print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has component `{name \
             }` that defines unrecognized keys: {keys_ignored}.")
 
@@ -261,6 +349,9 @@ def read_pattern_component(
 
 
 def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:
+    """ Finds keys 'size', 'location' (so far) and parses them as `SpatialConstraint`s.
+     By the way, deletes corresponding keys from `data`!
+     """
     constraints = []
     # size
     # location

@@ -1,15 +1,13 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Optional
 
 from loguru import logger
 
-from geom2d import Point
+from geom2d import Point, Box, RangedBox
 from grammar2d import Grammar, Pattern2d
 from grammar2d.Match2d import Match2d
-from grid import GridView, CellView, Grid, Region
+from grid import GridView, CellView, Grid
 from string_matching import CellClassifier
-from utils import global_var
 
 
 @dataclass
@@ -28,19 +26,32 @@ class GrammarMatcher:
     # scalar info about cells
     type_to_cells: dict[str, list[CellView]] = None
 
-    def get_pattern_matches(self, pattern: Pattern2d, region: Region = None) -> list[Match2d]:
-        """ Get all currently known matches of given parrern. If region specified, return only matches that are within the region. """
-        occurrences = self.matches_by_element[pattern] or []
+    def get_pattern_matches(
+            self,
+            pattern: Pattern2d,
+            region: Box | RangedBox = None,
+            match_limit: int = None) -> list[Match2d]:
+        """ Get all currently known matches of given pattern.
+        If region specified, return only matches that are within the region. """
+        if pattern.independently_matchable():
+            matches = self.matches_by_element[pattern] or []
 
-        if region:
-            # filter by region
-            occurrences = list(filter(
-                lambda m: m.box in region,
-                occurrences))
-        return occurrences
-        
+            if region:
+                # filter by region
+                matches = list(filter(
+                    lambda m: m.box in region,
+                    matches))
+
+            if match_limit is not None and len(matches) > match_limit:
+                # Drop unexpected matches.
+                matches = matches[:match_limit]
+
+            return matches
+        else:
+            return self._find_matches_of_dependent_pattern(pattern, region, match_limit)
 
     def run_match(self, grid: Grid) -> list[Match2d]:
+        self.matches_by_element.clear()
         self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
         self._roll_matching_waves()
@@ -101,18 +112,21 @@ class GrammarMatcher:
             if verbose:
                 logger.debug('WAVE:')
                 logger.debug([p.name for p in wave])
-            if self.grammar.root in wave:
+
+            if self.grammar.target_mode == 'root' and self.grammar.root in wave:
                 self._find_matches_of_pattern(self.grammar.root)
             else:
-                for elem in wave:
-                    self._find_matches_of_pattern(elem)
+                for ptt in wave:
+                    if ptt.independently_matchable():
+                        self._find_matches_of_pattern(ptt)
             ...
 
     def _find_matches_of_pattern(self, pattern: Pattern2d):
         """Try finding matches of element on all grid space"""
         matcher = pattern.get_matcher(self)
-        matches = matcher.find_all()
+        matches = matcher.find_all(match_limit=pattern.count_in_document.stop)
 
+        # Check the quantity of matches
         if len(matches) not in pattern.count_in_document:
             logger.warning(f'Found {len(matches)} match(es) of pattern `{pattern.name
                 }` but expected {pattern.count_in_document}.')
@@ -128,7 +142,92 @@ class GrammarMatcher:
             self.register_match(m)
 
         ###
-        print()
-        logger.debug(f':: matches of pattern `{pattern.name}` ↓')
-        logger.debug(matches)
-        ...
+        logger.debug('')
+        logger.info(f':: {len(matches)} matches of pattern `{pattern.name}`')
+        for m in matches:
+            logger.debug([m.box, m.get_content(), m.get_children()])
+        # ...
+        # return?
+
+    def _find_matches_of_dependent_pattern(
+            self,
+            pattern: Pattern2d,
+            region: Box | RangedBox = None,
+            match_limit: int = None) -> list[Match2d]:
+        """Try finding matches of element within the specified grid region"""
+        if (match_limit is None
+                or pattern.count_in_document.stop is not None
+                and match_limit > pattern.count_in_document.stop):
+            match_limit = pattern.count_in_document.stop
+
+        # Проверить наличие в кэше
+        matches = []
+        cache_key = 'matched_within_regions'
+        occurrences = self.matches_by_element[pattern] or ()
+        for m in occurrences:
+            # Проверить, что этот матч вообще попадает в желаемую область.
+            if region and m.box not in region:
+                continue
+
+            # We can use a match only if we known that we'll get complete set of matches.
+            # Мы можем взять матч, только если точно знаем,
+            # что после этого перебора получим исчерпывающий набор совпадений, —
+            # для этого матч должен происходить из совместимой с нами области:
+            # тогда мы переберём все матчи этой области.
+            if cache_key in m.data:
+                matched_within_regions: set[Box] = m.data[cache_key]
+                if not region or region in matched_within_regions:
+                    # cache hit.
+                    matches.append(m)
+                else:
+                    # still try to find indirect matches
+                    for ch_m in matched_within_regions:
+                        if ch_m and region in ch_m:
+                            # Желаемый регион внутри ранее найденного.
+                            # Прямая выборка из него в общем случае может быть неоптимальной
+                            # (при сдвиге начала по "чётности", например).
+                            matches.append(m)
+                            break
+
+        if matches:
+            # Нашли в кэше.
+            # Так как этот набор матчей может быть неоптимальным, но и найти его заново недолго,
+            # то не сохраняем (вторично) в кэше.
+            return matches
+
+        # Обычный процесс поиска ...
+
+        matcher = pattern.get_matcher(self)
+        matches = matcher.find_all(
+            region=region,
+            match_limit=match_limit,
+        )
+
+        # Check the quantity of matches ...
+        # Do not check the count over all document.
+
+        if match_limit is not None and len(matches) > match_limit:
+            # Drop unexpected matches.
+            matches = matches[:match_limit]
+            logger.warning(f' ... limited result to {match_limit} match(es) of this pattern.')
+
+        for m in matches:
+            # 1)
+            # Set metadata about the region requested...
+            if cache_key not in m.data:
+                matched_within_regions = m.data[cache_key] = set()
+            else:
+                matched_within_regions = m.data[cache_key]
+            # Add to cache.
+            matched_within_regions.add(region)
+
+            # 2)
+            # register Match globally
+            self.register_match(m)
+        ###
+        logger.debug('')
+        logger.debug(f':: {len(matches)} matches of DEPENDENT pattern `{pattern.name}` ↓')
+        for m in matches:
+            logger.debug([m.box, m.get_content()])
+        # ...
+        return matches

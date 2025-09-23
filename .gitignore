@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+~$*.*
+*.prof
+tests/test_data/debug/
 
 # C extensions
 *.so

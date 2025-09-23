@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Self
 
 from adict import adict
 
@@ -14,14 +14,14 @@ class Box:
     """ Прямоугольник на целочисленной координатной плоскости (2d). `Box(x, y, w, h)`. """
     # Dev note: i'm avoiding subclassing namedtuple to allow usual inheritance via __init__, not __new__.
 
-    __slots__ = ('_tuple')
+    __slots__ = ('_tuple',)
 
     # Dev note: using __slots__ tells CPython to not store object's data within __dict__.
 
     def __init__(self, x: int, y: int, w: int, h: int):
         self._tuple = (x, y, w, h)
 
-    def as_tuple(self):
+    def as_tuple(self) -> tuple[int, int, int, int]:
         return self._tuple
 
     def as_dict(self) -> dict:
@@ -35,8 +35,8 @@ class Box:
     def __len__(self):
         return 4
 
-    def __getitem__(self, key):
-        return self._tuple[key]
+    def __getitem__(self, idx) -> int:
+        return self._tuple[idx]
 
     def __iter__(self):
         return iter(self._tuple)
@@ -44,38 +44,53 @@ class Box:
     def __hash__(self):
         return hash(self._tuple)
 
-    def __eq__(self, other: 'Box'):
-        if hasattr(other, '_tuple'):
+    def __eq__(self, other: Self):
+        if hasattr(other, '_tuple') or isinstance(other, Box):
             return self._tuple.__eq__(other._tuple)
         return other == self
 
-    def __ne__(self, other):
+    def __ne__(self, other: Self):
         return not self == other
 
-    # def __lt__(self, other): return self._tuple.__lt__(other)
-    # def __le__(self, other): return self._tuple.__le__(other)
-    # def __gt__(self, other): return self._tuple.__gt__(other)
-    # def __ge__(self, other): return self._tuple.__ge__(other)
+    def __lt__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__lt__(other._tuple)
+        return NotImplemented
+
+    def __le__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__le__(other._tuple)
+        return NotImplemented
+
+    def __gt__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__gt__(other._tuple)
+        return NotImplemented
+
+    def __ge__(self, other: Self):
+        if hasattr(other, '_tuple'):
+            return self._tuple.__ge__(other._tuple)
+        return NotImplemented
 
     @property
-    def x(self):
+    def x(self) -> int:
         return self._tuple[0]
 
     @property
-    def y(self):
+    def y(self) -> int:
         return self._tuple[1]
 
     @property
-    def w(self):
+    def w(self) -> int:
         return self._tuple[2]
 
     @property
-    def h(self):
+    def h(self) -> int:
         return self._tuple[3]
 
     # other stuff.
     @classmethod
-    def from_2points(cls, x1: int, y1: int, x2: int, y2: int) -> 'Box':
+    def from_2points(cls, x1: int, y1: int, x2: int, y2: int) -> Self:
         """ Construct a new Box from two diagonal points (4 coordinates), no matter which diagonal.
 
         Args:
@@ -95,30 +110,40 @@ class Box:
         )
 
     @property
-    def position(self):
+    def position(self) -> Point:
         return Point(self.x, self.y)
 
     @property
-    def size(self):
+    def size(self) -> Size:
         return Size(self.w, self.h)
 
     @property
-    def left(self):
+    def left(self) -> int:
         return self.x
 
     @property
-    def right(self):
+    def right(self) -> int:
         return self.x + self.w
 
     @property
-    def top(self):
+    def top(self) -> int:
         return self.y
 
     @property
-    def bottom(self):
+    def bottom(self) -> int:
         return self.y + self.h
 
-    def get_side_dy_direction(self, direction):
+    @property
+    def rx(self) -> LinearSegment:
+        """ Horizontal projection: range by X """
+        return self.project('h')
+
+    @property
+    def ry(self) -> LinearSegment:
+        """ Vertical projection: range by Y """
+        return self.project('v')
+
+    def get_side_dy_direction(self, direction: Direction) -> int:
         return getattr(self, direction.prop_name)
 
     def __str__(self) -> str:
@@ -127,7 +152,7 @@ class Box:
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}{str(self)}'
 
-    def __contains__(self, other: 'Box | Point'):
+    def __contains__(self, other: Self | Point):
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return (
                     self.x <= other.x and
@@ -142,7 +167,7 @@ class Box:
             )
         return False
 
-    def overlaps(self, other):
+    def overlaps(self, other: Self | Point) -> bool:
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return any(p in self for p in other.iterate_corners()) or \
                 other in self or \
@@ -152,8 +177,7 @@ class Box:
             return other in self
         return False
 
-
-    def manhattan_distance_to(self, other: Union['Point', 'Box'], per_axis=False) -> int:
+    def manhattan_distance_to(self, other: Union['Point', Self], per_axis=False) -> int | ManhattanDistance:
         """ Расстояние городских кварталов, или манхеттенское расстояние между двумя точками на плоскости.
         Для прямоугольника: расстояние до касания, см. `Box.manhattan_distance_to_touch()`.
         Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу (внутрь) прямоугольника.
@@ -178,8 +202,9 @@ class Box:
                 corner.manhattan_distance_to(other, per_axis=per_axis)
                 for corner in self.iterate_corners()
             )
+        raise TypeError(other)
 
-    def manhattan_distance_to_overlap(self, other: Union[Point, 'Box'], per_axis=False) -> int:
+    def manhattan_distance_to_overlap(self, other: Union[Point, Self], per_axis=False) -> int | ManhattanDistance:
         """ Целочисленное расстояние до максимального перекрытия:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала внутрь прямоугольника.
             Для прямоугольника: 0, если один из прямоугольников полностью вкладывается в другой, иначе минимальное количество единичных перемещений, чтобы совместить один из углов этих прямоугольников (таким образом, один оказывается внутри другого). В случае, если прямоугольники не могут быть перекрыты полностью из-за несовместимых размеров, эта метрика покажет расстояние до ближайшего максимально возможного перекрытия.
@@ -196,15 +221,15 @@ class Box:
                     self.iterate_corners(),
                     other.iterate_corners())
             )
-        return None
+        raise TypeError(other)
 
-    def manhattan_distance_to_touch(self, other: Union[Point, 'Box'], per_axis=False) -> int:
+    def manhattan_distance_to_touch(self, other: Union[Point, Self], per_axis=False) -> int | ManhattanDistance:
         """ Целочисленное расстояние до ближайшего касания:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу прямоугольника.
             Для прямоугольника: 0, если прямоугольники касаются или перекрываются, иначе минимальное количество единичных перемещений, чтобы они стали касаться сторонами или углами.
-        Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости. """
+        Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости."""
         if isinstance(other, Point):
-            return other.manhattan_distance_to(self, per_axis=per_axis)
+            return self.manhattan_distance_to(other, per_axis=per_axis)
 
         if isinstance(other, Box):
             if other in self or self in other:
@@ -221,13 +246,55 @@ class Box:
             dx = max(0, rel_h.outer_gap)
             dy = max(0, rel_v.outer_gap)
             return ManhattanDistance(dx, dy) if per_axis else dx + dy
-        return None
+        raise TypeError(other)
 
-    def iterate_corners(self):
-        yield Point(self.x, self.y)
-        yield Point(self.right, self.top)
-        yield Point(self.right, self.bottom)
-        yield Point(self.left, self.bottom)
+    def manhattan_distance_to_contact(self, other: Union[Point, Self], per_axis=False) -> int | ManhattanDistance:
+        """ Целочисленное расстояние до ближайшего совмещения пары сторон, т.е. касания не углами, а целыми сторонами:
+            Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу прямоугольника.
+            Для прямоугольника: 0, если:
+                либо прямоугольники вложены,
+                либо в одной проекции прямоугольники касаются, а в другой максимально перекрываются,
+                иначе минимальное количество единичных перемещений,
+                чтобы одна из сторон прямоугольника полностью совместилась с другой.
+        Имеется в виду расстояние городских кварталов, или манхэттенское расстояние между двумя точками на плоскости."""
+        if isinstance(other, Point):
+            return other.manhattan_distance_to(self, per_axis=per_axis)
+
+        if isinstance(other, Box):
+            if other in self or self in other:
+                return ManhattanDistance(0, 0) if per_axis else 0
+
+            px1 = self.rx
+            py1 = self.ry
+            px2 = other.rx
+            py2 = other.ry
+            rel_h = LinearRelation(px1, px2)
+            rel_v = LinearRelation(py1, py2)
+            # Внешний зазор
+            gx = max(0, rel_h.outer_gap)
+            gy = max(0, rel_v.outer_gap)
+            # Расстояние до полного перекрытия:
+            # = разность между меньшей стороной и длиной общей части (если перекрываются)
+            # = сумма меньшей стороны и зазора (если не перекрываются)
+            side_x = min(px1.size, px2.size)
+            side_y = min(py1.size, py2.size)
+            mx = side_x + (gx if gx > 0 else -rel_h.intersection().size)
+            my = side_y + (gy if gy > 0 else -rel_v.intersection().size)
+            d1 = gx + my
+            d2 = gy + mx
+            d, dx, dy = (d1, gx, my) if d1 < d2 else (d2, gy, mx)
+            return ManhattanDistance(dx, dy) if per_axis else d
+        raise TypeError(other)
+
+    def iterate_corners(self, mode='clockwise'):
+        if mode == 'clockwise':
+            yield Point(self.x, self.y)
+            yield Point(self.right, self.top)
+            yield Point(self.right, self.bottom)
+            yield Point(self.left, self.bottom)
+        elif mode == 'diagonal':
+            yield Point(self.x, self.y)
+            yield Point(self.right, self.bottom)
 
     def iterate_points0(self, per='rows', reverse=False, exclude_top_left=False):
         along_row = adict(range=(self.x, self.right), index=0)
@@ -301,7 +368,7 @@ class Box:
             # vertical
             return LinearSegment(self.y, length=self.h)
 
-    def intersect(self, other: 'Box') -> Optional['Box']:
+    def intersect(self, other: Self) -> Optional[Self]:
         """ Returns intersection of this and other box,
             or None if no intersection exists. """
         if (h := self.project('h').intersect(other.project('h'))) and \
@@ -309,11 +376,11 @@ class Box:
             return type(self)(h.a, h.size, v.a, v.size)
         return None
 
-    def unite(self, *others: 'Box') -> 'Box':
+    def unite(self, *others: Self) -> Self:
         return type(self).union(self, *others)
 
     @classmethod
-    def union(cls, *boxes: 'Box') -> 'Box':
+    def union(cls, *boxes: Self) -> Self:
         """ Returns union of given boxes,
             i.e. minimal box that contains all of them. """
         return cls.from_2points(

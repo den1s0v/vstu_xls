@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
 import grammar2d as pt
-from grammar2d.Match2d import Match2d
 import grammar2d.GrammarMatcher as ns
-from grid import Region
+from geom2d import Box
+from grammar2d.Match2d import Match2d
 
 
 @dataclass
@@ -11,14 +11,10 @@ class PatternMatcher:
     pattern: 'pt.Pattern2d'
     grammar_matcher: 'ns.GrammarMatcher'
 
-    def find_all(self, region: Region = None) -> list[Match2d]:
-        """ Find all matches within whole document. """
-        pass
-        # raise TypeError(f"Unknown element type: {type(self.element)}")
-
-    def match_exact_region(self, region: Region) -> list[Match2d]:
-        """ Find all matches within given region. 
-        TODO: deprecate this, add optional param `region: Region = None` to find_all()
+    def find_all(self, region: Box = None, match_limit: int = None) -> list[Match2d]:
+        """ Find all matches within whole document.
+        :param region if given, find all matches within the region.
+        :param match_limit if given, the maximum count of matches returned.
         """
         pass
         # raise TypeError(f"Unknown element type: {type(self.element)}")

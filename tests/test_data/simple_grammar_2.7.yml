@@ -1,0 +1,77 @@
+cell_types_filepath: 'test_data/simple_cell_types.yml'
+
+
+patterns:
+  mark:
+    description: Mетка
+    kind: general
+    content_type: ring
+
+  ring:
+    description: Кружок
+    kind: cell
+    content_type: ring
+    extends: [mark]
+
+  star:
+    description: Звёздочка
+    kind: cell
+    content_type: star
+    extends: [mark]
+    # count_in_document: 10
+
+  cross:
+    description: Крестик
+    kind: cell
+    content_type: cross
+    extends: [mark]
+
+
+  col_letter:
+    description: Буква столбца
+    kind: cell
+    content_type: col_letter
+    extends: [mark]  # для теста поиска массивов
+
+  row_number:
+    description: Номер строки
+    kind: cell
+    content_type: row_number
+
+
+  marks_array:
+    description: Просто массив меток
+    kind: array
+    item_pattern: mark
+    direction: fill
+    gap: 0..0
+    distance_kind: side
+    # size: 4- x 4-  # размер в ячейках Excel
+    item_count: 4..5
+    allow_breakdown: true  # Разрешить дробить на части крупные совпадения массива
+    # item_count: 9
+
+  field:
+    description: Все группы меток на поле
+    kind: array  # массив или ряд элементов, выровненных друг относительно друга
+    direction: fill
+    # item_pattern: group_3x3
+    item_pattern: marks_array
+    item_count: 2+
+    gap: 0+
+    #  location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
+
+  root:
+    description: всё поле
+    kind: area
+    root: true
+    count_in_document: 1
+
+    inner:  # содержимое
+      field:
+        pattern: field
+      # numbers:
+      #   pattern: numbers
+      # letters:
+      #   pattern: letters
+

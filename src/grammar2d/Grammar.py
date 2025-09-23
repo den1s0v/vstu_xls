@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 import yaml
+from loguru import logger
 
 from grammar2d.Pattern2d import Pattern2d, read_pattern
 from grammar2d.NonTerminal import NonTerminal
@@ -11,21 +12,32 @@ from string_matching import CellType, read_cell_types
 from utils import WithCache
 
 
-# @dataclass
+TARGET_MODES = ('root', 'all')
+
+
+@dataclass
 class Grammar(WithCache):
     """Грамматика описывает весь документ, начиная от корня"""
 
     cell_types: dict[str, CellType]
-    patterns: dict[str, Pattern2d]
+    # can be initialized with list but normally is dict
+    patterns: dict[str, Pattern2d] | list[Pattern2d]
     root_name: str = None
+
+    # root: оптимизировать процесс для корневого, all: искать все подряд
+    target_mode: str = 'root'  # или 'all'
 
     _root: Pattern2d = None
 
-    def __init__(self, cell_types: dict[str, CellType], patterns: list[Pattern2d]):
-        self.cell_types = cell_types
+    def __post_init__(self):
+        if self.target_mode not in TARGET_MODES:
+            raise ValueError(f'Grammar\'s `target_mode` must be one of `{TARGET_MODES
+            }`, but got: `{self.target_mode}`.')
+
         # init patterns
-        self.patterns = {}
-        for pt in patterns:
+        pattern_list = self.patterns if isinstance(self.patterns, list) else self.patterns.values()
+        self.patterns = {}  # dict
+        for pt in pattern_list:
             self._register_pattern(pt)
 
     def _register_pattern(self, pattern: Pattern2d):
@@ -70,6 +82,11 @@ class Grammar(WithCache):
             pattern = self.patterns[name_or_el]
         return pattern
 
+    def __str__(self):
+        return f'Grammar[{len(self.cell_types)} cell types, {len(self.patterns)} patterns]'
+
+    __repr__ = __str__
+
     def get_effective_cell_types(self) -> dict[str, CellType]:
         """ Get cell types only used for matching, i.e. omit unused ones. """
         effective_cell_types = {}
@@ -104,7 +121,7 @@ class Grammar(WithCache):
 
                 if not current_wave:
                     raise ValueError(
-                        f"Grammar defined improperly: some patterns cannot be matched due to circular dependencies ({ \
+                        f"Grammar defined improperly: some patterns cannot be matched due to circular dependencies ({
                             unmatched_patterns}). Elements could be matched correctly: {matched_patterns}.")
 
                 waves.append(current_wave)
@@ -113,19 +130,23 @@ class Grammar(WithCache):
 
             assert waves, 'Cannot infer any matching stages for the grammar!'
 
-            # check root
-            if (n := len(waves[-1])) > 1:
-                print(f'WARNING: grammar defines several ({n}) top-level patterns!')
-                if not self.root_name:
-                    raise ValueError(
-                        f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
-            elif not self.root_name:
-                top_elem = waves[-1][0]
-                self.root_name = top_elem.name
-                self._root = top_elem
-                print('INFO: Grammar root inferred automatically:', self.root_name)
-            elif self.root not in waves[-1]:
-                print('WARNING: `root` of grammar is not the top-level pattern!')
+            if self.target_mode == 'root':
+                # check root
+                if (n := len(waves[-1])) > 1:
+                    logger.warning(f'WARNING: grammar defines several ({n}) top-level patterns!')
+                    if not self.root_name:
+                        raise ValueError(
+                            f'Grammar root is not specified and cannot be inferred automatically. Suggested options: {waves[-1]}.')
+                elif not self.root_name:
+                    top_elem = waves[-1][0]
+                    self.root_name = top_elem.name
+                    self._root = top_elem
+                    logger.info(f'INFO: Grammar root inferred automatically: {self.root_name}')
+                elif self.root not in waves[-1]:
+                    logger.warning('WARNING: `root` of grammar is not the top-level pattern!')
+
+                # Optimize waves (drop unnecessary patterns)
+                ... # TODO
 
             self._cache.dependency_waves = waves
 

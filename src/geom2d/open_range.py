@@ -1,3 +1,5 @@
+from typing import Self
+
 import geom2d.ranges as ns
 
 
@@ -15,12 +17,14 @@ class open_range:
     so use this class when checking whether a value is in an open range.
     """
 
+    __slots__ = ('start', 'stop', )
+
     start: int | None
     stop: int | None
-    _range: range | None  # None for infinite ranges
 
     @classmethod
-    def make(cls, value: 'int | str | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range' = None) -> 'open_range':
+    def make(cls,
+             value: 'int|str | list[Optional[int]] | tuple[Optional[int], Optional[int]] | open_range' = None) -> Self:
         """ Universal single-value factory method.
              If a number is given, returns a point range.
              If a str is given, parses range from it.
@@ -28,10 +32,10 @@ class open_range:
          """
         if value is None or isinstance(value, (int, float)):
             return cls(value, value)
-        if isinstance(value, str):
-            return cls.parse(value)
         if isinstance(value, open_range):
             return value  # no need to clone
+        if isinstance(value, str):
+            return cls.parse(value)
         try:
             it = iter(value)
             values = [t[0] for t in zip(it, range(2))]  # take up to 2 items
@@ -40,51 +44,59 @@ class open_range:
                 f"Expected an iterable of numeric items in open_range.make(), got {values!r}"
             return cls(*values)
         except AttributeError:
-            pass
+            raise ValueError(value)
 
     @classmethod
     def parse(cls, range_str: str):
         """ See more in description of `parse_range()` """
         return ns.parse_range(str(range_str))
 
-    def __init__(self, start: int = None, stop=None):
+    def __init__(self, start: int | None = None, stop: int | None = None):
         self.start = start
         self.stop = stop
 
-        if start is not None and stop is not None:
-            if start > stop:
-                raise ValueError(f'Invalid empty range passed to open_range({start!r}, {stop!r})')
-            self._range = range(start, stop + 1)
-        else:
-            self._range = None
+        if start is not None and stop is not None and start > stop:
+            raise ValueError(f'Invalid empty range passed to open_range({start!r}, {stop!r})')
 
-    def __contains__(self, value):
-        if self._range:
-            return value in self._range
-
+    def __contains__(self, value: int) -> bool:
         if self.start is not None and value < self.start:
             return False
         if self.stop is not None and value > self.stop:
             return False
         return True
 
-    def __iter__(self, *args, **kwargs):
-        if self._range:
-            return iter(self._range)
+    def includes(self, other: Self | int) -> bool:
+        """ Returns True iff given value or range completely lies within this range. """
+        if isinstance(other, int):
+            return other in self
+        if self.start is not None:
+            if other.start is None or other.start < self.start:
+                # Does not cover this end of infinity
+                return False
+        if self.stop is not None:
+            if other.stop is None or self.stop < other.stop:
+                # Does not cover this end of infinity
+                return False
+        return True
 
-        raise ValueError(f'Cannot iterate infinite open_range')
+    def __iter__(self):
+        if self.start is None or self.stop is None:
+            raise ValueError(f'Cannot iterate infinite open_range')
+        return iter(range(self.start, self.stop + 1))
 
-    def __len__(self):
-        if self._range:
-            return len(self._range)
+    def __len__(self) -> int:
+        if self.start is None or self.stop is None:
+            raise ValueError(f'Cannot get length of infinite open_range')
+        return self.stop - self.start + 1
 
-        raise ValueError(f'Cannot get length of infinite open_range')
-
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """ If range exists it should be always treated as True. """
         return True
 
-    def __eq__(self, other):
+    def __hash__(self) -> int:
+        return hash((self.start, self.stop))
+
+    def __eq__(self, other) -> bool:
         if isinstance(other, range):
             return self.start == other.start and self.stop == other.stop - 1
         if isinstance(other, open_range):
@@ -94,9 +106,8 @@ class open_range:
     def __str__(self) -> str:
         """Get string representation
         parseable back by `open_range.parse( '1..5')` """
-        if self._range:
+        if self.start is not None and self.stop is not None:
             return f"{self.start}..{self.stop}"
-
         if self.start is not None:
             return f"{self.start}+"
         if self.stop is not None:
@@ -196,7 +207,7 @@ class open_range:
 
     def is_open(self) -> bool:
         """ Check if the range is infinite (i.e. at least one side is None) """
-        return not self._range
+        return self.start is None or self.stop is None
 
     def is_double_open(self) -> bool:
         """ Check if the range is infinite in both directions """
@@ -213,39 +224,149 @@ class open_range:
         else:
             return None
 
-    def intersect(self, *others: 'open_range') -> 'open_range | None':
-        ranges = [self, *others]
-        try:
-            return open_range(
-                start=max((x.start for x in ranges if x.start is not None), default=None),
-                stop=min((x.stop for x in ranges if x.stop is not None), default=None),
-            )
-        except ValueError:
-            # Got invalid/empty range.
+    def intersect(self, *others: Self) -> Self | None:
+        others = tuple(filter(None, others))
+        if self is None:
+            self, *others = others
+        if not others:
+            return self
+
+        # Handle zero or one other ranges efficiently
+        if len(others) == 1:
+            other = others[0]
+            # Calculate new_start
+            if self.start is None:
+                new_start = other.start
+            elif other.start is None:
+                new_start = self.start
+            else:
+                new_start = max(self.start, other.start)
+
+            # Calculate new_stop
+            if self.stop is None:
+                new_stop = other.stop
+            elif other.stop is None:
+                new_stop = self.stop
+            else:
+                new_stop = min(self.stop, other.stop)
+
+            # Check for empty intersection
+            if new_start is not None and new_stop is not None and new_start > new_stop:
+                return None
+            return open_range(new_start, new_stop)
+
+        # General case: multiple ranges
+        new_start = self.start
+        new_stop = self.stop
+
+        for r in others:
+            # Update new_start
+            if r.start is not None:
+                if new_start is None:
+                    new_start = r.start
+                elif r.start > new_start:
+                    new_start = r.start
+
+            # Update new_stop
+            if r.stop is not None:
+                if new_stop is None:
+                    new_stop = r.stop
+                elif r.stop < new_stop:
+                    new_stop = r.stop
+
+        # Final check for empty intersection
+        if new_start is not None and new_stop is not None and new_start > new_stop:
             return None
 
-    def union(self, *others: 'open_range') -> 'open_range':
-        ranges = [self, *others]
+        return open_range(new_start, new_stop)
+
+    def strict_union(self, *others: Self) -> Self | None:
+        """ version of union
+        that does not allow "bridging" the gap between unconnected ranges
+        and returns None for such a case.
+        Formally, no union exists for ranges iff their intersection does not exist.
+        """
+        # if self is None:
+        #     self, *others = others
+        if self.intersect(*others) is None:
+            return None
+        # Normal union.
+        return self.union(*others)
+
+    def union(self, *others: Self) -> Self | None:
+        """Union of ranges:
+        - If any range has None as start/stop, the result will have None for that bound
+        - Otherwise takes min of starts and max of stops"""
+        ranges = tuple(filter(None, [self, *others]))
+        if not ranges:
+            return None
+
+        # Special case: single range
+        if len(ranges) == 1:
+            return ranges[0]
+
+        # Flags and trackers
+        has_none_start = False
+        has_none_stop = False
+        min_start = None
+        max_stop = None
+
+        for r in ranges:
+            # Process start
+            if not has_none_start:
+                if r.start is None:
+                    has_none_start = True
+                    min_start = None  # Stop tracking min
+                else:
+                    if min_start is None or r.start < min_start:
+                        min_start = r.start
+
+            # Process stop
+            if not has_none_stop:
+                if r.stop is None:
+                    has_none_stop = True
+                    max_stop = None  # Stop tracking max
+                else:
+                    if max_stop is None or r.stop > max_stop:
+                        max_stop = r.stop
+
         return open_range(
-            start=(None
-                   if any(x.start is None for x in ranges)
-                   else min((x.start for x in ranges))
-                   ),
-            stop=(None
-                  if any(x.stop is None for x in ranges)
-                  else max((x.stop for x in ranges))
-                  ),
+            None if has_none_start else min_start,
+            None if has_none_stop else max_stop
         )
 
-    def union_limited(self, *others: 'open_range') -> 'open_range':
-        """ This version of `union` does not grow the result for infinite (`None`) sides treating them as unknown. """
-        ranges = [self, *others]
-        return open_range(
-            start=min((x.start for x in ranges if x.start is not None), default=None),
-            stop=max((x.stop for x in ranges if x.stop is not None), default=None),
-        )
+    def union_limited(self, *others: Self) -> Self | None:
+        """Union that ignores None (infinite) bounds.
+            None is returned if resulting range is invalid.
+        """
+        ranges = tuple(filter(None, [self, *others]))
+        if not ranges:
+            return None
 
-    def trimmed_at_left(self, value: int | None) -> 'open_range | None':
+        # Special case: single range
+        if len(ranges) == 1:
+            return self
+
+        min_start = None
+        max_stop = None
+
+        for r in ranges:
+            # Process start (only non-None values)
+            if r.start is not None:
+                if min_start is None or r.start < min_start:
+                    min_start = r.start
+
+            # Process stop (only non-None values)
+            if r.stop is not None:
+                if max_stop is None or r.stop > max_stop:
+                    max_stop = r.stop
+
+        try:
+            return open_range(min_start, max_stop)
+        except ValueError:
+            return None
+
+    def trimmed_at_left(self, value: int | None) -> Self | None:
         if value is None:
             return self
         if value in self:
@@ -257,7 +378,7 @@ class open_range:
                 # Got invalid/empty range.
                 return None
 
-    def trimmed_at_right(self, value: int | None) -> 'open_range | None':
+    def trimmed_at_right(self, value: int | None) -> Self | None:
         if value is None:
             return self
         if value in self:
