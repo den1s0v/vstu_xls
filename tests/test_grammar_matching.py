@@ -576,15 +576,17 @@ class GrammarMatchingTestCase(unittest.TestCase):
             # print('using grid:', g)
             matched_documents = gm.run_match(g)
 
-            # month_days
-            for p in gm.grammar.patterns.values():
+            # view lesson instances
+            # for p in gm.grammar.patterns.values():
+            p = gm.grammar['lesson']
+            if p:
                 matches = gm.get_pattern_matches(p)
                 print('::', p.name, ':', len(matches), '::')
                 pprint([m.get_content()
                     for m in matches])
                 print()
 
-            pprint(matched_documents)
+            # pprint(matched_documents)
             # self.assertEqual(12, len(month_days_arr))
 
 
