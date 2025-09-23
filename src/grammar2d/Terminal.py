@@ -48,9 +48,16 @@ class Terminal(Pattern2d):
         """
         return [match.data.text]
 
-    def get_content_of_match(self, match: 'm2.Match2d') -> dict | list | str:
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=True) -> dict | list | str:
         """ Компактные данные для экспорта в JSON. """
-        return match.data.text
+        if not include_position:
+            return match.data.text
+        else:
+            content = match.data.text
+            return {
+                '@box': match.box,
+                'content': content
+            }
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher

@@ -93,10 +93,12 @@ class Pattern2d(WithCache, WithSafeCreate):
                 for m in match.component2match.values()
                 for s in m.get_content()]
 
-    def get_content_of_match(self, match: 'm2.Match2d') -> dict | list | str:
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
         """ Компактные данные для экспорта в JSON.
         """
-        return {
+        return ({
+            '@box': match.box,
+        } if include_position else {}) | {
             name: m.get_content()
             for name, m in match.component2match.items()
         }
