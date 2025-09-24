@@ -293,6 +293,7 @@ patterns:
         location:
           top: 1+
           left: 0..4
+          right: 0+
           bottom: 0..1
 
       room:
@@ -300,6 +301,7 @@ patterns:
         location:
           top: 1+
           right: 0..3
+          left: 0+
           bottom: 0..2
 
     outer:
