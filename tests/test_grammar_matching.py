@@ -30,7 +30,8 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
         cls.grid_vstusched_week = ExcelGrid.read_xlsx(Path('test_data/vstusched_week.xlsx'))
 
-        cls.grid_vstu_fevt3 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+        cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+        cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
 
         cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
 
@@ -567,11 +568,11 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
             self.assertEqual(12, len(month_days_arr))
 
-    def test_grid_vstu_fevt3(self):
+    def test_grid_vstu_fevt4(self):
         gm = GrammarMatcher(grammar=self.vstu_grammar)
 
         for g in (
-                self.grid_vstu_fevt3,
+                self.grid_vstu_fevt4,
         ):
             # print('using grid:', g)
             matched_documents = gm.run_match(g)
@@ -585,6 +586,28 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 pprint([m.get_content()
                     for m in matches])
                 print()
+
+            # pprint(matched_documents)
+            # self.assertEqual(12, len(month_days_arr))
+
+    def test_grid_vstu_fevt4_lite(self):
+        gm = GrammarMatcher(grammar=self.vstu_grammar)
+
+        for g in (
+            self.grid_vstu_fevt4_lite,
+        ):
+            # print('using grid:', g)
+            matched_documents = gm.run_match(g)
+
+            # view lesson instances
+            # for p in gm.grammar.patterns.values():
+            p = gm.grammar['lesson']
+            if p:
+                matches = gm.get_pattern_matches(p)
+                print('::', p.name, ':', len(matches), 'matches ::')
+                for m in matches:
+                    pprint(m.get_content())
+                    print()
 
             # pprint(matched_documents)
             # self.assertEqual(12, len(month_days_arr))
