@@ -266,7 +266,8 @@ class AreaPatternMatcher(PatternMatcher):
                 combined_rb = rb2
             else:
                 if component.inner:
-                    combined_rb = rb1.combine(rb2)
+                    # combined_rb = rb1.combine(rb2)
+                    combined_rb = rb1.intersect_borders(rb2)
                 else:
                     # outer: strict check
                     # if not rb2.covers(rb1):
