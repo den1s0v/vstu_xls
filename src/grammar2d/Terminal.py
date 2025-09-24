@@ -48,7 +48,7 @@ class Terminal(Pattern2d):
         """
         return [match.data.text]
 
-    def get_content_of_match(self, match: 'm2.Match2d', include_position=True) -> dict | list | str:
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
         """ Компактные данные для экспорта в JSON. """
         if not include_position:
             return match.data.text

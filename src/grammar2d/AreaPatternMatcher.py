@@ -211,7 +211,7 @@ class AreaPatternMatcher(PatternMatcher):
     def _best_matches(self,
                       plan_pos: PositionInMatchingPlan,
                       existing_match: Match2d | None = None,
-                      max_results=1) -> (list)[Match2d]:
+                      max_results=1) -> list[Match2d]:
         """
         Рекурсивный поиск совпадений (матчей) базового паттерна.
         Эта функция подбирает следующий (переданный) компонент паттерна, на котором может построить матч.
