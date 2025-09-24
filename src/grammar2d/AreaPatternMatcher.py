@@ -63,14 +63,14 @@ class AreaPatternMatcher(PatternMatcher):
         """
 
         # Найти все матчи-кандидаты для всех паттернов-компонентов.
-        with time_report('find_match_candidates_') as ch:
-            match_candidates = self.find_match_candidates_3(region)
+        # with time_report('find_match_candidates_') as ch:
+        match_candidates = self.find_match_candidates_3(region)
 
         # Отсеять невозможные / конфликтующие варианты, при наличии.
-        with time_report('filter_candidates', ch) as ch:
-            matches = self.filter_candidates(match_candidates, match_limit)
+        # with time_report('filter_candidates', ch) as ch:
+        matches = self.filter_candidates(match_candidates, match_limit)
 
-        logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
+        # logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
         return matches
 
