@@ -130,10 +130,16 @@ class ArrayPattern(NonTerminal):
 
     def score_of_match(self, match: m2.Match2d) -> float:
         """ Calc score for given match """
-        return sum(
+        N = max(1, len(match.component2match))
+        mean_components_score = sum(
             m.precision
             for m in match.component2match.values()
-        ) / max(1, len(match.component2match))
+        ) / N
+        # ф-я y = 1 / -x: асимптотически приближается к 0 снизу
+        # Смещённая ф-я y = 1 / -x + 1: асимптотически приближается к 1 снизу
+        # Смещённая ф-я y = -(1 / 2*x) + 1: асимптотически приближается к 1 снизу, начинаясь с +0.5 при x = 1
+        len_coeff = -(0.5 / N) + 1
+        return mean_components_score * len_coeff
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher

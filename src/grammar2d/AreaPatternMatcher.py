@@ -200,13 +200,20 @@ class AreaPatternMatcher(PatternMatcher):
         )
 
         # Получить окончательную область совпадения area для всех кандидатов (с учётом потенциальных выносов)
+        filtered_matches = []
         for m in complete_matches:
             combined_ranged_box: RangedBox = m.data.ranged_box
-            m.box = combined_ranged_box.minimal_box().to_box()
+            if not combined_ranged_box:
+                continue
+            min_box = combined_ranged_box.minimal_box()
+            if not min_box:
+                continue
+            m.box = min_box.to_box()
             # recalc precision
             m.calc_precision(force=True)
+            filtered_matches.append(m)
 
-        return complete_matches
+        return filtered_matches
 
     def _best_matches(self,
                       plan_pos: PositionInMatchingPlan,

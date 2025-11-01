@@ -69,7 +69,7 @@ patterns:
     description: заголовок с группами
     kind: area
 
-    count_in_document: 1+   # минимум один на документ; если не найдено, то должна быть ошибка.
+    count_in_document: 1..2   # минимум один на документ; если не найдено, то должна быть ошибка.
     size: 4+ x 1..2  # размер в ячейках Excel
     style:
       borders: all  #  должны быть все границы с линиями
@@ -85,19 +85,37 @@ patterns:
         pattern_definition:
           kind: array  # массив или ряд элементов, выровненных друг относительно друга
           direction: row  #  по горизонтали (если не указать, то в любом направлении)
-          description: учебная группа в заголовке
-          item_pattern: group_in_header
+          description: ряд учебных групп в заголовке
+          item_pattern: group
           item_count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
 
-  group_in_header:
-    description: группа в заголовке
+  group:
+    description: учебная группа
     kind: cell  # cell: одна (возможно объединённая) ячейка
     size: 4+ x 1..2
     content_type: group  # тип контента ячейки из файла cell_types.yml
 
+
+
+  group_in_header:
+    description: группа в заголовке
+    kind: area
+    inner:
+      group:
+        pattern: group
+        location: left, right, top, bottom  # полностью совпадает
+
+    outer:
+      groups_header:
+        pattern: groups_header
+        location:
+          left-padding: 0-
+          right-padding: 0-
+          top-padding: 0
+          bottom-padding: 0
 
 
   # datetime_header:
