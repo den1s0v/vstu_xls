@@ -46,6 +46,13 @@ class SpatialConstraint(BoolExpr):
         self.replace_vars(var_name2value)
         return self
 
+    def flexibility_estimation(self) -> int:
+        """ Оценка "гибкости" расположения ограниченных позиций:
+        ограничивающая способность тем выше, чем меньше гибкость.
+        """
+        raise NotImplementedError(type(self))
+        return 987
+
     def replace_components(self, mapping: dict[str, str]):
         """ Rename variables — change leading parts of variables so these denote different components. In-place. """
         vars_mapping = self._vars_mapping_for_replacing_components(mapping)

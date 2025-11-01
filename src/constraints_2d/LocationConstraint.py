@@ -1,13 +1,12 @@
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 
 from loguru import logger
 
+import geom2d as g2
+from constraints_2d.BoolExpr import BoolExprRegistry
 from constraints_2d.CoordVar import CoordVar
 from constraints_2d.SpatialConstraint import SpatialConstraint
-from constraints_2d.BoolExpr import BoolExprRegistry
-import geom2d as g2
-
 
 SIDE_ROLES = ("padding", "margin",)
 
@@ -151,6 +150,16 @@ class LocationConstraint(SpatialConstraint):
             side_to_padding=self.side_to_padding,
             side_to_margin=self.side_to_margin,
         )
+
+    def flexibility_estimation(self) -> int:
+        """ Оценка "гибкости" расположения ограниченных позиций:
+        ограничивающая способность тем выше, чем меньше гибкость.
+        """
+        ranges = [
+            *self.side_to_padding.values(),
+            *self.side_to_margin.values(),
+        ]
+        return g2.aggregate_flexibility_estimations(r.flexibility_estimation() for r in ranges)
 
     @staticmethod
     def _prepare_side_mappings(

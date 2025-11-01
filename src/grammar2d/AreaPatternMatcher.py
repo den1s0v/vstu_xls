@@ -179,6 +179,7 @@ class AreaPatternMatcher(PatternMatcher):
             t[0].optional,
             not t[0].subpattern.independently_matchable(),
             not t[0].inner,
+            t[0].flexibility_estimation(),  # ограничивающая способность убывает
             len(t[1]),  # ↑
         ))
 

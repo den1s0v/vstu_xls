@@ -1,7 +1,7 @@
+from constraints_2d.BoolExpr import BoolExprRegistry
 from constraints_2d.CoordVar import CoordVar
 from constraints_2d.SpatialConstraint import SpatialConstraint
-from constraints_2d.BoolExpr import BoolExprRegistry
-from geom2d import parse_size_range, open_range
+from geom2d import parse_size_range, open_range, aggregate_flexibility_estimations
 
 
 class SizeConstraint(SpatialConstraint):
@@ -15,7 +15,7 @@ class SizeConstraint(SpatialConstraint):
     _predicates: dict[str, callable]
 
     def __init__(self, size_range_str: str = None, size_range_tuple: tuple[open_range, open_range] | list = None):
-        """ Pass either: `size_range_str='4+ x 1..2'` or `size_range_tuple=(open_range(4, 999), open_range(1, 3))` """
+        """ Pass either: `size_range_str='4+ x 1..3'` or `size_range_tuple=(open_range(4, 999), open_range(1, 3))` """
         if size_range_str:
             size_range_tuple = parse_size_range(size_range_str)
         assert size_range_tuple, size_range_tuple
@@ -55,6 +55,12 @@ class SizeConstraint(SpatialConstraint):
 
     def clone(self) -> 'SizeConstraint':
         return type(self)(size_range_tuple=self.size_range_tuple)
+
+    def flexibility_estimation(self) -> int:
+        """ Оценка "гибкости" ограниченного размера:
+        ограничивающая способность тем выше, чем меньше гибкость.
+        """
+        return aggregate_flexibility_estimations(r.flexibility_estimation() for r in self.size_range_tuple)
 
     def __iter__(self):
         return iter(self.size_range_tuple)

@@ -9,7 +9,7 @@ import grammar2d.Grammar as ns
 import grammar2d.Pattern2d as pt
 from constraints_2d import LocationConstraint
 from constraints_2d import SpatialConstraint, SizeConstraint
-from geom2d import open_range, Box, RangedBox
+from geom2d import open_range, Box, RangedBox, aggregate_flexibility_estimations
 from utils import WithCache, WithSafeCreate
 from .Match2d import Match2d
 
@@ -184,6 +184,12 @@ class PatternComponent(WithCache, WithSafeCreate):
         if set(self.constraints) != set(other.constraints):
             return False
         return True
+
+    def flexibility_estimation(self) -> int:
+        """ Оценка "гибкости" ограниченного расположения компонента:
+        ограничивающая способность тем выше, чем меньше гибкость.
+        """
+        return aggregate_flexibility_estimations(r.flexibility_estimation() for r in self.constraints)
 
     def get_ranged_box_for_parent_location(self, component_match: Match2d) -> RangedBox:
         """Получить ограничения на позицию родителя

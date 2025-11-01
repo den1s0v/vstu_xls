@@ -224,6 +224,16 @@ class open_range:
         else:
             return None
 
+    def flexibility_estimation(self) -> int:
+        """ Return the flexibility estimation of the range:
+        1 for point, length for finite, large number for infinite.
+        """
+        if self.is_double_open():
+            return 999_999
+        if self.is_open():
+            return 999
+        return len(self)
+
     def intersect(self, *others: Self) -> Self | None:
         others = tuple(filter(None, others))
         if self is None:

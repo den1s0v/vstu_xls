@@ -1,4 +1,6 @@
 # geom2d
+import operator
+from functools import reduce
 
 """ Двумерные примитивы для работы на прямоугольной сетке из ячеек.
 
@@ -21,4 +23,14 @@ from geom2d.ranged_box import RangedBox
 # def sign(a):
 #     return (a > 0) - (a < 0)
 
+MAX_FLEXIBILITY = 999_999_999
 
+def aggregate_flexibility_estimations(estimations) -> int:
+    return min(
+        MAX_FLEXIBILITY,
+        reduce(
+            operator.mul,
+            estimations or (MAX_FLEXIBILITY,),
+            1  # initial
+        )
+    )
