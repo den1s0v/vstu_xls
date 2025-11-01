@@ -12,6 +12,7 @@ import geom2d as g2
 SIDE_ROLES = ("padding", "margin",)
 
 
+@BoolExprRegistry.register
 @dataclass(kw_only=True, repr=True)
 class LocationConstraint(SpatialConstraint):
     """ Проверка прилегания сторон компонента к границам области родительского паттерна
@@ -321,9 +322,6 @@ class LocationConstraint(SpatialConstraint):
 
     def __lt__(self, other):
         return isinstance(other, type(self)) and str(self) < str(other)
-
-
-BoolExprRegistry.register(LocationConstraint)
 
 
 def parse_sides_to_gaps(s: str, range_value="0") -> dict[str, str]:

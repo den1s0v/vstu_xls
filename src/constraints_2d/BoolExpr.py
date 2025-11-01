@@ -32,6 +32,7 @@ class BoolExprRegistry:
         # Регистрация подкласса в реестре по его kind
         kind = boolexpr_cls.get_kind()
         cls.registry[kind] = boolexpr_cls
+        return boolexpr_cls
 
     @classmethod
     def get_class_by_kind(cls, kind: str) -> 'type|None':
