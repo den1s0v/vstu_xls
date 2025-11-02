@@ -108,7 +108,7 @@ patterns:
         location: left, right, top, bottom  # полностью совпадает
 
     outer:
-      groups_header:
+      _groups_header:
         pattern: groups_header
         location:
           left-padding: 0-

@@ -95,12 +95,14 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
         """ Компактные данные для экспорта в JSON.
+        Игнорирует поля, начинающиеся с "_". Этот префикс может быть использован специально, чтобы скрывать избыточные данные из результата.
         """
         return ({
             '@box': match.box,
         } if include_position else {}) | {
             name: m.get_content()
             for name, m in match.component2match.items()
+            if not name.startswith('_')
         }
 
     # parent: Optional['Pattern2d'] = None # родительский узел грамматики
