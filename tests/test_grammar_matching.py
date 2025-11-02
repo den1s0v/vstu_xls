@@ -592,22 +592,29 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
     def test_grid_vstu_fevt4_lite(self):
         gm = GrammarMatcher(grammar=self.vstu_grammar)
-
-        for g in (
-            self.grid_vstu_fevt4_lite,
+        g = self.grid_vstu_fevt4_lite
+        for pattern_name in (
+            'lesson',
+            # 'teacher',
+            # 'discipline',
+            # 'room',
+            # 'groups_header',
+            # 'group_in_header',
+            # 'week_day',
+            # 'hour_range',
         ):
-            # print('using grid:', g)
             matched_documents = gm.run_match(g)
-
             # view lesson instances
             # for p in gm.grammar.patterns.values():
-            p = gm.grammar['lesson']
+            p = gm.grammar[pattern_name]
             if p:
                 matches = gm.get_pattern_matches(p)
                 print('::', p.name, ':', len(matches), 'matches ::')
                 for m in matches:
                     pprint(m.get_content())
+                    print('  precision=', m.precision)
                     print()
+                print()
 
             # pprint(matched_documents)
             # self.assertEqual(12, len(month_days_arr))
