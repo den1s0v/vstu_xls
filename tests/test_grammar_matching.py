@@ -619,6 +619,41 @@ class GrammarMatchingTestCase(unittest.TestCase):
             # pprint(matched_documents)
             # self.assertEqual(12, len(month_days_arr))
 
+    def test_grid_vstu_fevt4_lessons(self):
+        gm = GrammarMatcher(grammar=self.vstu_grammar)
+        doc = self.grid_vstu_fevt4_lessons
+        matched_documents = gm.run_match(doc)
+        for type_name in (
+            'discipline',
+        ):
+            cells = gm.type_to_cells[type_name]
+            if cells:
+                print(':: CELL :', type_name, ':', len(cells), 'cells ::')
+                for m in cells:
+                    precision = m.data['cell_matches'][type_name].precision
+                    if precision < 0.5:
+                        continue
+                    pprint(m)
+                    # print('  data=', m.data)
+                    print(f'  {precision=}', )
+                    print()
+                print()
+
+        for pattern_name in (
+            # 'lesson',
+            'lesson_lab',
+        ):
+            # view lesson instances
+            p = gm.grammar[pattern_name]
+            if p:
+                matches = gm.get_pattern_matches(p)
+                print('::', p.name, ':', len(matches), 'matches ::')
+                for m in matches:
+                    pprint(m.get_content())
+                    print('  precision=', m.precision)
+                    print()
+                print()
+
 
 if __name__ == '__main__':
     # unittest.main()

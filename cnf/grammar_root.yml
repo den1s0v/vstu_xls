@@ -293,6 +293,69 @@ patterns:
 
 
 
+  lesson_lab:
+    description: занятие-лабораторная (4ч)
+    kind: area
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline
+        location:
+          - top  # упаковано сверху и по бокам
+          - left
+          - right
+
+      teacher:
+        pattern: teacher
+        location:
+          top: 1+
+          left: 0..1
+          right: 0+
+          bottom: 0..1
+
+      room:
+        pattern: room
+        location:
+          top: 1+
+          right: 0..2
+          left: 0+
+          bottom: 0..3
+
+    outer:
+      group:  # для занятий только для одной группы
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и по бокам
+          - padding-left: -4..0
+          - padding-right: -4..0
+
+      week_day:
+        pattern: week_day
+        location: { left: '0+' }  # день недели указан слева
+
+      # hour_1:  # для занятий длиной в 1 пару
+      #   pattern: hour_range
+      #   location:
+      #     margin-left: 0+  # академ. часы указаны слева
+      #     padding-top: 0
+      #     padding-bottom: 0
+
+      hour_begin:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 1+
+      hour_end:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 1+
+          padding-bottom: 0
+
+
+
+  # обычная пара-лекция на 1 группу
   lesson:
     description: занятие
     kind: area
