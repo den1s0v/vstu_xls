@@ -38,7 +38,6 @@ class MatchingPlan:
 class PositionInMatchingPlan:
     plan: MatchingPlan
     component_i: int = 0
-
     # match_i: int = 0
 
     def clone(self) -> Self:
