@@ -1,7 +1,7 @@
 import unittest
+from pprint import pprint
 
 from geom2d import Point, Box
-from pprint import pprint
 from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
@@ -32,6 +32,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
 
         cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
         cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
+        cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lessons.xlsx'))
 
         cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
 
@@ -576,6 +577,13 @@ class GrammarMatchingTestCase(unittest.TestCase):
         ):
             # print('using grid:', g)
             matched_documents = gm.run_match(g)
+
+            if not 'save':
+                doc = matched_documents[0]
+                json_data = doc.get_content()
+                with open('test_grid_vstu_fevt4.json', 'w') as f:
+                    # json.dump(f, json_data, indent=2)
+                    print(json_data, file=f)
 
             # view lesson instances
             # for p in gm.grammar.patterns.values():
