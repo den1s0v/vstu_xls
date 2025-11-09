@@ -121,8 +121,11 @@ class Grammar(WithCache):
 
                 if not current_wave:
                     raise ValueError(
-                        f"Grammar defined improperly: some patterns cannot be matched due to circular dependencies ({
-                            unmatched_patterns}). Elements could be matched correctly: {matched_patterns}.")
+                        "Grammar defined improperly: some patterns cannot be matched due to circular dependencies:\n - "
+                        f"{'\n - '.join(sorted(map(str, 
+                            unmatched_patterns)))}. \n"
+                        "Elements could be matched correctly: \n - "
+                        f"{'\n - '.join(sorted(map(str, matched_patterns)))}.")
 
                 waves.append(current_wave)
                 unmatched_patterns -= current_wave
