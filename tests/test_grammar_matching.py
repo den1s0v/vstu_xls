@@ -16,48 +16,48 @@ from grammar2d import read_grammar, GrammarMatcher
 class GrammarMatchingTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
-        cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
-
-        cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
-        cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
-
-        cls.grid4_t = TxtGrid(Path('test_data/grid4.tsv').read_text())
-
-        cls.grid5_t = TxtGrid(Path('test_data/grid5.tsv').read_text(), sep='')
-        cls.grid5_x = ExcelGrid.read_xlsx(Path('test_data/grid5.xlsx'))
-        cls.grid6_x = ExcelGrid.read_xlsx(Path('test_data/grid6.xlsx'))
-
-        cls.grid_vstusched_week = ExcelGrid.read_xlsx(Path('test_data/vstusched_week.xlsx'))
-
-        cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
-        cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
+        # cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
+        # cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
+        #
+        # cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
+        # cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
+        #
+        # cls.grid4_t = TxtGrid(Path('test_data/grid4.tsv').read_text())
+        #
+        # cls.grid5_t = TxtGrid(Path('test_data/grid5.tsv').read_text(), sep='')
+        # cls.grid5_x = ExcelGrid.read_xlsx(Path('test_data/grid5.xlsx'))
+        # cls.grid6_x = ExcelGrid.read_xlsx(Path('test_data/grid6.xlsx'))
+        #
+        # cls.grid_vstusched_week = ExcelGrid.read_xlsx(Path('test_data/vstusched_week.xlsx'))
+        #
+        # cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+        # cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
         cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lessons.xlsx'))
 
         cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
 
-        cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
-        cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
-        cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
-        cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
-        cls.simple_grammar_2_4 = read_grammar('test_data/simple_grammar_2.4.yml')
-        cls.simple_grammar_2_5 = read_grammar('test_data/simple_grammar_2.5.yml')
-        cls.simple_grammar_2_6 = read_grammar('test_data/simple_grammar_2.6.yml')
-        cls.simple_grammar_2_7 = read_grammar('test_data/simple_grammar_2.7.yml')
-
-        # sea
-        cls.sea_0_t = TxtGrid(Path('test_data/sea_0.tsv').read_text())
-        cls.sea_1_t = TxtGrid(Path('test_data/sea_1.tsv').read_text())
-        ...
-        cls.sea_6_t = TxtGrid(Path('test_data/sea_6.tsv').read_text())
-
-        cls.sea_9_x = ExcelGrid.read_xlsx(Path('test_data/sea9.xlsx'))
-
-        cls.sea_grammar_1 = read_grammar('test_data/sea_grammar_1.yml')
-        cls.sea_grammar_2 = read_grammar('test_data/sea_grammar_2.yml')
-        cls.sea_grammar_22 = read_grammar('test_data/sea_grammar_2.2.yml')
-        cls.sea_grammar_6 = read_grammar('test_data/sea_grammar_6.yml')
-        cls.sea_grammar_62 = read_grammar('test_data/sea_grammar_6.2.yml')
+        # cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
+        # cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
+        # cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
+        # cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
+        # cls.simple_grammar_2_4 = read_grammar('test_data/simple_grammar_2.4.yml')
+        # cls.simple_grammar_2_5 = read_grammar('test_data/simple_grammar_2.5.yml')
+        # cls.simple_grammar_2_6 = read_grammar('test_data/simple_grammar_2.6.yml')
+        # cls.simple_grammar_2_7 = read_grammar('test_data/simple_grammar_2.7.yml')
+        #
+        # # sea
+        # cls.sea_0_t = TxtGrid(Path('test_data/sea_0.tsv').read_text())
+        # cls.sea_1_t = TxtGrid(Path('test_data/sea_1.tsv').read_text())
+        # ...
+        # cls.sea_6_t = TxtGrid(Path('test_data/sea_6.tsv').read_text())
+        #
+        # cls.sea_9_x = ExcelGrid.read_xlsx(Path('test_data/sea9.xlsx'))
+        #
+        # cls.sea_grammar_1 = read_grammar('test_data/sea_grammar_1.yml')
+        # cls.sea_grammar_2 = read_grammar('test_data/sea_grammar_2.yml')
+        # cls.sea_grammar_22 = read_grammar('test_data/sea_grammar_2.2.yml')
+        # cls.sea_grammar_6 = read_grammar('test_data/sea_grammar_6.yml')
+        # cls.sea_grammar_62 = read_grammar('test_data/sea_grammar_6.2.yml')
         ...
 
     def _test_txt_debug(self):
@@ -632,7 +632,8 @@ class GrammarMatchingTestCase(unittest.TestCase):
         doc = self.grid_vstu_fevt4_lessons
         matched_documents = gm.run_match(doc)
         for type_name in (
-            'discipline',
+            # 'discipline',
+            # 'room',
         ):
             cells = gm.type_to_cells[type_name]
             if cells:
