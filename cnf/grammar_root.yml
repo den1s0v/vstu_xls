@@ -292,14 +292,145 @@ patterns:
     content_type: discipline
 
 
+  discipline_stack:
+    description: дисциплина, написанная на нескольких строках
+    kind: array
+    direction: column
+    item_pattern: discipline
+    item_count: 1..3
+
+
+  discipline_with_groups:
+    description: дисциплина, сопоставленная с группой(-ами)
+    kind: general
+
+
+  discipline_with_several_groups:
+    description: дисциплина, сопоставленная с 2+ группами
+    kind: area
+    extends: discipline_with_groups  # string or list is supported.
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_stack
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      first_group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и слева
+          - padding-left: 0
+          - padding-right: 0+
+      last_group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и справа
+          - padding-left: 0+
+          - padding-right: 0
+
+      _hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+  discipline_with_single_group:
+    description: дисциплина, сопоставленная с 1 группой
+    kind: area
+    extends: discipline_with_groups
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_stack
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и по бокам
+          - padding-left: 0
+          - padding-right: 0
+
+      _hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+
+  discipline_with_groups_lab_left:
+    description: дисциплина, сопоставленная с левой "половиной" группы
+    kind: area
+    extends: discipline_with_groups
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_stack
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и слева
+          - padding-left: 0
+          - padding-right: -4..-1
+
+      _hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+  discipline_with_groups_lab_right:
+    description: дисциплина, сопоставленная с правой "половиной" группы
+    kind: area
+    extends: discipline_with_groups
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_stack
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и справа
+          - padding-left: -4..-1
+          - padding-right: 0
+
+      _hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+
+
 
   lesson_lab:
     description: занятие-лабораторная (4ч)
     kind: area
+    # extends: lesson
 
     inner:  # содержимое
       discipline:
-        pattern: discipline
+        pattern: discipline_with_groups
         location:
           - top  # упаковано сверху и по бокам
           - left
@@ -322,23 +453,9 @@ patterns:
           bottom: 0..3
 
     outer:
-      group:  # для занятий только для одной группы
-        pattern: group_in_header
-        location:
-          - margin-top: 0+  # упаковано сверху и по бокам
-          - padding-left: -4..0
-          - padding-right: -4..0
-
       week_day:
         pattern: week_day
         location: { left: '0+' }  # день недели указан слева
-
-      # hour_1:  # для занятий длиной в 1 пару
-      #   pattern: hour_range
-      #   location:
-      #     margin-left: 0+  # академ. часы указаны слева
-      #     padding-top: 0
-      #     padding-bottom: 0
 
       hour_begin:
         pattern: hour_range
@@ -362,7 +479,7 @@ patterns:
 
     inner:  # содержимое
       discipline:
-        pattern: discipline
+        pattern: discipline_with_groups
         location:
           - top  # упаковано сверху и по бокам
           - left
@@ -385,13 +502,6 @@ patterns:
           bottom: 0..2
 
     outer:
-      group:  # для занятий только для одной группы
-        pattern: group_in_header
-        location:
-          - margin-top: 0+  # упаковано сверху и по бокам
-          - padding-left: 0
-          - padding-right: 0
-
       week_day:
         pattern: week_day
         location: { left: '0+' }  # день недели указан слева
