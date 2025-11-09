@@ -648,8 +648,12 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 print()
 
         for pattern_name in (
-            # 'lesson',
+            'lesson',
             'lesson_lab',
+            # 'discipline_stack',
+            # 'discipline_with_several_groups',
+            # 'discipline_with_groups_lab_left',
+            # 'discipline_with_groups_lab_right',
         ):
             # view lesson instances
             p = gm.grammar[pattern_name]

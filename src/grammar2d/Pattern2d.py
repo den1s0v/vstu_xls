@@ -39,6 +39,8 @@ class Pattern2d(WithCache, WithSafeCreate):
         if not isinstance(self.count_in_document, open_range):
             self.count_in_document = open_range.parse(
                 str(self.count_in_document)) if self.count_in_document else open_range(0, None)
+        if self.extends and not isinstance(self.extends, list):
+            self.extends = [str(self.extends)]
 
     def __hash__(self) -> int:
         return hash(self.name)
