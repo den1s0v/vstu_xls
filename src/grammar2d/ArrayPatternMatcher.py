@@ -59,6 +59,10 @@ class ArrayPatternMatcher(PatternMatcher):
         # найти ряды элементов, одинаково выровненных вдоль заданного направления
         matches = self._find_clusters(item_occurrences, match_limit=match_limit)
 
+        # if 'set indexes':
+        #     for i, m in enumerate(matches, 1):
+        #         m.component2match['INDEX'] = i
+
         return matches
 
     def _find_element_candidates(self):
