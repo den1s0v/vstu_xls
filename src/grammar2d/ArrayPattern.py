@@ -45,6 +45,8 @@ class ArrayPattern(NonTerminal):
     _subpattern: Pattern2d = None  # дочерний элемент грамматики
     ITEM_INDEX_META_KEY = '@index_in_array'
 
+    index_items: bool = False
+
     def __post_init__(self):
         super().__post_init__()
 

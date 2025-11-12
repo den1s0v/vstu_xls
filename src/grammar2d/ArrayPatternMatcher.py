@@ -62,7 +62,8 @@ class ArrayPatternMatcher(PatternMatcher):
         if not single_match_mode:
             matches = self._find_clusters(item_occurrences, match_limit=match_limit)
 
-        self._assign_indexes(matches)
+        if self.pattern.index_items:
+            self._assign_indexes(matches)
 
         return matches
 
