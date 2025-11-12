@@ -17,17 +17,17 @@ cell_types:
 
         - confidence: 0.95
             # Фамилия И.О.
-          pattern: '[А-ЯЁа-яё-]{2,}  [А-ЯЁ]\.? [А-ЯЁ]\.? (?:$|,)'
+          pattern: '[А-ЯЁ][а-яё-]+  [А-ЯЁ]\.? [А-ЯЁ]\.? (?:$|,)'
           pattern_syntax: re-spaces
 
         - confidence: 0.92
             # Фамилия Имя
-          pattern: '[А-ЯЁа-яё-]{2,} [А-ЯЁа-яё-]+\.?  [А-ЯЁа-яё-]*\.? (?:$|,)'
+          pattern: '[А-ЯЁ][а-яё-]+ [А-ЯЁ][а-яё-]?\.?  [А-ЯЁ][а-яё-]*\.? (?:$|,)'
           pattern_syntax: re-spaces
 
         - confidence: 0.90
             # Фамилия И.
-          pattern: '[А-ЯЁа-яё-]{2,} [А-ЯЁ]?\.? [А-ЯЁ]\. (?:$|,)'
+          pattern: '[А-ЯЁ][а-яё-]+ [А-ЯЁ]?\.? [А-ЯЁ]\. (?:$|,)'
           pattern_syntax: re-spaces
 
         - confidence: 0.80
@@ -119,9 +119,9 @@ cell_types:
           anchors: both
           preprocess: fix_sparse_words
 
-        - confidence: 0.90
+        - confidence: 0.95
             # заглавные буквы, дефисы, скобки и точки, ....
-          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}\d{,3}'
+          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}[\d.,-]{,3}'
           pattern_syntax: re
           anchors: both
           preprocess: fix_sparse_words
