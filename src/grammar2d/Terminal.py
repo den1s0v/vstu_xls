@@ -51,13 +51,13 @@ class Terminal(Pattern2d):
     def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
         """ Компактные данные для экспорта в JSON. """
         if not include_position:
-            return match.data.text
-        else:
             content = match.data.text
-            return {
+        else:
+            content = {
                 '@box': match.box,
-                'content': content
+                'content': match.data.text
             }
+        return self._merge_static_data_into_content(match, content)
 
     def get_matcher(self, grammar_matcher):
         from grammar2d.TerminalMatcher import TerminalMatcher

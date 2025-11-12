@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass
 
 import grammar2d.Grammar as ns
@@ -7,7 +8,7 @@ import grammar2d.PatternMatcher as pm
 from constraints_2d import BoolExprRegistry, SpatialConstraint, SizeConstraint
 from geom2d import Point
 from geom2d import open_range, Box
-from utils import WithCache, WithSafeCreate, sorted_list
+from utils import WithCache, WithSafeCreate, sorted_list, safe_adict
 
 
 @dataclass(kw_only=True, )
@@ -26,6 +27,8 @@ class Pattern2d(WithCache, WithSafeCreate):
     extends: list[str] = ()
     _directly_extends_patterns: list['Pattern2d'] = None
     _all_direct_extensions: list['Pattern2d'] = None
+
+    static_data: dict = None  # static data for the pattern, not used for matching. Will be included in any match of this pattern.
 
     constraints: list[SpatialConstraint] = ()
 
@@ -95,10 +98,46 @@ class Pattern2d(WithCache, WithSafeCreate):
                 for m in match.component2match.values()
                 for s in m.get_content()]
 
-    def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
-        """ Компактные данные для экспорта в JSON.
-        Игнорирует поля, начинающиеся с "_". Этот префикс может быть использован специально, чтобы скрывать избыточные данные из результата.
-        """
+    def prepare_match(self, match: 'm2.Match2d') -> None:
+        """Хук для инициализации данных совпадения."""
+        self._attach_static_data(match)
+
+    def _attach_static_data(self, match: 'm2.Match2d') -> None:
+        if match.data is None or not isinstance(match.data, safe_adict):
+            match.data = safe_adict(match.data or {})
+
+        static_data = self._static_data_for_match(match)
+        if static_data:
+            match.data.update(static_data)
+
+    def _static_data_for_match(self, match: 'm2.Match2d') -> dict | None:
+        if not self.static_data:
+            return None
+        try:
+            return deepcopy(self.static_data)
+        except Exception:
+            return dict(self.static_data)
+
+    def _merge_static_data_into_content(self, match: 'm2.Match2d', content):
+        static_data = self._static_data_for_match(match)
+        if not static_data:
+            return content
+
+        if isinstance(content, dict):
+            merged = dict(static_data)
+            merged.update(content)  # match content takes precedence over static data.
+            return merged
+
+        if content is None:
+            return static_data
+
+        merged = dict(static_data)
+        merged.setdefault('@content', content)
+        return merged
+
+    def _build_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict:
+        """Игнорирует поля, начинающиеся с "_". Этот префикс может быть использован 
+        специально, чтобы скрывать избыточные данные из результата."""
         return ({
             '@box': match.box,
         } if include_position else {}) | {
@@ -106,6 +145,11 @@ class Pattern2d(WithCache, WithSafeCreate):
             for name, m in match.component2match.items()
             if not name.startswith('_')
         }
+
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=False):
+        """Компактные данные для экспорта в JSON."""
+        content = self._build_content_of_match(match, include_position)
+        return self._merge_static_data_into_content(match, content)
 
     # parent: Optional['Pattern2d'] = None # родительский узел грамматики
     # components: dict[str, 'PatternComponent']

@@ -24,6 +24,8 @@ class Match2d:
         if not self.box:
             # try to infer from components
             self.recalc_box()
+        if self.pattern:
+            self.pattern.prepare_match(self)
 
     def calc_precision(self, force=False) -> float:
         if self.precision is None or force:

@@ -93,13 +93,19 @@ class ArrayPattern(NonTerminal):
         inner_points = set(match.box.iterate_points())
         return sorted_list(inner_points & component_points)
 
-    def get_content_of_match(self, match: 'm2.Match2d') -> dict | list | str:
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
         """ Компактные данные для экспорта в JSON.
         """
-        return [
+        content = [
             m.get_content()
             for m in match.component2match.values()
         ]
+        if include_position:
+            content = {
+                '@box': match.box,
+                '@items': content
+            }
+        return self._merge_static_data_into_content(match, content)
 
     @property
     def subpattern(self) -> Pattern2d:
