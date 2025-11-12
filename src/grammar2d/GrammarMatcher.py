@@ -1,13 +1,18 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from geom2d import Point, Box, RangedBox
-from grammar2d import Grammar, Pattern2d
+from grammar2d import Grammar
+import grammar2d.Pattern2d as pt
 from grammar2d.Match2d import Match2d
 from grid import GridView, CellView, Grid
 from string_matching import CellClassifier
+
+if TYPE_CHECKING:
+    from grammar2d.Pattern2d import Pattern2d
 
 
 @dataclass
@@ -21,14 +26,14 @@ class GrammarMatcher:
     _matches_by_position: dict[Point, list[Match2d]] = None
 
     # matches related to pattern
-    _matches_by_element: dict[Pattern2d, list[Match2d]] = None
+    _matches_by_element: dict['Pattern2d', list[Match2d]] = None
 
     # scalar info about cells
     type_to_cells: dict[str, list[CellView]] = None
 
     def get_pattern_matches(
             self,
-            pattern: Pattern2d,
+            pattern: 'Pattern2d',
             region: Box | RangedBox = None,
             match_limit: int = None) -> list[Match2d]:
         """ Get all currently known matches of given pattern.
@@ -68,21 +73,22 @@ class GrammarMatcher:
         return self._matches_by_position
 
     @property
-    def matches_by_element(self) -> dict[Pattern2d, list[Match2d]]:
+    def matches_by_element(self) -> dict['Pattern2d', list[Match2d]]:
         if not self._matches_by_element:
             self._matches_by_element = defaultdict(list)
         return self._matches_by_element
 
-    def _resolve_patterns(self, patterns: 'str | Pattern2d | list[str] | list[Pattern2d]') -> list[Pattern2d]:
+    def _resolve_patterns(self, patterns: 'str | Pattern2d | list[str] | list[Pattern2d]') -> list['Pattern2d']:
+        """Преобразует идентификаторы паттернов в объекты `Pattern2d` текущей грамматики."""
         if not patterns:
             raise ValueError('Pattern name or list of pattern names must be provided.')
 
         if not isinstance(patterns, (list, tuple, set)):
             patterns = [patterns]
 
-        resolved: list[Pattern2d] = []
+        resolved: list['Pattern2d'] = []
         for item in patterns:
-            if isinstance(item, Pattern2d):
+            if isinstance(item, pt.Pattern2d):
                 resolved.append(item)
             elif isinstance(item, str):
                 try:
@@ -142,7 +148,7 @@ class GrammarMatcher:
                         self._find_matches_of_pattern(ptt)
             ...
 
-    def _find_matches_of_pattern(self, pattern: Pattern2d):
+    def _find_matches_of_pattern(self, pattern: 'Pattern2d'):
         """Try finding matches of element on all grid space"""
         matcher = pattern.get_matcher(self)
         matches = matcher.find_all(match_limit=pattern.count_in_document.stop)
@@ -172,7 +178,7 @@ class GrammarMatcher:
 
     def _find_matches_of_dependent_pattern(
             self,
-            pattern: Pattern2d,
+            pattern: 'Pattern2d',
             region: Box | RangedBox = None,
             match_limit: int = None) -> list[Match2d]:
         """Try finding matches of element within the specified grid region"""
@@ -284,7 +290,7 @@ class GrammarMatcher:
 
     @staticmethod
     def _collect_match_ids(root_match: Match2d) -> set[int]:
-        """Собирает идентификаторы матчей, входящих в состав документа."""
+        """Обходит дерево матчей и возвращает множество их идентификаторов (`id`)."""
         stack = [root_match]
         visited: set[int] = set()
 
