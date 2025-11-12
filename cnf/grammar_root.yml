@@ -145,6 +145,7 @@ patterns:
           item_pattern: week_datetime  # ... TODO
           item_count: 1..2
           gap: 1  # 1 ячейка между неделями
+          index_items: true  # Нужно ли индексировать элементы массива явно
         location: left, right,  bottom
 
 
@@ -166,7 +167,7 @@ patterns:
       borders: all
 
     inner:  # содержимое
-      days:
+      _days:
         pattern_definition:
           kind: array  # массив (ряд)
           direction: column
@@ -460,6 +461,9 @@ patterns:
       week_day:
         pattern: week_day
         location: { left: '0+' }  # день недели указан слева
+      week:
+        pattern: week_datetime
+        location: { left: '0+' }  # неделя указана слева
 
       hour_begin:
         pattern: hour_range
@@ -509,6 +513,9 @@ patterns:
       week_day:
         pattern: week_day
         location: { left: '0+' }  # день недели указан слева
+      week:
+        pattern: week_datetime
+        location: { left: '0+' }  # неделя указана слева
 
       hour_1:  # для занятий длиной в 1 пару
         pattern: hour_range
