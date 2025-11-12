@@ -33,6 +33,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         # cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
         # cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
         cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lessons.xlsx'))
+        # cls.grid_vstu_fevt4_labs = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 labs.xlsx'))
 
         cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
 
@@ -633,24 +634,25 @@ class GrammarMatchingTestCase(unittest.TestCase):
         matched_documents = gm.run_match(doc)
         for type_name in (
             # 'discipline',
-            # 'room',
         ):
             cells = gm.type_to_cells[type_name]
             if cells:
                 print(':: CELL :', type_name, ':', len(cells), 'cells ::')
-                for m in cells:
+                for m in sorted(cells, key=lambda m: -m.data['cell_matches'][type_name].precision):
                     precision = m.data['cell_matches'][type_name].precision
                     if precision < 0.5:
                         continue
-                    pprint(m)
                     # print('  data=', m.data)
-                    print(f'  {precision=}', )
+                    print(f'  {precision=}', end=' : ')
+                    pprint(m)
                     print()
                 print()
 
         for pattern_name in (
+            # 'teacher',
+            # 'room',
             # 'lesson',
-            # 'lesson_lab',
+            'lesson_lab',
             # 'week_datetime',
             # 'discipline_stack',
             # 'discipline_with_groups',
@@ -671,21 +673,17 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 print()
 
         for pattern_name in (
-            # 'lesson',
-            # 'lesson_lab',
-            # 'week_datetime',
-            # 'discipline_stack',
             'discipline_with_groups',
-            # 'discipline_with_several_groups',
-            # 'discipline_with_groups_lab_left',
-            # 'discipline_with_groups_lab_right',
         ):
             # view lesson instances
             p = gm.grammar[pattern_name]
             if p:
                 matches = gm.find_unused_pattern_matches(matched_documents[0], p)
+                if not matches:
+                    continue
                 print('!!! UNUSED ::', p.name, ':', len(matches), 'matches ::')
                 for m in matches:
+                    print('UNUSED ::', pattern_name)#, end=' ')
                     pprint(m.get_content())
                     print('  precision=', m.precision)
                     print()
