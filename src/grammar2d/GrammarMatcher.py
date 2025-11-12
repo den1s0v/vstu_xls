@@ -73,6 +73,27 @@ class GrammarMatcher:
             self._matches_by_element = defaultdict(list)
         return self._matches_by_element
 
+    def _resolve_patterns(self, patterns: 'str | Pattern2d | list[str] | list[Pattern2d]') -> list[Pattern2d]:
+        if not patterns:
+            raise ValueError('Pattern name or list of pattern names must be provided.')
+
+        if not isinstance(patterns, (list, tuple, set)):
+            patterns = [patterns]
+
+        resolved: list[Pattern2d] = []
+        for item in patterns:
+            if isinstance(item, Pattern2d):
+                resolved.append(item)
+            elif isinstance(item, str):
+                try:
+                    resolved.append(self.grammar[item])
+                except KeyError as exc:
+                    raise KeyError(f'Pattern `{item}` not found in grammar.') from exc
+            else:
+                raise TypeError(f'Unsupported pattern identifier type: {type(item)!r}')
+
+        return resolved
+
     def register_match(self, match: Match2d, as_pattern: 'str|Pattern2d' = None, _seen_patterns: set = None):
         self.matches_by_position[match.box.position].append(match)
         self.matches_by_element[match.pattern].append(match)
@@ -231,3 +252,51 @@ class GrammarMatcher:
             logger.debug([m.box, m.get_content()])
         # ...
         return matches
+
+    def find_unused_pattern_matches(
+            self,
+            document_match: Match2d,
+            patterns: 'str | Pattern2d | list[str] | list[Pattern2d]',
+    ) -> list[Match2d]:
+        """Возвращает список совпадений паттернов, не использованных в документе."""
+        if not document_match:
+            raise ValueError('Document match must be provided.')
+
+        resolved_patterns = self._resolve_patterns(patterns)
+        if not resolved_patterns:
+            return []
+
+        used_ids = self._collect_match_ids(document_match)
+        unused_matches: list[Match2d] = []
+        seen_match_ids: set[int] = set()
+
+        for pattern in resolved_patterns:
+            for match in self.get_pattern_matches(pattern) or ():
+                match_id = id(match)
+                if match_id in used_ids:
+                    continue
+                if match_id in seen_match_ids:
+                    continue
+                seen_match_ids.add(match_id)
+                unused_matches.append(match)
+
+        return unused_matches
+
+    @staticmethod
+    def _collect_match_ids(root_match: Match2d) -> set[int]:
+        """Собирает идентификаторы матчей, входящих в состав документа."""
+        stack = [root_match]
+        visited: set[int] = set()
+
+        while stack:
+            current = stack.pop()
+            match_id = id(current)
+            if match_id in visited:
+                continue
+
+            visited.add(match_id)
+
+            if current.component2match:
+                stack.extend(current.component2match.values())
+
+        return visited
