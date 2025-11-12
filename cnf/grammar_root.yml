@@ -370,6 +370,8 @@ patterns:
     description: дисциплина, сопоставленная с левой "половиной" группы
     kind: area
     extends: discipline_with_groups
+    static_data:
+      subgroup: left
 
     inner:  # содержимое
       discipline:
@@ -397,6 +399,8 @@ patterns:
     description: дисциплина, сопоставленная с правой "половиной" группы
     kind: area
     extends: discipline_with_groups
+    static_data:
+      subgroup: right
 
     inner:  # содержимое
       discipline:
