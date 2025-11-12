@@ -38,8 +38,8 @@ class Match2d:
     def get_text(self) -> list[str]:
         return self.pattern.get_text_of_match(self)
 
-    def get_content(self) -> dict | list | str:
-        return self.pattern.get_content_of_match(self)
+    def get_content(self, include_position=False) -> dict | list | str:
+        return self.pattern.get_content_of_match(self, include_position=include_position)
 
     def get_children(self) -> list[Self]:
         return list(self.component2match.values()) if self.component2match else []
