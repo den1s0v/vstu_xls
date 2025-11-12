@@ -100,15 +100,27 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def prepare_match(self, match: 'm2.Match2d') -> None:
         """Хук для инициализации данных совпадения."""
+        self._ensure_match_data(match)
         self._attach_static_data(match)
 
     def _attach_static_data(self, match: 'm2.Match2d') -> None:
-        if match.data is None or not isinstance(match.data, safe_adict):
-            match.data = safe_adict(match.data or {})
+        data = self._ensure_match_data(match)
 
         static_data = self._static_data_for_match(match)
         if static_data:
-            match.data.update(static_data)
+            data.update(static_data)
+
+    def _ensure_match_data(self, match: 'm2.Match2d') -> safe_adict:
+        if match.data is None or not isinstance(match.data, safe_adict):
+            match.data = safe_adict(match.data or {})
+        return match.data
+
+    def set_match_metadata(self, match: 'm2.Match2d', **metadata) -> None:
+        """Служебные данные, используемые при экспорте содержимого."""
+        if not metadata:
+            return
+        data = self._ensure_match_data(match)
+        data.update(metadata)
 
     def _static_data_for_match(self, match: 'm2.Match2d') -> dict | None:
         if not self.static_data:
@@ -118,20 +130,49 @@ class Pattern2d(WithCache, WithSafeCreate):
         except Exception:
             return dict(self.static_data)
 
+    def _exportable_match_metadata(self, match: 'm2.Match2d') -> dict:
+        data = getattr(match, 'data', None)
+        if not data:
+            return {}
+
+        return {
+            key: deepcopy(value)
+            for key, value in data.items()
+            if isinstance(key, str) and key.startswith('@')
+        }
+
     def _merge_static_data_into_content(self, match: 'm2.Match2d', content):
         static_data = self._static_data_for_match(match)
-        if not static_data:
-            return content
+        metadata = self._exportable_match_metadata(match)
 
         if isinstance(content, dict):
-            merged = dict(static_data)
-            merged.update(content)  # match content takes precedence over static data.
+            merged = {}
+            if static_data:
+                merged.update(static_data)
+            if metadata:
+                merged.update(metadata)
+            merged.update(content)  # match content takes precedence.
             return merged
 
         if content is None:
-            return static_data
+            if static_data or metadata:
+                merged = {}
+                if static_data:
+                    merged.update(static_data)
+                if metadata:
+                    merged.update(metadata)
+                return merged
+            return None
 
-        merged = dict(static_data)
+        merged = {}
+        if static_data:
+            merged.update(static_data)
+        if metadata:
+            merged.update(metadata)
+
+        if not merged:
+            return content
+
         merged.setdefault('@content', content)
         return merged
 

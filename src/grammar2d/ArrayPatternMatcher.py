@@ -41,7 +41,8 @@ class ArrayPatternMatcher(PatternMatcher):
 
         matches = []
 
-        if len(item_occurrences) == 1:
+        single_match_mode = len(item_occurrences) == 1
+        if single_match_mode:
             # There is only one occurrence, no need to analyze its placement.
             item_match = item_occurrences[0]
 
@@ -54,14 +55,14 @@ class ArrayPatternMatcher(PatternMatcher):
                             box=item_match.box,
                             component2match={0: item_match})
                 matches.append(m)
-            return matches
+            else:
+                return []
 
         # найти ряды элементов, одинаково выровненных вдоль заданного направления
-        matches = self._find_clusters(item_occurrences, match_limit=match_limit)
+        if not single_match_mode:
+            matches = self._find_clusters(item_occurrences, match_limit=match_limit)
 
-        # if 'set indexes':
-        #     for i, m in enumerate(matches, 1):
-        #         m.component2match['INDEX'] = i
+        self._assign_indexes(matches)
 
         return matches
 
@@ -173,6 +174,29 @@ class ArrayPatternMatcher(PatternMatcher):
         #         matches.append(m)
 
         return matches
+
+    def _assign_indexes(self, matches: list[Match2d]) -> None:
+        if not matches:
+            return
+
+        key = self.pattern.ITEM_INDEX_META_KEY
+
+        for array_match in matches:
+            if not array_match.component2match:
+                continue
+
+            for index, (_, item_match) in enumerate(
+                    sorted(array_match.component2match.items(), key=lambda kv: kv[0]),
+                    start=1):
+                if not isinstance(item_match, Match2d):
+                    continue
+                data = getattr(item_match, 'data', None)
+                if data is not None and key in data:
+                    logger.warning(
+                        f'ARRAY WARN: match `{item_match}` already has {key}={data[key]}, '
+                        f'reassigning to {index} for array `{self.pattern.name}`.'
+                    )
+                item_match.pattern.set_match_metadata(item_match, **{key: index})
 
     def calc_distance(self, box1: Box, box2: Box) -> int:
         if self.pattern.distance_kind == 'corner':
