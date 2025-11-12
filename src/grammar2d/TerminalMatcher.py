@@ -27,7 +27,6 @@ class TerminalMatcher(PatternMatcher):
             if precision < self.pattern.precision_threshold:
                 continue
 
-            position = string_match.confidence
             if precision < self.pattern.precision_threshold:
                 continue
 
