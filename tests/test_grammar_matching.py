@@ -664,7 +664,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 matches = gm.get_pattern_matches(p)
                 print('::', p.name, ':', len(matches), 'matches ::')
                 for m in matches:
-                    pprint(m.get_content())
+                    pprint(m.get_content(True))
                     print('  precision=', m.precision)
                     print()
                 print()
