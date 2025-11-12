@@ -649,11 +649,12 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 print()
 
         for pattern_name in (
-            'lesson',
-            'lesson_lab',
-            'discipline_stack',
+            # 'lesson',
+            # 'lesson_lab',
+            # 'week_datetime',
+            # 'discipline_stack',
+            # 'discipline_with_groups',
             # 'discipline_with_several_groups',
-            'discipline_with_groups',
             # 'discipline_with_groups_lab_left',
             # 'discipline_with_groups_lab_right',
         ):
@@ -662,6 +663,28 @@ class GrammarMatchingTestCase(unittest.TestCase):
             if p:
                 matches = gm.get_pattern_matches(p)
                 print('::', p.name, ':', len(matches), 'matches ::')
+                for m in matches:
+                    pprint(m.get_content())
+                    print('  precision=', m.precision)
+                    print()
+                print()
+                print()
+
+        for pattern_name in (
+            # 'lesson',
+            # 'lesson_lab',
+            # 'week_datetime',
+            # 'discipline_stack',
+            'discipline_with_groups',
+            # 'discipline_with_several_groups',
+            # 'discipline_with_groups_lab_left',
+            # 'discipline_with_groups_lab_right',
+        ):
+            # view lesson instances
+            p = gm.grammar[pattern_name]
+            if p:
+                matches = gm.find_unused_pattern_matches(matched_documents[0], p)
+                print('!!! UNUSED ::', p.name, ':', len(matches), 'matches ::')
                 for m in matches:
                     pprint(m.get_content())
                     print('  precision=', m.precision)

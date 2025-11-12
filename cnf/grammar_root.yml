@@ -430,7 +430,7 @@ patterns:
   lesson_lab:
     description: занятие-лабораторная (4ч)
     kind: area
-    # extends: lesson
+    extends: lesson
 
     inner:  # содержимое
       discipline:
