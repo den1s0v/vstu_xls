@@ -167,7 +167,7 @@ patterns:
       borders: all
 
     inner:  # содержимое
-      _days:
+      days:
         pattern_definition:
           kind: array  # массив (ряд)
           direction: column
@@ -223,7 +223,7 @@ patterns:
           content_type: hour_range
 
     outer:  # ограничения на контекст (!!)
-      week_day:
+      _week_day:
         pattern: week_day
         location: left  # слева находится день недели
 
@@ -241,7 +241,7 @@ patterns:
           gap: 5-
 
     outer:  # ограничения на контекст (!!)
-      week_day:
+      _week_day:
         pattern: week_day
         location:
           right: '*'  # справа находится день недели
