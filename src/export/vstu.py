@@ -35,8 +35,8 @@ def extract_schedule_data(grid: Grid, vstu_grammar: Grammar, inspect=False) -> M
     gm = GrammarMatcher(grammar=vstu_grammar)
     matched_documents = gm.run_match(grid)
 
-    # if inspect:
-    #     _inspect_match_and_warn(matched_documents[0], gm)
+    if inspect:
+        _inspect_match_and_warn(matched_documents[0], gm)
 
     return matched_documents[0]
 
