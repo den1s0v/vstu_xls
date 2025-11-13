@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Iterable, Self
+from typing import Iterable, Self, Generator
 
 from adict import adict
 
@@ -38,7 +38,7 @@ class Checkpointer:
 
 
 @contextmanager
-def time_report(message: str = None, ch: Checkpointer = None):
+def time_report(message: str = None, ch: Checkpointer = None) -> Generator[Checkpointer]:
     ch = ch or Checkpointer()
     try:
         yield ch
