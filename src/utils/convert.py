@@ -83,8 +83,8 @@ def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
 
 def main():
     paths = (
-        r'c:\Users\Student\Downloads\ОН_ФТПП_3 курс.xls',
-        r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
+        r'c:\Users\Lenovo\Downloads\ОН_ФЭУ_3 курс.xls',
+        # r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
     )
     for filename in paths:
         convert_xls_to_xlsx(filename)

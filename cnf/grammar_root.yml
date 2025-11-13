@@ -167,7 +167,7 @@ patterns:
       borders: all
 
     inner:  # содержимое
-      days:
+      _days:
         pattern_definition:
           kind: array  # массив (ряд)
           direction: column
@@ -223,7 +223,7 @@ patterns:
           content_type: hour_range
 
     outer:  # ограничения на контекст (!!)
-      _week_day:
+      week_day:
         pattern: week_day
         location: left  # слева находится день недели
 
@@ -333,7 +333,7 @@ patterns:
           - padding-left: 0+
           - padding-right: 0
 
-      _hour_begin:  # проверка на выровненность с началом академ. часа
+      hour_begin:  # проверка на выровненность с началом академ. часа
         pattern: hour_range
         location:
           left: 0+  # академ. часы указаны слева
@@ -360,7 +360,7 @@ patterns:
           - padding-left: 0
           - padding-right: 0
 
-      _hour_begin:  # проверка на выровненность с началом академ. часа
+      hour_begin:  # проверка на выровненность с началом академ. часа
         pattern: hour_range
         location:
           left: 0+  # академ. часы указаны слева
@@ -390,7 +390,7 @@ patterns:
           - padding-left: 0
           - padding-right: -4..-1
 
-      _hour_begin:  # проверка на выровненность с началом академ. часа
+      hour_begin:  # проверка на выровненность с началом академ. часа
         pattern: hour_range
         location:
           left: 0+  # академ. часы указаны слева
@@ -419,7 +419,7 @@ patterns:
           - padding-left: -4..-1
           - padding-right: 0
 
-      _hour_begin:  # проверка на выровненность с началом академ. часа
+      hour_begin:  # проверка на выровненность с началом академ. часа
         pattern: hour_range
         location:
           left: 0+  # академ. часы указаны слева
@@ -445,7 +445,7 @@ patterns:
         pattern: teacher
         location:
           top: 1+
-          left: 0..1
+          left: 0..7
           right: 0+
           bottom: 0..1
 
@@ -453,7 +453,7 @@ patterns:
         pattern: room
         location:
           top: 1+
-          right: 0..2
+          right: 0..8
           left: 0+
           bottom: 0..3
 
@@ -497,7 +497,7 @@ patterns:
         pattern: teacher
         location:
           top: 1+
-          left: 0..4
+          left: 0..6
           right: 0+
           bottom: 0..1
 
@@ -505,7 +505,7 @@ patterns:
         pattern: room
         location:
           top: 1+
-          right: 0..3
+          right: 0..7
           left: 0+
           bottom: 0..2
 

@@ -30,8 +30,9 @@ class GrammarMatchingTestCase(unittest.TestCase):
         #
         # cls.grid_vstusched_week = ExcelGrid.read_xlsx(Path('test_data/vstusched_week.xlsx'))
         #
-        cls.grid_vstu_fevt1 = ExcelGrid.read_xlsx(Path('test_data/ОН_Магистратура_1 курс ФЭВТ 2025.xlsx'))
-        cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+        # cls.grid_vstu_fevt1 = ExcelGrid.read_xlsx(Path('test_data/ОН_Магистратура_1 курс ФЭВТ 2025.xlsx'))
+        # cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+        cls.grid_vstu_feu3 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭУ_3 курс_v2.xlsx'))
         # cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
         # cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lessons.xlsx'))
         # cls.grid_vstu_fevt4_labs = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 labs.xlsx'))
@@ -570,6 +571,44 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 for m in month_days_arr])
 
             self.assertEqual(12, len(month_days_arr))
+
+    def test_grid_vstu_feu3(self):
+        gm = GrammarMatcher(grammar=self.vstu_grammar)
+
+        for g in (
+                self.grid_vstu_feu3,
+        ):
+            matched_documents = gm.run_match(g)
+            for pattern_name in (
+                # 'lesson',
+            ):
+                p = gm.grammar[pattern_name]
+                if p:
+                    matches = gm.get_pattern_matches(p)
+                    print('::', p.name, ':', len(matches), 'matches ::')
+                    for m in matches:
+                        pprint(m.get_content(True))
+                        print('  precision=', m.precision)
+                        print()
+                    print()
+                    print()
+
+        for pattern_name in (
+            'discipline_with_groups',
+        ):
+            p = gm.grammar[pattern_name]
+            if p:
+                matches = gm.find_unused_pattern_matches(matched_documents[0], p)
+                if not matches:
+                    continue
+                print('!!! UNUSED ::', p.name, ':', len(matches), 'matches ::')
+                for m in matches:
+                    print('UNUSED ::', pattern_name)#, end=' ')
+                    pprint(m.get_content())
+                    print('  precision=', m.precision)
+                    print()
+                print()
+                print()
 
     def test_grid_vstu_fevt1(self):
         gm = GrammarMatcher(grammar=self.vstu_grammar)

@@ -15,12 +15,12 @@ if __name__ == '__main__':
 
 
     vstu_grammar = read_grammar('../cnf/grammar_root.yml')
-    grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+    # grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
+    grid_vstu_feu3 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭУ_3 курс.xlsx'))
 
     gm = GrammarMatcher(grammar=vstu_grammar)
 
-    # print('using grid:', grid_vstu_fevt4)
-    matched_documents = gm.run_match(grid_vstu_fevt4)
+    matched_documents = gm.run_match(grid_vstu_feu3)
 
     # view lesson instances
     ## for p in gm.grammar.patterns.values():
