@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Protocol
 
 from loguru import logger
 
@@ -13,11 +13,22 @@ from string_matching import CellClassifier
 
 if TYPE_CHECKING:
     from grammar2d.Pattern2d import Pattern2d
+else:
+    Pattern2d = pt.Pattern2d
+
+
+class _WaveObserver(Protocol):
+    def notify_wave_started(self, wave_index: int, patterns: Iterable[str]) -> None:
+        ...
+
+    def notify_wave_completed(self, wave_index: int, matches: Iterable[Match2d]) -> None:
+        ...
 
 
 @dataclass
 class GrammarMatcher:
     grammar: Grammar
+    wave_observer: '_WaveObserver | None' = None
 
     # projection of processed grid
     _grid_view: GridView = None
@@ -135,18 +146,26 @@ class GrammarMatcher:
     def _roll_matching_waves(self, verbose=True):
         """ Find matches of all grammar elements per all matching waves defined by grammar,
             from terminals to the root. """
-        for wave in self.grammar.dependency_waves():
+        for wave_index, wave in enumerate(self.grammar.dependency_waves()):
+            pattern_names = [p.name for p in wave]
+            self._notify_wave_started(wave_index, pattern_names)
+
             if verbose:
                 logger.debug('WAVE:')
-                logger.debug([p.name for p in wave])
+                logger.debug(pattern_names)
+
+            processed_patterns: list[Pattern2d] = []
 
             if self.grammar.target_mode == 'root' and self.grammar.root in wave:
                 self._find_matches_of_pattern(self.grammar.root)
+                processed_patterns.append(self.grammar.root)
             else:
                 for ptt in wave:
                     if ptt.independently_matchable():
                         self._find_matches_of_pattern(ptt)
+                        processed_patterns.append(ptt)
             ...
+            self._notify_wave_completed(wave_index, processed_patterns)
 
     def _find_matches_of_pattern(self, pattern: 'Pattern2d'):
         """Try finding matches of element on all grid space"""
@@ -306,3 +325,17 @@ class GrammarMatcher:
                 stack.extend(current.component2match.values())
 
         return visited
+
+    def _notify_wave_started(self, wave_index: int, pattern_names: Iterable[str]) -> None:
+        if self.wave_observer:
+            self.wave_observer.notify_wave_started(wave_index, pattern_names)
+
+    def _notify_wave_completed(self, wave_index: int, patterns: Iterable['Pattern2d']) -> None:
+        if not self.wave_observer:
+            return
+
+        matches: list[Match2d] = []
+        for pattern in patterns:
+            matches.extend(self.matches_by_element.get(pattern) or [])
+
+        self.wave_observer.notify_wave_completed(wave_index, matches)
