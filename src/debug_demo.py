@@ -9,11 +9,13 @@ from converters.xlsx import ExcelGrid
 from grammar2d import GrammarMatcher, read_grammar
 from services import DocumentParsingService, WaveDebugExporter
 
+# DEFAULT_XLSX_NAME = 'ОН_ФЭВТ_4 курс 2023.xlsx'
+DEFAULT_XLSX_NAME = 'ОН_ФЭУ_3 курс_v2.xlsx'
 
 def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
     default_grammar = root_dir / "cnf" / "grammar_root.yml"
-    default_input = root_dir / "tests" / "test_data" / "ОН_ФЭВТ_4 курс 2023.xlsx"
+    default_input = root_dir / "tests" / "test_data" / DEFAULT_XLSX_NAME
     default_output = root_dir / "data" / "debug_waves"
 
     parser = argparse.ArgumentParser(
