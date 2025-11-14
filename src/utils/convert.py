@@ -101,6 +101,9 @@ def main():
     #     # r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
     # )
     # convert_many(paths)
+    folders = [
+        '.',  # TODO set your paths
+        ]
     for folder in folders:
         convert_all_in_dir(folder)
 

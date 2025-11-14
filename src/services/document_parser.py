@@ -9,6 +9,12 @@ from grammar2d.Match2d import Match2d
 from services.debugging import WaveDebugExporter
 
 
+# Список паттернов для анализа неиспользованных совпадений
+DEFAULT_UNUSED_PATTERNS_TO_ANALYZE = [
+    'discipline_with_groups',
+]
+
+
 @dataclass
 class ParsingDebugHooks:
     """Вспомогательные хуки для отладки процесса распознавания."""
@@ -97,4 +103,49 @@ class DocumentParsingService:
                 pattern_names=self._wave_patterns.get(wave_index, []),
                 matches=matches,
             )
+
+    def analyze_unused_patterns(
+            self,
+            document_match: Match2d | None,
+            pattern_names: Sequence[str] | None = None,
+    ) -> dict[str, list[Match2d]]:
+        """Анализирует неиспользованные совпадения паттернов в документе."""
+        if not document_match:
+            return {}
+
+        if pattern_names is None:
+            pattern_names = DEFAULT_UNUSED_PATTERNS_TO_ANALYZE
+
+        unused_by_pattern: dict[str, list[Match2d]] = {}
+
+        for pattern_name in pattern_names:
+            try:
+                pattern = self.grammar[pattern_name]
+                unused_matches = self._matcher.find_unused_pattern_matches(document_match, pattern)
+                if unused_matches:
+                    unused_by_pattern[pattern_name] = unused_matches
+            except KeyError:
+                continue
+
+        return unused_by_pattern
+
+    def export_final_report(
+            self,
+            document_match: Match2d | None,
+            pattern_names: Sequence[str] | None = None,
+    ) -> None:
+        """Экспортирует финальный отчёт о распознавании, включая неиспользованные паттерны.
+        
+        По умолчанию анализируются паттерны из DEFAULT_UNUSED_PATTERNS_TO_ANALYZE.
+        """
+        if not self.wave_exporter:
+            return
+
+        if pattern_names is None:
+            pattern_names = DEFAULT_UNUSED_PATTERNS_TO_ANALYZE
+
+        unused_by_pattern = self.analyze_unused_patterns(document_match, pattern_names)
+
+        if self.wave_exporter.enable_json:
+            self.wave_exporter.export_unused_patterns_report(unused_by_pattern)
 

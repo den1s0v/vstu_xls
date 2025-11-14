@@ -92,6 +92,9 @@ def main() -> None:
     if matches:
         logger.info("First match: {}", matches[0])
 
+        logger.info("Analyzing unused patterns…")
+        service.export_final_report(document_match=matches[0])
+
     logger.info("Wave artifacts are saved under {}", args.output.resolve())
 
 

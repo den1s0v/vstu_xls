@@ -111,6 +111,26 @@ class WaveDebugExporter:
             "height": box.h,
         }
 
+    def export_unused_patterns_report(self, unused_by_pattern: Mapping[str, Sequence[Match2d]]) -> None:
+        """Экспортирует отчёт о неиспользованных паттернах в JSON."""
+        if not self.enable_json:
+            return
+
+        target_path = self.output_dir / "unused_patterns.json"
+        report_data = {
+            "patterns_analyzed": len(unused_by_pattern),
+            "patterns_with_unused": len([p for p, matches in unused_by_pattern.items() if matches]),
+            "unused_by_pattern": {
+                pattern_name: [
+                    self._serialize_match(match) for match in matches
+                ]
+                for pattern_name, matches in unused_by_pattern.items()
+                if matches
+            },
+        }
+
+        target_path.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
+
     # endregion ------------------------------------------------------------------------
 
     # region Excel ---------------------------------------------------------------------
