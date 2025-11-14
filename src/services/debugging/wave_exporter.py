@@ -20,7 +20,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
 
 
 DEFAULT_COLOR_PALETTE = [
-    "FFF8B4",  # light yellow
+    # "FFF8B4",  # light yellow - excluded to avoid conflict with existing document backgrounds
     "FFCCE5",  # light pink
     "C6E0FF",  # light blue
     "D4F4DD",  # light green
@@ -30,6 +30,8 @@ DEFAULT_COLOR_PALETTE = [
     "CFE8FF",  # icy blue
     "F9CCCC",  # rose
     "D1FFD6",  # mint
+    "E6E6FA",  # lavender
+    "F0E68C",  # khaki (warmer yellow alternative)
 ]
 
 
@@ -118,6 +120,7 @@ class WaveDebugExporter:
 
         workbook_copy = self._clone_workbook(excel_grid)
         worksheet_copy = workbook_copy[excel_grid._worksheet.title]
+        self._clear_cell_fills(worksheet_copy)
         pattern_colors = self._resolve_colors(matches)
         border_style = self._make_border()
 
@@ -146,6 +149,14 @@ class WaveDebugExporter:
         workbook.save(stream)
         stream.seek(0)
         return openpyxl.load_workbook(stream)
+
+    @staticmethod
+    def _clear_cell_fills(worksheet) -> None:
+        """Clear all cell fill backgrounds to remove existing coloring from source document."""
+        for row in worksheet.iter_rows():
+            for cell in row:
+                if cell.fill and cell.fill.fill_type:
+                    cell.fill = PatternFill()
 
     def _resolve_colors(self, matches: list[Match2d]) -> Mapping[str, str]:
         palette_cycle = list(self.palette) or list(DEFAULT_COLOR_PALETTE)
