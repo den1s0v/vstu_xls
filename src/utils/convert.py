@@ -9,6 +9,7 @@
 
 
 from typing import Optional
+from pathlib import Path
 
 from xls2xlsx import XLS2XLSX
 
@@ -81,14 +82,28 @@ def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
     return filename_out
 
 
-def main():
-    paths = (
-        r'c:\Users\Lenovo\Downloads\ОН_ФЭУ_3 курс.xls',
-        # r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
-    )
+def convert_many(paths: list[str | Path]):
+    ch = Checkpointer()
+
     for filename in paths:
-        convert_xls_to_xlsx(filename)
+        convert_xls_to_xlsx(str(filename))
+
+    ch.hit(f'COMPLETE! files converted: {len(paths)}')
 
 
-if __name__ == '__main__':
-    main()
+def convert_all_in_dir(folder_path = '.'):
+    paths = list(Path(folder_path).rglob('*.xls'))
+    convert_many(paths)
+
+def main():
+    # paths = (
+    #     r'c:\Users\Lenovo\Downloads\ОН_ФЭУ_3 курс.xls',
+    #     # r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
+    # )
+    # convert_many(paths)
+    for folder in folders:
+        convert_all_in_dir(folder)
+
+    # ! USE util_main.py !
+# if __name__ == '__main__':
+#     main()
