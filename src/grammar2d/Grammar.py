@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 
 import yaml
 from loguru import logger
@@ -182,7 +183,7 @@ class Grammar(WithCache):
 
 
 def read_grammar(
-        config_file: str = '../cnf/grammar_root.yml',
+        config_file: 'str | Path' = '../cnf/grammar_root.yml',
         data: dict = None) -> Grammar | None:
     if not data:
         assert config_file

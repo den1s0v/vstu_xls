@@ -94,6 +94,7 @@ class WaveDebugExporter:
             "pattern": match.pattern.name,
             "precision": precision,
             "box": WaveDebugExporter._box_dict(match.box),
+            "text_content": match.get_text(),
             "component_count": len(component_entries),
             "components": component_entries,
         }
@@ -120,6 +121,10 @@ class WaveDebugExporter:
         report_data = {
             "patterns_analyzed": len(unused_by_pattern),
             "patterns_with_unused": len([p for p, matches in unused_by_pattern.items() if matches]),
+            "count_unused_by_pattern": {
+                pattern_name: len(matches)  # f"{len(matches)} unused matches"
+                for pattern_name, matches in unused_by_pattern.items()
+            },
             "unused_by_pattern": {
                 pattern_name: [
                     self._serialize_match(match) for match in matches
