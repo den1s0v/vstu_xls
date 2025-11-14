@@ -13,8 +13,6 @@ from string_matching import CellClassifier
 
 if TYPE_CHECKING:
     from grammar2d.Pattern2d import Pattern2d
-else:
-    Pattern2d = pt.Pattern2d
 
 
 class _WaveObserver(Protocol):
@@ -154,7 +152,7 @@ class GrammarMatcher:
                 logger.debug('WAVE:')
                 logger.debug(pattern_names)
 
-            processed_patterns: list[Pattern2d] = []
+            processed_patterns: list['Pattern2d'] = []
 
             if self.grammar.target_mode == 'root' and self.grammar.root in wave:
                 self._find_matches_of_pattern(self.grammar.root)
