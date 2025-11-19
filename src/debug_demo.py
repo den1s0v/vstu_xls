@@ -10,7 +10,8 @@ from grammar2d import GrammarMatcher, read_grammar
 from services import DocumentParsingService, WaveDebugExporter
 
 # DEFAULT_XLSX_NAME = 'ОН_ФЭВТ_4 курс 2023.xlsx'
-DEFAULT_XLSX_NAME = 'ОН_ФЭУ_3 курс_v2.xlsx'
+# DEFAULT_XLSX_NAME = 'ОН_ФЭУ_3 курс_v2.xlsx'
+DEFAULT_XLSX_NAME = 'Сборник_расписаний_1.xlsx'
 
 def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
