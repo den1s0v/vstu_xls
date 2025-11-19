@@ -50,8 +50,12 @@ class WaveDebugExporter:
             grid: Grid | None,
             pattern_names: Sequence[str],
             matches: Iterable[Match2d],
+            only_indices=(4, 7,)
     ) -> None:
         """Export wave results in configured formats."""
+        if only_indices and wave_index not in only_indices:
+            return
+
         if not (self.enable_json or self.enable_excel):
             return
 

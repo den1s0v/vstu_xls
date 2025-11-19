@@ -1,0 +1,14 @@
+# specific_patterns.yml
+
+patterns:
+  # На этом уровне перечисляются паттерны грамматики.
+
+
+  room_stack:
+    description: аудитории в столбик/в ряд
+    kind: array
+    direction: auto
+    item_pattern: room
+    item_count: 1..3
+    extends: room  # string or list is supported.
+

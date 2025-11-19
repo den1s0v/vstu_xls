@@ -182,9 +182,11 @@ class Grammar(WithCache):
         return children and extension_pattern in children
 
 
-def read_grammar(
+def read_grammar_data(
         config_file: 'str | Path' = '../cnf/grammar_root.yml',
-        data: dict = None) -> Grammar | None:
+        data: dict = None,
+        require_cell_types: bool = True,
+  ) -> tuple[dict[str, CellType], list[Pattern2d]]:
     if not data:
         assert config_file
         with open(config_file, encoding='utf-8') as f:
@@ -192,7 +194,7 @@ def read_grammar(
 
     assert isinstance(data, dict), data
 
-    cell_types = read_cell_types(data=data)
+    cell_types = read_cell_types(data=data, raise_on_error=require_cell_types)
 
     if 'patterns' in data:
         patterns_dict = data['patterns']
@@ -208,5 +210,16 @@ def read_grammar(
         p = read_pattern(fields)
         if p:
             parsed_patterns.append(p)
+
+    return cell_types, parsed_patterns
+
+
+def read_grammar(
+        config_file: 'str | Path' = '../cnf/grammar_root.yml',
+        data: dict = None,
+        require_cell_types: bool = True,
+  ) -> Grammar | None:
+
+    cell_types, parsed_patterns = read_grammar_data(config_file, data=data, )
 
     return Grammar(cell_types, parsed_patterns)

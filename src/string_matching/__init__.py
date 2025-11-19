@@ -30,7 +30,11 @@ from string_matching import CellClassifier
 from utils import find_file_under_path
 
 
-def read_cell_types(config_file: str = '../cnf/cell_types.yml', data=None) -> Dict[str, CellType]:
+def read_cell_types(
+        config_file: str = '../cnf/cell_types.yml',
+        data=None,
+        raise_on_error=True,
+) -> Dict[str, CellType] | None:
     if not data:
         assert config_file
         config_file = find_file_under_path(config_file)
@@ -47,9 +51,11 @@ def read_cell_types(config_file: str = '../cnf/cell_types.yml', data=None) -> Di
         filepath = data['cell_types_filepath']
         # Note: uncontrolled recursion
         return read_cell_types(filepath)
-    else:
+    elif raise_on_error:
         raise ValueError(
             f'Format error: `cell_types` or `cell_types_filepath` key expected in given file: `{config_file}`.')
+    else:
+        return None
 
     cell_types = {}
     for kt in cell_types_list:

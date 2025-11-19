@@ -38,7 +38,7 @@ class Checkpointer:
 
 
 @contextmanager
-def time_report(message: str = None, ch: Checkpointer = None) -> Generator[Checkpointer]:
+def time_report(message: str = None, ch: Checkpointer = None) -> 'Generator[Checkpointer]':
     ch = ch or Checkpointer()
     try:
         yield ch
