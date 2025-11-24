@@ -62,7 +62,7 @@ class GrammarTestCase(unittest.TestCase):
     def test_get_ranged_box_for_parent_location_inner(self):
 
         # Example 1: {location: left}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -75,7 +75,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 2: {location: {}}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -89,7 +89,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 3: {location: left, right, bottom}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -106,7 +106,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 4: {location: right, bottom}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -122,7 +122,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 5: {location: top: 0, left: '0..1', right: '0..2'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -139,7 +139,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 6: {location: top: -2, right: '-3..3'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -155,7 +155,7 @@ class GrammarTestCase(unittest.TestCase):
 
         #
         # Example 7: {location: top: '*', left: '*', right: '*', bottom: '*'}
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
         pattern_component = PatternComponent(
             name="child",
             pattern="child_pattern",
@@ -176,7 +176,7 @@ class GrammarTestCase(unittest.TestCase):
         #
         m_box = RangedBox(rx=(2, 3), ry=(1, 2)).to_box()
         self.assertEqual(Box(2,1, 1,1), m_box)
-        component_match = Match2d(box=m_box, pattern="dummy str instead of pattern")
+        component_match = Match2d(box=m_box, pattern=None)
 
         pattern_component = PatternComponent(
             name="child", pattern="child_pattern", inner=True,
@@ -197,7 +197,7 @@ class GrammarTestCase(unittest.TestCase):
 
     def test_get_ranged_box_for_parent_location_outer(self):
 
-        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern="dummy str instead of pattern")
+        component_match = Match2d(box=RangedBox(rx=(20, 40), ry=(1, 5)).to_box(), pattern=None)
 
         # Example 1: {location: left}
         pattern_component = PatternComponent(
