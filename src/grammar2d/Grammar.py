@@ -211,6 +211,7 @@ def read_grammar_data(
     if 'include_grammars' in data:
         # Add cell_types & patterns from referenced grammar (with overwrite for cell_types)
         for sub_path in data['include_grammars']:
+            # TODO add guard: ignore grammars already loaded to avoid potential duplication & uncontrolled recursion.
             sub_cell_types, sub_parsed_patterns = read_grammar_data(config_file=find_file_under_path(sub_path), require_cell_types=False)
             cell_types |= sub_cell_types or {}
             parsed_patterns += sub_parsed_patterns or ()
