@@ -10,8 +10,7 @@ from grammar2d.NonTerminal import NonTerminal
 import grammar2d.PatternComponent as pc
 from grammar2d.Terminal import Terminal
 from string_matching import CellType, read_cell_types
-from utils import WithCache
-
+from utils import WithCache, find_file_under_path
 
 TARGET_MODES = ('root', 'all')
 
@@ -196,20 +195,29 @@ def read_grammar_data(
 
     cell_types = read_cell_types(data=data, raise_on_error=require_cell_types)
 
-    if 'patterns' in data:
-        patterns_dict = data['patterns']
-    else:
-        raise ValueError(
-            f'Format error: `patterns` key expected in given file: `{config_file}`.')
-
-    assert isinstance(patterns_dict, dict), patterns_dict
-
     parsed_patterns = []
-    for name, fields in patterns_dict.items():
-        fields['name'] = name
-        p = read_pattern(fields)
-        if p:
-            parsed_patterns.append(p)
+
+    if 'patterns' in data:
+        # get & parse patterns.
+        patterns_dict = data['patterns']
+        assert isinstance(patterns_dict, dict), patterns_dict
+
+        for name, fields in patterns_dict.items():
+            fields['name'] = name
+            p = read_pattern(fields)
+            if p:
+                parsed_patterns.append(p)
+
+    if 'include_grammars' in data:
+        # Add cell_types & patterns from referenced grammar (with overwrite for cell_types)
+        for sub_path in data['include_grammars']:
+            sub_cell_types, sub_parsed_patterns = read_grammar_data(config_file=find_file_under_path(sub_path), require_cell_types=False)
+            cell_types |= sub_cell_types or {}
+            parsed_patterns += sub_parsed_patterns or ()
+
+    if not parsed_patterns:
+        raise ValueError(
+            f'Format error: `patterns` dict and/or `include_grammars` list are expected in given file: `{config_file}`.')
 
     return cell_types, parsed_patterns
 
@@ -220,6 +228,6 @@ def read_grammar(
         require_cell_types: bool = True,
   ) -> Grammar | None:
 
-    cell_types, parsed_patterns = read_grammar_data(config_file, data=data, )
+    cell_types, parsed_patterns = read_grammar_data(config_file, data=data, require_cell_types=require_cell_types)
 
     return Grammar(cell_types, parsed_patterns)
