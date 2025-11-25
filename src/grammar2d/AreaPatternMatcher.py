@@ -238,6 +238,8 @@ class AreaPatternMatcher(PatternMatcher):
 
             occurrences = self.get_component_matches(pattern_component, region=region)
 
+            # Проверяем только компоненты с независимыми паттернами
+            # Зависимые паттерны будут искаться позже в контексте родителя
             if (not occurrences
                     and not pattern_component.optional
                     and pattern_component.pattern
@@ -246,6 +248,9 @@ class AreaPatternMatcher(PatternMatcher):
                 logger.info(f'''NO MATCH: pattern `{self.pattern.name
                 }` cannot have any matches since its required component `{pattern_component.name}` has no matches.''')
                 return []
+            
+            # Для зависимых паттернов (не independently_matchable) пустой список occurrences - это нормально,
+            # они будут искаться позже в _best_matches в контексте родителя
 
             component_matches_list.append((pattern_component, occurrences))
 
@@ -349,7 +354,8 @@ class AreaPatternMatcher(PatternMatcher):
         elif (not match_list 
               and component.pattern 
               and component.subpattern 
-              and not component.subpattern.independently_matchable()):
+              and component.independently_matchable()  # Не reuse_match компонент
+              and not component.subpattern.independently_matchable()):  # Но зависимый паттерн
             # Только сейчас стало возможно искать зависимый компонент,
             # когда часть компонентов уже известна и может подсказать его расположение
             if existing_match:
