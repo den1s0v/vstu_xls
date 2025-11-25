@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 
 import openpyxl
+from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill, Border, Side
 
 from geom2d import Box
@@ -50,7 +51,7 @@ class WaveDebugExporter:
             grid: Grid | None,
             pattern_names: Sequence[str],
             matches: Iterable[Match2d],
-            only_indices=(4, 7,)
+            only_indices=()
     ) -> None:
         """Export wave results in configured formats."""
         if only_indices and wave_index not in only_indices:
@@ -153,6 +154,10 @@ class WaveDebugExporter:
         pattern_colors = self._resolve_colors(matches)
         border_style = self._make_border()
 
+        # Группируем совпадения по верхней левой ячейке
+        matches_by_position = self._group_matches_by_position(matches)
+
+        # Подсвечиваем совпадения и добавляем комментарии
         for match in matches:
             fill = PatternFill(
                 start_color=pattern_colors[match.pattern.name],
@@ -160,6 +165,9 @@ class WaveDebugExporter:
                 fill_type="solid",
             )
             self._highlight_box(worksheet_copy, match.box, fill, border_style)
+
+        # Добавляем комментарии в верхние левые ячейки
+        self._add_match_annotations(worksheet_copy, matches_by_position)
 
         target_path = self.output_dir / f"wave_{wave_index:02d}.xlsx"
         workbook_copy.save(target_path)
@@ -225,6 +233,71 @@ class WaveDebugExporter:
                 cell = worksheet.cell(row=row + 1, column=col + 1)
                 cell.fill = fill
                 cell.border = border
+
+    @staticmethod
+    def _group_matches_by_position(matches: list[Match2d]) -> dict[tuple[int, int], list[Match2d]]:
+        """Группирует совпадения по их верхней левой ячейке (x, y)."""
+        grouped: dict[tuple[int, int], list[Match2d]] = {}
+
+        for match in matches:
+            if not match.box:
+                continue
+            position = (match.box.left, match.box.top)
+            if position not in grouped:
+                grouped[position] = []
+            grouped[position].append(match)
+
+        return grouped
+
+    @staticmethod
+    def _format_match_annotation(matches: list[Match2d]) -> str:
+        """Формирует текст аннотации для списка совпадений в одной позиции."""
+        if not matches:
+            return ""
+
+        # Подготавливаем данные для сортировки: (размер, точность, паттерн, размер текстом)
+        match_info = []
+        for match in matches:
+            if not match.box:
+                continue
+            size = match.box.w * match.box.h
+            precision = match.precision if match.precision is not None else match.calc_precision()
+            pattern_name = match.pattern.name
+            match_info.append((size, precision, pattern_name, match.box.w, match.box.h))
+
+        # Сортируем: сначала по размеру (больше -> меньше), затем по точности (больше -> меньше)
+        match_info.sort(key=lambda x: (-x[0], -x[1]))
+
+        # Формируем строки аннотации
+        lines = []
+        for size, precision, pattern_name, w, h in match_info:
+            precision_str = f"{precision:.2f}" if precision is not None else "N/A"
+            lines.append(f"{pattern_name}: {w}x{h}, точность {precision_str}")
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def _add_match_annotations(worksheet, matches_by_position: dict[tuple[int, int], list[Match2d]]) -> None:
+        """Добавляет комментарии-аннотации в верхнюю левую ячейку каждого совпадения."""
+        for (col, row), matches in matches_by_position.items():
+            if not matches:
+                continue
+
+            annotation_text = WaveDebugExporter._format_match_annotation(matches)
+            if not annotation_text:
+                continue
+
+            # Excel использует 1-based координаты, поэтому добавляем 1
+            excel_row = row + 1
+            excel_col = col + 1
+
+            try:
+                cell = worksheet.cell(row=excel_row, column=excel_col)
+                comment = Comment(text=annotation_text, author="Grammar Matcher")
+                cell.comment = comment
+            except (AttributeError, Exception):
+                # Игнорируем ошибки при добавлении комментария
+                pass
 
     # endregion ------------------------------------------------------------------------
 
