@@ -7,7 +7,7 @@ from string_matching.StringTransformer import StringTransformer
 _RE_SEVERAL_SPACES = re.compile(r'\s{2,}')
 _RE_SPACES = re.compile(r'\s+')
 _RE_GAPS = re.compile(r'\b\s+\b')
-_RE_HYPEN_SPACED = re.compile(r'\s*-\s*')
+_RE_HYPHEN_SPACED = re.compile(r'\s*-\s*')
 
 
 
@@ -127,7 +127,7 @@ class remove_spaces_around_hypen_Transformer(StringTransformer):
         return "remove_spaces_around_hypen"
 
     def transform(self, string: str):
-        return _RE_HYPEN_SPACED.sub("-", string)
+        return _RE_HYPHEN_SPACED.sub("-", string)
     
 StringTransformer.register(remove_spaces_around_hypen_Transformer)
 
