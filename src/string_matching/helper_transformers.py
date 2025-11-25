@@ -25,7 +25,7 @@ _LETTER_RE_HELPER_MAP = {
     'L': '[A-ZА-ЯЁa-zа-яё]',  # все буквы в принципе
 }
 # не предварённые обратным слешем
-_RE_LETTER_RE_HELPER_MARKS = re.compile("(?<!\\)\\[%s]" % ''.join(_LETTER_RE_HELPER_MAP.keys()))
+_RE_LETTER_RE_HELPER_MARKS = re.compile(r"(?<!\\)\\([%s])" % ''.join(_LETTER_RE_HELPER_MAP.keys()))
 
 
 
@@ -147,7 +147,7 @@ class remove_spaces_around_hypen_Transformer(StringTransformer):
 
 def inject_letter_helpers(string: str):
     """ Replace single chars with regexp helpers, using _LETTER_RE_HELPER_MAP """
-    return _RE_LETTER_RE_HELPER_MARKS.sub(lambda m: _LETTER_RE_HELPER_MAP.get(m[0], m[0]), string)
+    return _RE_LETTER_RE_HELPER_MARKS.sub(lambda m: _LETTER_RE_HELPER_MAP.get(m[1], m[1]), string)
 
 
 # Подкласс для преобразования строк
