@@ -144,6 +144,119 @@ class AreaPattern(NonTerminal):
                     similar_component_pairs.append((k1, k2))
         return similar_component_pairs
 
+    def build_component_dependency_graph(self) -> dict[str, set[str]]:
+        """Строит граф зависимостей компонентов на основе reuse_match.
+        
+        :return: словарь, где ключ - имя компонента, значение - множество имён компонентов, от которых он зависит.
+        """
+        dependency_graph: dict[str, set[str]] = {}
+        
+        for component in self.components:
+            if not component.reuse_match:
+                continue
+            
+            component_name = component.name
+            if component_name not in dependency_graph:
+                dependency_graph[component_name] = set()
+            
+            # Извлечь все зависимости из путей reuse_match
+            for path in component.reuse_match:
+                if path:
+                    # Первый элемент пути - это имя компонента, от которого зависит текущий
+                    first_component = path[0]
+                    dependency_graph[component_name].add(first_component)
+        
+        return dependency_graph
+
+    def compute_component_waves(self) -> dict[str, int]:
+        """Вычисляет "волны" компонентов на основе зависимостей (топологическая сортировка).
+        
+        :return: словарь {имя_компонента: номер_волны}, где волна 0 - независимые компоненты.
+        :raises ValueError: при обнаружении циклических зависимостей.
+        """
+        dependency_graph = self.build_component_dependency_graph()
+        component_names = {comp.name for comp in self.components}
+        waves: dict[str, int] = {}
+        wave = 0
+        
+        # Начальная волна: компоненты без зависимостей
+        remaining = component_names.copy()
+        
+        while remaining:
+            # Найти компоненты без зависимостей на текущей итерации
+            independent = {
+                name for name in remaining
+                if name not in dependency_graph or not dependency_graph[name] or
+                all(dep not in remaining for dep in dependency_graph[name])
+            }
+            
+            if not independent:
+                # Циклическая зависимость обнаружена
+                cycle_info = []
+                for name in remaining:
+                    deps = dependency_graph.get(name, set())
+                    if deps:
+                        cycle_info.append(f"  {name} -> {', '.join(sorted(deps))}")
+                
+                raise ValueError(
+                    f"Circular dependency detected in pattern `{self.name}` components. "
+                    f"Dependencies:\n" + "\n".join(cycle_info)
+                )
+            
+            # Назначить волну независимым компонентам
+            for name in independent:
+                waves[name] = wave
+                remaining.remove(name)
+                # Удалить эту зависимость из графа для следующей итерации
+                for other_name in dependency_graph:
+                    dependency_graph[other_name].discard(name)
+            
+            wave += 1
+        
+        return waves
+
+    def validate_reuse_match_paths(self) -> None:
+        """Валидирует пути reuse_match: проверяет, что все пути ссылаются на существующие компоненты.
+        
+        :raises ValueError: если найдены несуществующие компоненты в путях или циклические зависимости.
+        """
+        component_names = {comp.name for comp in self.components}
+        errors = []
+
+        for component in self.components:
+            if not component.reuse_match:
+                continue
+
+            for path_index, path in enumerate(component.reuse_match):
+                if not path:
+                    errors.append(
+                        f"Pattern `{self.name}`, component `{component.name}`: "
+                        f"reuse_match path #{path_index} is empty."
+                    )
+                    continue
+
+                # Проверить, что первый элемент пути существует как компонент
+                first_component_name = path[0]
+                if first_component_name not in component_names:
+                    errors.append(
+                        f"Pattern `{self.name}`, component `{component.name}`: "
+                        f"reuse_match path #{path_index} `{' / '.join(path)}` references "
+                        f"non-existent component `{first_component_name}`."
+                    )
+                    continue
+
+                # Дополнительно проверить вложенные пути (если нужно будет в будущем)
+                # Для этого нужно рекурсивно проверять подпаттерны компонентов
+
+        if errors:
+            raise ValueError("reuse_match validation errors:\n" + "\n".join(errors))
+
+        # Проверить циклические зависимости (через compute_component_waves)
+        try:
+            self.compute_component_waves()
+        except ValueError as e:
+            raise ValueError(f"Pattern `{self.name}`: {e}")
+
     def get_component_matches_relations(self) -> list[tuple[PatternComponent, PatternComponent, MatchRelation]]:
         """ Могут присутствовать внутренние компоненты с одинаковыми ожиданиями,
         т.е. требуемым паттерном и ограничениями.

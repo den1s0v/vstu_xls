@@ -400,7 +400,47 @@ def read_pattern_component(
     # collect info about keys could not be read...
     keys_ignored = set(data.keys())
 
-    if 'pattern' not in data:
+    # Обработка reuse_match
+    reuse_match_paths = None
+    if 'reuse_match' in data:
+        reuse_match_raw = data['reuse_match']
+        del data['reuse_match']
+        keys_ignored.discard('reuse_match')
+
+        # Поддержка как строки, так и списка строк
+        if isinstance(reuse_match_raw, str):
+            reuse_match_raw = [reuse_match_raw]
+
+        # Парсинг путей, разделяя по ' / ' и нормализуя пробелы
+        reuse_match_paths = []
+        for path_item in reuse_match_raw:
+            if isinstance(path_item, str):
+                # Разделить по ' / ' и нормализовать пробелы
+                path_parts = [part.strip() for part in path_item.split(' / ') if part.strip()]
+                if path_parts:
+                    reuse_match_paths.append(path_parts)
+            elif isinstance(path_item, list):
+                # Уже список - нормализовать пробелы
+                path_parts = [str(part).strip() for part in path_item if str(part).strip()]
+                if path_parts:
+                    reuse_match_paths.append(path_parts)
+
+        data['reuse_match'] = reuse_match_paths if reuse_match_paths else None
+
+    # Проверка: должен быть ровно один из pattern, pattern_definition, reuse_match
+    has_pattern = 'pattern' in data
+    has_pattern_definition = 'pattern_definition' in data
+    has_reuse_match = bool(data.get('reuse_match'))
+
+    defined_count = sum([has_pattern, has_pattern_definition, has_reuse_match])
+    if defined_count != 1:
+        raise ValueError(
+            f"grammar pattern `{pattern_name}` has component `{name}` that must define exactly one of: "
+            f"'pattern', 'pattern_definition', or 'reuse_match'. Found: pattern={has_pattern}, "
+            f"pattern_definition={has_pattern_definition}, reuse_match={has_reuse_match}."
+        )
+
+    if 'pattern' not in data and not has_reuse_match:
         # got inline pattern definition...
         if 'pattern_definition' not in data:
             raise ValueError(f"grammar pattern `{pattern_name}` has component `{name
