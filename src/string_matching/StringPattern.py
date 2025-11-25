@@ -8,7 +8,13 @@ from string_matching.StringTransformer import StringTransformer
 # A comma or a mandatory space with optional spaces around.
 RE_COMMON_SEPARATOR = re.compile(r'\s*[,\s]\s*')
 
-VALID_pattern_syntax = {'re', 're-spaces', 'plain'}
+VALID_pattern_syntax = {
+    're',
+    're+letters',
+    're-spaces',
+    're-spaces+letters',
+    'plain'
+}
 VALID_preprocess = {'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen'}
 
 
@@ -115,9 +121,13 @@ class StringPattern:
         return None
 
     def prepare_pattern(self):
-        if self.pattern_syntax == 're-spaces':
+        if 're-spaces' in self.pattern_syntax:
             # convert regex in 're-spaces' to ordinary 're'
             self.pattern = StringTransformer.apply('decode_re_spaces', self.pattern)
+
+        if 're' in self.pattern_syntax and '+letters' in self.pattern_syntax:
+            # convert regex in 're...+letters' to ordinary 're'
+            self.pattern = StringTransformer.apply('inject_letter_helpers', self.pattern)
 
         if isinstance(self.pattern_flags, str):
             # parse regex flags

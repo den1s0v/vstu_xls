@@ -10,6 +10,23 @@ _RE_GAPS = re.compile(r'\b\s+\b')
 _RE_HYPHEN_SPACED = re.compile(r'\s*-\s*')
 
 
+_LETTER_RE_HELPER_MAP = {
+    # только лат.
+    'Z': '[A-Z]',
+    'z': '[a-z]',
+
+    # только рус.
+    'Я': '[А-ЯЁ]',
+    'я': '[а-яё]',
+
+    # рус. и лат
+    'б': '[a-zа-яё]',
+    'Б': '[A-ZА-ЯЁ]',
+    'L': '[A-ZА-ЯЁa-zа-яё]',  # все буквы в принципе
+}
+# не предварённые обратным слешем
+_RE_LETTER_RE_HELPER_MARKS = re.compile("(?<!\\)\\[%s]" % ''.join(_LETTER_RE_HELPER_MAP.keys()))
+
 
 
 # Подкласс для преобразования строк
@@ -126,4 +143,21 @@ class remove_spaces_around_hypen_Transformer(StringTransformer):
     def transform(self, string: str):
         return _RE_HYPHEN_SPACED.sub("-", string)
 
+
+
+def inject_letter_helpers(string: str):
+    """ Replace single chars with regexp helpers, using _LETTER_RE_HELPER_MAP """
+    return _RE_LETTER_RE_HELPER_MARKS.sub(lambda m: _LETTER_RE_HELPER_MAP.get(m[0], m[0]), string)
+
+
+# Подкласс для преобразования строк
+@StringTransformer.register
+class inject_letter_helpers_Transformer(StringTransformer):
+    """ Replace each sequence of several whitespaces with one space. """
+    @classmethod
+    def get_id(cls):
+        return "inject_letter_helpers"
+
+    def transform(self, string: str):
+        return inject_letter_helpers(string)
 
