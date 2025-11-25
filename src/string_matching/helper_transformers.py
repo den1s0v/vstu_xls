@@ -13,6 +13,7 @@ _RE_HYPHEN_SPACED = re.compile(r'\s*-\s*')
 
 
 # Подкласс для преобразования строк
+@StringTransformer.register
 class Decode_re_spaces_Transformer(StringTransformer):
     """
     Перечень замен:
@@ -29,8 +30,6 @@ class Decode_re_spaces_Transformer(StringTransformer):
                 .replace("   ", r'\s')
                 .replace("  ", r'\s+')
                 .replace(" ", r'\s*'))
-    
-StringTransformer.register(Decode_re_spaces_Transformer)
 
 
 
@@ -39,6 +38,7 @@ def shrink_extra_inner_spaces(string: str):
     
 
 # Подкласс для преобразования строк
+@StringTransformer.register
 class shrink_extra_inner_spaces_Transformer(StringTransformer):
     """ Replace each sequence of several whitespaces with one space. """
     @classmethod
@@ -47,8 +47,6 @@ class shrink_extra_inner_spaces_Transformer(StringTransformer):
 
     def transform(self, string: str):
         return shrink_extra_inner_spaces(string)
-    
-StringTransformer.register(shrink_extra_inner_spaces_Transformer)
 
 
 
@@ -87,6 +85,7 @@ def fix_sparse_words(string: str, _mul_of_longest_as_sep=2, _min_spaces=5):
 
 
 # Подкласс для преобразования строк
+@StringTransformer.register
 class fix_sparse_words_Transformer(StringTransformer):
     """ Try fix words formatted to look wide with spaces between chars, e.g.:
      'М А Т Е М А Т И К А' -> 'МАТЕМАТИКА'
@@ -98,12 +97,11 @@ class fix_sparse_words_Transformer(StringTransformer):
 
     def transform(self, string: str):
         return fix_sparse_words(string)
-    
-StringTransformer.register(fix_sparse_words_Transformer)
 
 
 
 # Подкласс для преобразования строк
+@StringTransformer.register
 class remove_all_spaces_Transformer(StringTransformer):
     """ Remove all spaces from string.
      """
@@ -113,12 +111,11 @@ class remove_all_spaces_Transformer(StringTransformer):
 
     def transform(self, string: str):
         return string.replace(" ", '')
-    
-StringTransformer.register(remove_all_spaces_Transformer)
 
 
 
 # Подкласс для преобразования строк
+@StringTransformer.register
 class remove_spaces_around_hypen_Transformer(StringTransformer):
     """ Remove all spaces from string.
      """
@@ -128,7 +125,5 @@ class remove_spaces_around_hypen_Transformer(StringTransformer):
 
     def transform(self, string: str):
         return _RE_HYPHEN_SPACED.sub("-", string)
-    
-StringTransformer.register(remove_spaces_around_hypen_Transformer)
 
 
