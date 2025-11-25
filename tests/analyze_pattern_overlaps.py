@@ -5,8 +5,10 @@
 Находит случаи, где один текст совпадает с несколькими типами с высоким confidence.
 """
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 from dataclasses import dataclass
+import re
+from pprint import pprint
 from typing import List, Tuple, Dict
 
 from tests_bootstrapper import init_testing_environment
@@ -47,6 +49,21 @@ def load_test_data():
             continue
     
     return values_by_file
+
+def maskify_string(s: str) -> str:
+    """ Replaces all letters with Upper- or lowercase "W" or "w", and all digits with `#`, keeping all other chars as is. """
+    s = re.sub(r'\d', '#', s)
+    s = re.sub(r'\w', lambda m: 'w' if m[0].lower() == m[0] else 'W', s)
+    return s
+
+def infer_patterns_from_real_data():
+    values_by_file = load_test_data()
+    group_names = values_by_file['groupnames']
+
+    cnt = Counter(map(maskify_string, group_names))
+
+    pprint(cnt.most_common())
+
 
 
 def analyze_conflicts(
@@ -231,6 +248,10 @@ def analyze_all_data(
 if __name__ == '__main__':
     import sys
     import os
+
+    infer_patterns_from_real_data()
+
+    exit()
     
     # Сохраняем вывод в файл для избежания проблем с кодировкой консоли
     output_file = 'analyze_pattern_overlaps_output.txt'
