@@ -25,13 +25,9 @@ class PatternComponent(WithCache, WithSafeCreate):
     """
     name: str  # имя компонента по отношению к родителю.
 
-    pattern: str = None  # имя дочернего элемента, включаемого в родительский как компонент.
+    pattern: str  # имя дочернего элемента, включаемого в родительский как компонент.
 
     inner: bool = True  # Является ли внутренним и образующим размер родителя
-
-    # Переиспользование матча компонента из другого паттерна вместо поиска глобально.
-    # Список альтернативных путей к компонентам: каждый путь — список имён компонентов через слэш.
-    reuse_match: list[list[str]] = None  # Например: [['discipline', 'hour_begin']] или [['path1', 'sub1'], ['path2']]
 
     # "Локальные" ограничения, накладываемые на расположение этого компонента по отношению к родителю.
     # Используются координаты текущего дочернего элемента и родительского элемента.
@@ -63,10 +59,8 @@ class PatternComponent(WithCache, WithSafeCreate):
     _grammar: 'ns.Grammar' = None
 
     @property
-    def subpattern(self) -> 'pt.Pattern2d | None':
+    def subpattern(self) -> 'pt.Pattern2d':
         """Дочерний элемент грамматики"""
-        if not self.pattern:
-            return None
         if not self._subpattern:
             self._subpattern = self._grammar[self.pattern]
 
@@ -75,28 +69,15 @@ class PatternComponent(WithCache, WithSafeCreate):
     def set_grammar(self, grammar: 'ns.Grammar'):
         self._grammar = grammar
 
-    def independently_matchable(self) -> bool:
-        """Возвращает True, если компонент может быть найден независимо (не использует reuse_match)."""
-        return self.reuse_match is None or len(self.reuse_match) == 0
-
     # @property
     # def max_score(self) -> float:
     #     return self.weight * max(0, self.importance)
 
     def dependencies(self, recursive=False) -> list['pt.Pattern2d']:
-        # Компоненты с reuse_match не привносят уникальных зависимостей
-        # (не имеют паттерна и не участвуют в вычислении зависимостей)
-        if not self.pattern:
-            return []
-        
-        subpat = self.subpattern
-        if not subpat:
-            return []
-        
         if not recursive:
-            return [subpat]
+            return [self.subpattern]
 
-        return [subpat, *subpat.dependencies(recursive=True)]
+        return [self.subpattern, *self.subpattern.dependencies(recursive=True)]
 
     # constraints_with_full_names: list[SpatialConstraint] = None
 

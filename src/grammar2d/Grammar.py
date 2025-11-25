@@ -40,9 +40,6 @@ class Grammar(WithCache):
         for pt in pattern_list:
             self._register_pattern(pt)
 
-        # Валидация reuse_match для всех AreaPattern после полной регистрации
-        self._validate_reuse_match_paths()
-
     def _register_pattern(self, pattern: Pattern2d):
         assert pattern.name, f"Cannot register pattern without name: {pattern}"
         self.patterns[pattern.name] = pattern
@@ -67,12 +64,6 @@ class Grammar(WithCache):
             for component in pattern.components:
                 if (p := component._subpattern) and p.name not in self.patterns:
                     self._register_pattern(p)
-
-    def _validate_reuse_match_paths(self) -> None:
-        """Валидирует reuse_match пути для всех AreaPattern после полной регистрации паттернов."""
-        for pattern in self.patterns.values():
-            if hasattr(pattern, 'validate_reuse_match_paths'):
-                pattern.validate_reuse_match_paths()
 
     @property
     def root(self) -> Pattern2d:

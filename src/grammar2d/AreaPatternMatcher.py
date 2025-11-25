@@ -84,17 +84,10 @@ class AreaPatternMatcher(PatternMatcher):
         :param match_limit: -1 means to search for all matches required for this component
            in one match of parent area (usually 1).
         """
-        # Если компонент использует reuse_match, не ищем глобально
-        if not component.independently_matchable():
-            return []
-
         if match_limit == -1 and component.count and component.count.stop is not None:
             match_limit = component.count.stop
 
         subpattern: Pattern2d = component.subpattern
-        if not subpattern:
-            return []
-        
         gm = self.grammar_matcher
         matches = gm.get_pattern_matches(subpattern, region, match_limit)
 
@@ -104,95 +97,6 @@ class AreaPatternMatcher(PatternMatcher):
             matches))
 
         self._set_parent_location_to_component_matches(component, matches)
-        return matches
-
-    @staticmethod
-    def _resolve_match_path(parent_match: Match2d, path: list[str]) -> Match2d | list[Match2d] | None:
-        """Разрешает путь к матчу через component2match.
-        
-        :param parent_match: родительский матч, из которого извлекается дочерний матч.
-        :param path: список имён компонентов по пути (например, ['discipline', 'hour_begin']).
-        :return: найденный матч, список матчей (если путь ведёт к массиву) или None если путь недоступен.
-        """
-        if not parent_match or not parent_match.component2match:
-            return None
-
-        current_match = parent_match
-        for i, component_name in enumerate(path):
-            if not current_match.component2match:
-                return None
-
-            # Попытаться найти компонент по имени (может быть строка или int для массивов)
-            child_match = current_match.component2match.get(component_name)
-            if child_match is None:
-                # Попробовать найти по строковому представлению
-                child_match = current_match.component2match.get(str(component_name))
-            
-            if child_match is None:
-                return None
-
-            # Если это последний элемент пути - вернуть результат
-            if i == len(path) - 1:
-                # Проверить, является ли найденный компонент массивом (все ключи - числовые индексы)
-                if child_match.component2match:
-                    # Проверим, все ли ключи числовые (признак массива)
-                    all_keys_numeric = all(
-                        isinstance(key, (int, str)) and (str(key).isdigit() if isinstance(key, str) else isinstance(key, int))
-                        for key in child_match.component2match.keys()
-                    )
-                    
-                    if all_keys_numeric and len(child_match.component2match) > 0:
-                        # Это массив - вернуть все элементы для проверки на оптимальность
-                        return list(child_match.component2match.values())
-                
-                # Обычный компонент
-                return child_match
-
-            # Продолжить путь дальше
-            current_match = child_match
-
-        return None
-
-    def _get_reused_component_matches(
-            self,
-            component: PatternComponent,
-            existing_match: Match2d) -> list[Match2d]:
-        """Получает матчи компонента через reuse_match из уже найденных компонентов."""
-        if not component.reuse_match or not existing_match:
-            return []
-
-        matches = []
-        for path in component.reuse_match:
-            resolved = self._resolve_match_path(existing_match, path)
-            
-            if resolved is None:
-                continue
-            
-            # Если путь ведёт к массиву - получили список матчей
-            if isinstance(resolved, list):
-                matches.extend(resolved)
-            else:
-                # Один матч
-                matches.append(resolved)
-            
-            # Если нашли хотя бы один путь - используем его (первый доступный)
-            if matches:
-                break
-
-        if not matches:
-            logger.warning(
-                f"Component `{component.name}` in pattern `{self.pattern.name}` "
-                f"could not resolve any reuse_match paths: {component.reuse_match}. "
-                f"Possible error in path specification."
-            )
-            return []
-
-        # Применить фильтрацию по precision_threshold
-        matches = [m for m in matches if m.precision >= component.precision_threshold]
-
-        # Установить parent_location для переиспользованных матчей
-        self._set_parent_location_to_component_matches(component, matches)
-        
         return matches
 
     def _set_parent_location_to_component_matches(
@@ -242,8 +146,6 @@ class AreaPatternMatcher(PatternMatcher):
             # Зависимые паттерны будут искаться позже в контексте родителя
             if (not occurrences
                     and not pattern_component.optional
-                    and pattern_component.pattern
-                    and pattern_component.subpattern
                     and pattern_component.subpattern.independently_matchable()):
                 logger.info(f'''NO MATCH: pattern `{self.pattern.name
                 }` cannot have any matches since its required component `{pattern_component.name}` has no matches.''')
@@ -276,14 +178,10 @@ class AreaPatternMatcher(PatternMatcher):
         #  В случае нулевой дельты взять порог равным 1 лишней клетке. ??)
         #  По отобранным кандидатам углубляемся внутрь (рекурсия).
 
-        # Получить волны компонентов на основе зависимостей reuse_match
-        component_waves = self.pattern.compute_component_waves()
-        
-        # Сортировать: волна зависимостей, все опциональные в конце, сначала независимые и внутренние, по возрастанию числа матчей
+        # Сортировать: все опциональные в конце, сначала независимые и внутренние, по возрастанию числа матчей
         component_matches_list.sort(key=lambda t: (
-            component_waves.get(t[0].name, 0),  # Индекс волны (независимые - 0)
             t[0].optional,
-            not t[0].independently_matchable(),  # reuse_match компоненты после обычных
+            not t[0].subpattern.independently_matchable(),
             not t[0].inner,
             t[0].flexibility_estimation(),  # ограничивающая способность убывает
             len(t[1]),  # ↑
@@ -347,15 +245,8 @@ class AreaPatternMatcher(PatternMatcher):
 
         rb1: RangedBox = existing_match.data.ranged_box if existing_match else None
 
-        # Обработка компонентов с reuse_match
-        if not component.independently_matchable() and existing_match:
-            # Компонент использует reuse_match - получаем матч из уже найденных компонентов
-            match_list = self._get_reused_component_matches(component, existing_match)
-        elif (not match_list 
-              and component.pattern 
-              and component.subpattern 
-              and component.independently_matchable()  # Не reuse_match компонент
-              and not component.subpattern.independently_matchable()):  # Но зависимый паттерн
+        #  not match_list and
+        if not component.subpattern.independently_matchable():
             # Только сейчас стало возможно искать зависимый компонент,
             # когда часть компонентов уже известна и может подсказать его расположение
             if existing_match:
