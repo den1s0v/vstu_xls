@@ -1,6 +1,13 @@
 cell_types:
           # "re-spaces" для `pattern_syntax` означает, что в `pattern` содержится модифицированное регулярное выражение, которое будет предварительно обработано, заменяя все  одиночные пробелы на возможные пробелы (' '  ->  \s* или [ ]*), а двойные - на обязательные пробелы ('  '  ->  \s+).
 
+          # "...+letters" для `pattern_syntax` означает, что в `pattern` содержится модифицированное регулярное выражение, которое будет предварительно обработано, заменяя все одиночные буквы в двойных квадратных скобках из списка на их условные эквиваленты (see: inject_letter_helpers):
+        #  - \Я -- русские заглавные
+        #  - \я -- русские строчные
+        #  - \Б -- любые заглавные
+        #  - \б -- любые строчные
+        #  - \L -- любые буквы (здесь и везде выше: без цифр)
+
           # Перечень "preprocess: ..." при паттерне позволяет указать преобразования, которые будут произведены над текстовым значением ячейки перед проверкой (регулярным выражением). На момент написания доступны преобразования: 'fix_sparse_words', 'remove_all_spaces', 'remove_spaces_around_hypen' (подробнее см. класс StringPattern).
           # "update_content: ..."
 
@@ -11,41 +18,41 @@ cell_types:
       patterns:
             # имя преподавателя может содержать префикс должности, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
         - confidence: 1.00
-          pattern: '(?:доц|проф|асс[истент]*|ст\. пр\w* |пр[еподаватель]*|[кд]\.\w{1,6}\.н)[.\s] [а-яё]+'
-          pattern_syntax: re-spaces
+          pattern: '(?:доц|проф|асс[истент]*|ст\. пр\w* |пр[еподаватель]*|[кд]\.\я{1,6}\.н)[.\s] \я+'
+          pattern_syntax: re-spaces+letters
           pattern_flags: I
 
         - confidence: 0.95
             # Фамилия И.О.
-          pattern: '[А-ЯЁ][а-яё-]+  [А-ЯЁ]\.? [А-ЯЁ]\.? (?:$|,)'
-          pattern_syntax: re-spaces
+          pattern: '\Я[а-яё-]+  \Я\.? \Я\.? (?:$|,)'
+          pattern_syntax: re-spaces+letters
 
         - confidence: 0.92
             # Фамилия Имя
-          pattern: '[А-ЯЁ][а-яё-]+ [А-ЯЁ][а-яё-]?\.?  [А-ЯЁ][а-яё-]*\.? (?:$|,)'
-          pattern_syntax: re-spaces
+          pattern: '\Я\я+ \Я[а-яё-]?\.?  \Я\я*\.? (?:$|,)'
+          pattern_syntax: re-spaces+letters
 
         - confidence: 0.90
             # Фамилия И.
-          pattern: '[А-ЯЁ][а-яё-]+ [А-ЯЁ]?\.? [А-ЯЁ]\. (?:$|,)'
-          pattern_syntax: re-spaces
+          pattern: '\Я[а-яё-]+ \Я?\.? \Я\. (?:$|,)'
+          pattern_syntax: re-spaces+letters
 
         - confidence: 0.80
             # Фамилия
-          pattern: '[А-ЯЁ][а-яё-]+(\-[А-ЯЁ]?[а-яё]+)*\s*(?:,|$)'
-          pattern_syntax: re
+          pattern: '\Я[а-яё-]+(\-\Я?\я+)*\s*(?:,|$)'
+          pattern_syntax: re+letters
 
         - confidence: 0.40
             # Содержится слово (Фамилия) с Большой буквы
-          pattern: '[А-ЯЁ][а-яё]+'
-          pattern_syntax: re
+          pattern: '\Я\я+'
+          pattern_syntax: re+letters
           anchors: none
           pattern_flags: 0
 
         - confidence: 0.20
             # Слово с любой буквы
-          pattern: '\w+'
-          pattern_syntax: re
+          pattern: '\L+'
+          pattern_syntax: re+letters
 
         - confidence: 0.05
             # Любые символы (Например, "???")
@@ -150,6 +157,16 @@ cell_types:
             # Любые символы (Например, "???")
           pattern: '.+'
           pattern_syntax: re
+
+  # - group_list:
+  #     description: несколько учебных групп через запятую
+  #     patterns:
+  #       - confidence: 1.00
+  #           # 354, 55, 61,62,63
+  #         pattern: '(?:(?:(?:[ИМФЭ]|[А-ЯЁA-Z]+[А-ЯЁA-Zа-яёa-z.]+)-)?[\d.-]+[^,]*[,]?){2,}'
+  #         pattern_syntax: re
+  #         anchors: both
+  #         preprocess: remove_all_spaces
 
   - group:
       description: учебная группа
