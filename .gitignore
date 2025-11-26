@@ -5,6 +5,7 @@ __pycache__/
 ~$*.*
 *.prof
 tests/test_data/debug/
+materials/vstu-reference-tables
 
 # C extensions
 *.so
