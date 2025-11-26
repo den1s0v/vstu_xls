@@ -9,7 +9,10 @@ from collections import defaultdict, Counter
 from dataclasses import dataclass
 import re
 from pprint import pprint
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from string_matching.CellType import CellType
 
 from tests_bootstrapper import init_testing_environment
 init_testing_environment()
@@ -35,6 +38,7 @@ def load_test_data():
         ('../materials/ОН_Магистратура_2 курс ХТФ - unique-values.txt', 'Магистратура_ХТФ'),
         ('../materials/ОН_Магистратура_ 1 курс ФТКМ - unique-values.txt', 'Магистратура_ФТКМ'),
         ('../materials/groupnames.txt', 'groupnames'),
+        ('../materials/vstu-discipline-shortnames.txt', 'discipline_shortnames'),
     ]
     
     values_by_file = {}
@@ -51,18 +55,132 @@ def load_test_data():
     return values_by_file
 
 def maskify_string(s: str) -> str:
-    """ Replaces all letters with Upper- or lowercase "W" or "w", and all digits with `#`, keeping all other chars as is. """
-    s = re.sub(r'\d', '#', s)
-    s = re.sub(r'\w', lambda m: 'w' if m[0].lower() == m[0] else 'W', s)
-    return s
+    """
+    Преобразует строку в шаблон, заменяя:
+    - Цифры на '#'
+    - Русские заглавные буквы на 'Я' (А-Я, Ё)
+    - Русские строчные буквы на 'я' (а-я, ё)
+    - Английские заглавные буквы на 'W' (A-Z)
+    - Английские строчные буквы на 'w' (a-z)
+    - Все остальные символы остаются без изменений
+    """
+    result = []
+    for char in s:
+        if char.isdigit():
+            result.append('#')
+        elif 'А' <= char <= 'Я' or char == 'Ё':
+            result.append('Я')  # Русская заглавная
+        elif 'а' <= char <= 'я' or char == 'ё':
+            result.append('я')  # Русская строчная
+        elif 'A' <= char <= 'Z':
+            result.append('W')  # Английская заглавная
+        elif 'a' <= char <= 'z':
+            result.append('w')  # Английская строчная
+        else:
+            result.append(char)  # Остальные символы как есть
+    return ''.join(result)
 
 def infer_patterns_from_real_data():
+    """Анализирует шаблоны имён групп и дисциплин"""
     values_by_file = load_test_data()
-    group_names = values_by_file['groupnames']
-
-    cnt = Counter(map(maskify_string, group_names))
-
-    pprint(cnt.most_common())
+    
+    # Очищаем кавычки из имён дисциплин (как указал пользователь)
+    discipline_names = {name.strip('"\'') for name in values_by_file.get('discipline_shortnames', set())}
+    group_names = values_by_file.get('groupnames', set())
+    
+    print("=" * 80)
+    print("АНАЛИЗ ШАБЛОНОВ ИМЁН")
+    print("=" * 80)
+    print()
+    
+    # Анализ групп
+    if group_names:
+        print(f"ИМЕНА ГРУПП: {len(group_names)} уникальных значений")
+        print("-" * 80)
+        group_patterns = Counter(map(maskify_string, group_names))
+        
+        print("\nТОП-30 шаблонов имён групп:")
+        for pattern, count in group_patterns.most_common(30):
+            # Найдём несколько примеров для каждого шаблона
+            examples = [name for name in group_names if maskify_string(name) == pattern][:3]
+            examples_str = ', '.join(f'`{ex}`' for ex in examples)
+            print(f"  {pattern:30s} : {count:4d} раз  [примеры: {examples_str}]")
+        print()
+    
+    # Анализ дисциплин
+    if discipline_names:
+        print(f"КОРОТКИЕ ИМЕНА ДИСЦИПЛИН: {len(discipline_names)} уникальных значений")
+        print("-" * 80)
+        discipline_patterns = Counter(map(maskify_string, discipline_names))
+        
+        print("\nТОП-30 шаблонов имён дисциплин:")
+        for pattern, count in discipline_patterns.most_common(30):
+            # Найдём несколько примеров для каждого шаблона
+            examples = [name for name in discipline_names if maskify_string(name) == pattern][:3]
+            examples_str = ', '.join(f'`{ex}`' for ex in examples)
+            print(f"  {pattern:30s} : {count:4d} раз  [примеры: {examples_str}]")
+        print()
+    
+    # Сравнение групп и дисциплин
+    if group_names and discipline_names:
+        print("=" * 80)
+        print("СРАВНЕНИЕ ШАБЛОНОВ ГРУПП И ДИСЦИПЛИН")
+        print("=" * 80)
+        print()
+        
+        group_pattern_set = set(group_patterns.keys())
+        discipline_pattern_set = set(discipline_patterns.keys())
+        
+        common_patterns = group_pattern_set & discipline_pattern_set
+        only_group_patterns = group_pattern_set - discipline_pattern_set
+        only_discipline_patterns = discipline_pattern_set - group_pattern_set
+        
+        print(f"Общих шаблонов: {len(common_patterns)}")
+        print(f"Только для групп: {len(only_group_patterns)}")
+        print(f"Только для дисциплин: {len(only_discipline_patterns)}")
+        print()
+        
+        if common_patterns:
+            print("ОБЩИЕ ШАБЛОНЫ (могут быть проблемными):")
+            common_sorted = sorted(common_patterns, 
+                                 key=lambda p: group_patterns[p] + discipline_patterns[p], 
+                                 reverse=True)
+            for pattern in common_sorted[:20]:
+                g_count = group_patterns[pattern]
+                d_count = discipline_patterns[pattern]
+                print(f"  {pattern:30s} : группы={g_count:4d}, дисциплины={d_count:4d}")
+            print()
+        
+        if only_group_patterns:
+            print("ТОП-10 шаблонов ТОЛЬКО для групп (возможно, уникальные признаки групп):")
+            group_only_sorted = sorted(only_group_patterns,
+                                     key=lambda p: group_patterns[p],
+                                     reverse=True)
+            for pattern in group_only_sorted[:10]:
+                count = group_patterns[pattern]
+                examples = [name for name in group_names if maskify_string(name) == pattern][:2]
+                examples_str = ', '.join(f'`{ex}`' for ex in examples)
+                print(f"  {pattern:30s} : {count:4d} раз  [примеры: {examples_str}]")
+            print()
+        
+        if only_discipline_patterns:
+            print("ТОП-10 шаблонов ТОЛЬКО для дисциплин (возможно, уникальные признаки дисциплин):")
+            disc_only_sorted = sorted(only_discipline_patterns,
+                                    key=lambda p: discipline_patterns[p],
+                                    reverse=True)
+            for pattern in disc_only_sorted[:10]:
+                count = discipline_patterns[pattern]
+                examples = [name for name in discipline_names if maskify_string(name) == pattern][:2]
+                examples_str = ', '.join(f'`{ex}`' for ex in examples)
+                print(f"  {pattern:30s} : {count:4d} раз  [примеры: {examples_str}]")
+            print()
+    
+    return {
+        'group_patterns': group_patterns if group_names else Counter(),
+        'discipline_patterns': discipline_patterns if discipline_names else Counter(),
+        'group_names': group_names,
+        'discipline_names': discipline_names
+    }
 
 
 
@@ -248,28 +366,60 @@ def analyze_all_data(
 if __name__ == '__main__':
     import sys
     import os
-
-    infer_patterns_from_real_data()
-
-    exit()
     
-    # Сохраняем вывод в файл для избежания проблем с кодировкой консоли
-    output_file = 'analyze_pattern_overlaps_output.txt'
+    # Анализ шаблонов имён
+    print("Анализ шаблонов имён групп и дисциплин...")
+    print()
     
-    # Перенаправляем stdout в файл
-    with open(output_file, 'w', encoding='utf-8') as f:
+    # Сохраняем вывод анализа шаблонов в файл
+    patterns_output_file = 'analyze_name_patterns_output.txt'
+    
+    with open(patterns_output_file, 'w', encoding='utf-8') as f:
         original_stdout = sys.stdout
         sys.stdout = f
         
         try:
-            analyze_all_data(
-                min_confidence=0.75,  # Минимальный confidence для учёта
-                min_precision=0.50,   # Минимальный precision для учёта
-                show_top_n=30         # Сколько конфликтов показать детально
-            )
+            patterns_data = infer_patterns_from_real_data()
         finally:
             sys.stdout = original_stdout
     
-    print(f"Анализ завершён! Результаты сохранены в файл: {output_file}")
-    print(f"Откройте файл для просмотра результатов.")
+    print(f"Анализ шаблонов завершён! Результаты сохранены в файл: {patterns_output_file}")
+    
+    # Читаем и показываем краткую сводку в консоль
+    with open(patterns_output_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        # Показываем первые 50 строк
+        print("\n" + "=" * 80)
+        print("КРАТКАЯ СВОДКА (первые строки):")
+        print("=" * 80)
+        for line in lines[:50]:
+            print(line.rstrip())
+        if len(lines) > 50:
+            print(f"\n... (остальные {len(lines) - 50} строк см. в файле {patterns_output_file})")
+    
+    print("\n" + "=" * 80)
+    print("Для полного анализа конфликтов паттернов раскомментируйте код ниже.")
+    print("=" * 80)
+    
+    # Раскомментировать для анализа конфликтов:
+    # 
+    # # Сохраняем вывод в файл для избежания проблем с кодировкой консоли
+    # output_file = 'analyze_pattern_overlaps_output.txt'
+    # 
+    # # Перенаправляем stdout в файл
+    # with open(output_file, 'w', encoding='utf-8') as f:
+    #     original_stdout = sys.stdout
+    #     sys.stdout = f
+    #     
+    #     try:
+    #         analyze_all_data(
+    #             min_confidence=0.75,  # Минимальный confidence для учёта
+    #             min_precision=0.50,   # Минимальный precision для учёта
+    #             show_top_n=30         # Сколько конфликтов показать детально
+    #         )
+    #     finally:
+    #         sys.stdout = original_stdout
+    # 
+    # print(f"Анализ конфликтов завершён! Результаты сохранены в файл: {output_file}")
+    # print(f"Откройте файл для просмотра результатов.")
 
