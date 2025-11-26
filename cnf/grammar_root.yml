@@ -97,8 +97,15 @@ patterns:
   group:
     description: учебная группа
     kind: cell  # cell: одна (возможно объединённая) ячейка
-    size: 4+ x 1..2
+    size: 4+ x 1..4
     content_type: group  # тип контента ячейки из файла cell_types.yml
+
+
+  # group_list:
+  #   description: несколько учебных групп через запятую
+  #   kind: cell  # cell: одна (возможно объединённая) ячейка
+  #   size: 4+ x 1..4
+  #   content_type: group_list  # тип контента ячейки из файла cell_types.yml
 
 
 
@@ -284,11 +291,15 @@ patterns:
     description: преподаватель
     kind: cell
     content_type: teacher
+    extends:
+      - teacher_general
 
   room:
     description: аудитория
     kind: cell
     content_type: room
+    extends:
+      - room_general
 
   discipline:
     description: дисциплина
@@ -445,7 +456,7 @@ patterns:
           - right
 
       teacher:
-        pattern: teacher
+        pattern: teacher_general
         location:
           top: 1+
           left: 0..7
@@ -453,7 +464,7 @@ patterns:
           bottom: 0..1
 
       room:
-        pattern: room
+        pattern: room_general
         location:
           top: 1+
           right: 0..8
@@ -497,7 +508,7 @@ patterns:
           - right
 
       teacher:
-        pattern: teacher
+        pattern: teacher_general
         location:
           top: 1+
           left: 0..6
@@ -505,7 +516,7 @@ patterns:
           bottom: 0..1
 
       room:
-        pattern: room
+        pattern: room_general
         location:
           top: 1+
           right: 0..7
