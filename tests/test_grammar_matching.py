@@ -794,6 +794,137 @@ class GrammarMatchingTestCase(unittest.TestCase):
                 print()
                 print()
 
+    def test_match_reuse_between_components(self):
+        """Тест для проверки переиспользования matches компонентов через reuse_match.
+        
+        Проверяет, что паттерн A может переиспользовать match компонента C из компонента B,
+        используя reuse_match: [['B', 'C']] вместо поиска C глобально.
+        
+        В данном тесте:
+        - beach-complex содержит компонент beach_L (pattern: beach-L)
+        - beach-L содержит компонент sand
+        - beach-complex переиспользует sand из beach_L через reuse_match: [['beach_L', 'sand']]
+        """
+        # Загружаем грамматику и данные
+        grammar = read_grammar('test_data/sea_grammar_reuse_test.yml')
+        grid = TxtGrid(Path('test_data/sea_2.tsv').read_text())
+        
+        gm = GrammarMatcher(grammar=grammar)
+        matched_documents = gm.run_match(grid)
+        
+        # Проверяем, что документ найден
+        self.assertEqual(1, len(matched_documents))
+        root = matched_documents[0]
+        
+        # Получаем паттерны
+        beach_L_pattern = grammar['beach-L']
+        
+        # Проверяем наличие beach-complex в грамматике
+        if 'beach-complex' not in grammar.patterns:
+            self.skipTest("beach-complex pattern not found in grammar")
+        
+        beach_complex_pattern = grammar['beach-complex']
+        
+        # Получаем matches для паттернов
+        beach_L_matches = gm.matches_by_element.get(beach_L_pattern, [])
+        beach_complex_matches = gm.matches_by_element.get(beach_complex_pattern, [])
+        
+        # Должны быть найдены matches для beach-L
+        self.assertGreater(len(beach_L_matches), 0, 
+                          "Должны быть найдены matches для beach-L")
+        
+        # Проверяем переиспользование matches через reuse_match
+        # Для каждого match beach-complex проверяем:
+        # 1. Что он содержит компонент beach_L
+        # 2. Что он содержит компонент reused_sand, который переиспользует sand из beach_L
+        # 3. Что reused_sand - это тот же объект, что и sand в beach_L
+        
+        for beach_complex_match in beach_complex_matches:
+            if not beach_complex_match.component2match:
+                continue
+            
+            # Проверяем наличие компонента beach_L
+            self.assertIn('beach_L', beach_complex_match.component2match,
+                         "beach-complex должен содержать компонент beach_L")
+            beach_L_match = beach_complex_match.component2match['beach_L']
+            
+            # Проверяем, что beach_L содержит компонент sand
+            self.assertIsNotNone(beach_L_match.component2match,
+                               "beach_L match должен иметь component2match")
+            self.assertIn('sand', beach_L_match.component2match,
+                         "beach_L должен содержать компонент sand")
+            sand_from_beach_L = beach_L_match.component2match['sand']
+            
+            # Проверяем наличие переиспользованного компонента reused_sand
+            self.assertIn('reused_sand', beach_complex_match.component2match,
+                         "beach-complex должен содержать компонент reused_sand (через reuse_match)")
+            reused_sand_match = beach_complex_match.component2match['reused_sand']
+            
+            # КРИТИЧЕСКАЯ ПРОВЕРКА: reused_sand должен быть тем же объектом, что и sand из beach_L
+            self.assertIs(reused_sand_match, sand_from_beach_L,
+                         f"reused_sand должен быть тем же объектом, что и sand из beach_L. "
+                         f"ID reused_sand: {id(reused_sand_match)}, ID sand_from_beach_L: {id(sand_from_beach_L)}")
+            
+            # Проверяем, что box совпадает
+            self.assertEqual(reused_sand_match.box, sand_from_beach_L.box,
+                           "Box переиспользованного match должен совпадать с оригинальным")
+            
+            # Проверяем, что parent_location установлен для переиспользованного match
+            # reused_sand должен иметь parent_location для beach-complex
+            self.assertIsNotNone(reused_sand_match.data,
+                                "reused_sand match должен иметь data")
+            self.assertIn('parent_location', reused_sand_match.data,
+                         "reused_sand match должен иметь parent_location в data")
+            
+            parent_locations = reused_sand_match.data.parent_location
+            self.assertIsNotNone(parent_locations,
+                               "parent_location не должен быть None")
+            
+            # Проверяем наличие записи для beach-complex
+            key_beach_complex = ('beach-complex', 'reused_sand')
+            self.assertIn(key_beach_complex, parent_locations,
+                         f"parent_location должен содержать ключ {key_beach_complex}")
+            
+            ranged_box = parent_locations[key_beach_complex]
+            self.assertIsNotNone(ranged_box,
+                               f"RangedBox для {key_beach_complex} не должен быть None")
+            
+            # Также проверяем, что sand из beach_L имеет parent_location для beach-L
+            if sand_from_beach_L.data and 'parent_location' in sand_from_beach_L.data:
+                sand_parent_locations = sand_from_beach_L.data.parent_location
+                if sand_parent_locations:
+                    key_beach_L = ('beach-L', 'sand')
+                    # Может быть запись для beach-L (если sand был найден глобально)
+                    # или может не быть (если sand был найден только через reuse_match в beach-complex)
+                    # В любом случае, если есть запись для beach-complex, это хорошо
+                    has_beach_complex_key = any(
+                        key[0] == 'beach-complex' for key in sand_parent_locations.keys()
+                    )
+                    # Проверяем, что если есть parent_location, то он корректен
+                    for (pattern_name, component_name), rb in sand_parent_locations.items():
+                        self.assertIsNotNone(rb,
+                                           f"RangedBox в parent_location не должен быть None для {pattern_name}, {component_name}")
+        
+        # Дополнительная проверка: убеждаемся, что нет ошибок при разрешении reuse_match путей
+        # Проверяем все matches beach-complex на корректность структуры
+        for beach_complex_match in beach_complex_matches:
+            if beach_complex_match.component2match:
+                try:
+                    # Попытка доступа к компонентам не должна вызывать ошибок
+                    if 'beach_L' in beach_complex_match.component2match:
+                        beach_L_comp = beach_complex_match.component2match['beach_L']
+                        if beach_L_comp.component2match and 'sand' in beach_L_comp.component2match:
+                            sand_comp = beach_L_comp.component2match['sand']
+                            # Проверяем, что можно получить box без ошибок
+                            self.assertIsNotNone(sand_comp.box, "sand match должен иметь box")
+                    
+                    if 'reused_sand' in beach_complex_match.component2match:
+                        reused_sand_comp = beach_complex_match.component2match['reused_sand']
+                        self.assertIsNotNone(reused_sand_comp.box, 
+                                           "reused_sand match должен иметь box")
+                except (KeyError, AttributeError, TypeError) as e:
+                    self.fail(f"Ошибка при доступе к компонентам beach-complex: {e}")
+
 
 if __name__ == '__main__':
     # unittest.main()

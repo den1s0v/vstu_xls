@@ -1,0 +1,86 @@
+cell_types_filepath: 'test_data/sea_cell_types.yml'
+
+
+patterns:
+  water:
+    description: Вода
+    kind: cell
+    content_type: water
+
+  sand:
+    description: Песок
+    kind: cell
+    content_type: sand
+    extends: [earth]
+
+  earth:
+    description: Суша
+    kind: general
+
+  beach:
+    description: Пляж
+    kind: general
+
+  beach-L:
+    extends: [beach]
+    description: Пляж слева
+    kind: area
+    inner:
+      sand:
+        pattern: sand
+        location: left, right, top, bottom  # coinside
+    outer:
+      sea:
+        pattern: water
+        location: left
+
+  beach-R:
+    extends: [beach]
+    description: Пляж справа
+    kind: area
+    inner:
+      sand:
+        pattern: sand
+        location: left, right, top, bottom  # coinside
+    outer:
+      sea:
+        pattern: water
+        location: right
+
+  # Паттерн, который переиспользует sand из beach-L
+  beach-complex:
+    extends: [beach]
+    description: Сложный пляж с переиспользованием
+    kind: area
+    inner:
+      beach_L:
+        pattern: beach-L
+      # Переиспользуем sand из beach-L вместо поиска глобально
+      reused_sand:
+        reuse_match: [['beach_L', 'sand']]
+        location: left, right, top, bottom
+
+  coast:
+    description: берег
+    kind: array
+    direction: fill
+    item_pattern: beach
+    item_count: 1+
+
+  field:
+    description: Все области берега на поле
+    kind: array
+    direction: fill
+    item_pattern: coast
+    item_count: 1+
+    gap: 2+
+
+  root:
+    description: всё поле
+    kind: area
+    root: true
+    count_in_document: 1
+
+    inner:  # содержимое
+      field:
+        pattern: field
