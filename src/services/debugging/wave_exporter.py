@@ -73,9 +73,17 @@ class WaveDebugExporter:
     # region JSON -----------------------------------------------------------------------
     def _export_json(self, wave_index: int, pattern_names: Sequence[str], matches: list[Match2d]) -> None:
         target_path = self.output_dir / f"wave_{wave_index:02d}.json"
+        
+        # Подсчитываем количество совпадений для каждого паттерна
+        pattern_counts: dict[str, int] = {name: 0 for name in pattern_names}
+        for match in matches:
+            pattern_name = match.pattern.name
+            if pattern_name in pattern_counts:
+                pattern_counts[pattern_name] += 1
+        
         data = {
             "wave_index": wave_index,
-            "patterns": list(pattern_names),
+            "patterns": pattern_counts,
             "matches": [self._serialize_match(match) for match in matches],
         }
 
