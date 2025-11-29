@@ -28,7 +28,7 @@ class StringPattern:
     `pattern_syntax` — синтаксисы паттерна:
      - 're' (regexp, python's `re` lib), the default.
      - 're-spaces' (regexp in simplified notation @see (…?)).
-     - 'plain' (exact plain text; pattern_flags are ignored).
+     - 'plain' (exact plain text: full, not substring; pattern_flags are ignored).
 
     `pattern_flags`: optional string of space-separated regexp flags defined in `re` lib (I M S X - IGNORECASE MULTILINE DOTALL VERBOSE)
 
@@ -36,7 +36,8 @@ class StringPattern:
     если паттерн содержит группы захвата (запоминающие скобки),
     чтобы указать имена групп захвата (в порядке их появления).
     Если же regex использует именованные группы захвата ( `…(?P<your_name>...)…` ) и определяет все указанные имена,
-    то их взаимный порядок в паттерне может не соблюдаться.
+      то их порядок в паттерне и `captures` может не совпадать:
+      будет использован порядок из `captures`.
 
     `content_class`: `CellType` instance.
 

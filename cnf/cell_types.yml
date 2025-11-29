@@ -37,9 +37,18 @@ cell_types:
           pattern: '\Я[а-яё-]+ \Я?\.? \Я\. (?:$|,)'
           pattern_syntax: re-spaces+letters
 
+        - confidence: 0.85
+            # просто буква 'Х' , типа "вакансия"
+          pattern: 'Х'
+          pattern_syntax: plain
+
         - confidence: 0.80
             # Фамилия
-          pattern: '\Я[а-яё-]+(\-\Я?\я+)*\s*(?:,|$)'
+            # Фамилия(1)
+            # Фамилия(<язык>)
+            # `Рыжова(1)`
+            # `Чечет(нем)`
+          pattern: '\Я[а-яё-]+(\-\Я?\я+)* (?:\((?:\d|(?:нем|англ|фр[анц]*)\.?)\))? \s*(?:,|$)'
           pattern_syntax: re+letters
 
         - confidence: 0.40
@@ -72,16 +81,20 @@ cell_types:
           pattern_flags: I
           preprocess: remove_spaces_around_hypen
 
-        - confidence: 0.98
-          pattern: '.*  зал  .*'
-          pattern_syntax: re-spaces
+          # фитнес-зал кор. «В»
+          # ГУК, Спортивный зал
+        - confidence: 1.00
+          pattern: '\bзал\b'
+          pattern_syntax: re
           pattern_flags: I
+          anchors: none
           preprocess: remove_spaces_around_hypen
 
         - confidence: 0.98
-          pattern: 'кафедра .*'
+          pattern: 'каф.|кафедра .*'
           pattern_syntax: re-spaces
           pattern_flags: I
+          anchors: both
           preprocess: remove_spaces_around_hypen
 
         - confidence: 0.95
@@ -356,6 +369,7 @@ cell_types:
           # `лекция 4 часа`
           # `лаб. 4 час.`
           # `пр.` , `лаб.`
+          # `лаб.`
           pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:\d час[.а]?)?'
           pattern_syntax: re-spaces
           anchors: both
@@ -368,6 +382,72 @@ cell_types:
           anchors: both
           pattern_flags: I
 
+
+  - lesson_kind_4h:
+      description: 'форма занятия: ровно 4 часа'
+      patterns:
+        - confidence: 1.00
+          # `практ. 4 час.`
+          # `лекц. 4 час.`
+          # `лекция 4 часа`
+          # `лаб. 4 час.`
+          # `пр.` , `лаб.`
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:4 час[.а]?)'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+
+        - confidence: 1.00
+          # `4 часа`
+          pattern: '4 час[.а]?'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+
+  - lesson_kind_6h:
+      description: 'форма занятия: ровно 6 часов'
+      patterns:
+        - confidence: 1.00
+          # `практ. 6 час.`
+          # `лекц. 6 час.`
+          # `лекция 6 часа`
+          # `лаб. 6 час.`
+          # `пр.` , `лаб.`
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:6 час[.а]?)'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+
+        - confidence: 1.00
+          # `6 час.`
+          pattern: '6 час[.аов]{0,2}'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+
+
+  - lesson_kind_2h:
+      description: 'форма занятия: ровно 2 часа'
+      patterns:
+        - confidence: 1.00
+          # `лаб. 2 час.`
+          # `лаб 2 час`
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:2 час[.а]?)'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+
+  - lesson_kind_2h_with_room:
+      description: 'форма занятия: ровно 2 часа, плюс указана аудитория'
+      patterns:
+        - confidence: 1.00
+          # `лаб 2 час., каф.`
+          # `лаб 2 час., А 104`
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:2 час[.а]?) , (.+)'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+          captures: ['room']  # (.+)
 
 
   - mark_elective_discipline:

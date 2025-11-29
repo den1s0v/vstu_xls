@@ -17,7 +17,7 @@ patterns:
   room_stack:
     description: аудитории в столбик/в ряд
     kind: array
-    direction: auto
+    direction: column
     item_pattern: room
     item_count: 2..3
     extends:
@@ -26,9 +26,52 @@ patterns:
   teacher_stack:
     description: преподаватели в столбик/в ряд
     kind: array
-    direction: auto
+    direction: column
     item_pattern: teacher
     item_count: 2..3
     extends:
       - teacher_general
+
+
+
+
+
+
+  explicit_dates:
+    kind: cell
+    description: переопределённые даты
+    content_type: explicit_dates
+    size: 2+ x 1
+
+  explicit_hours:
+    kind: cell
+    description: переопределённые часы
+    content_type: explicit_hours
+    size: 1+ x 1+
+
+  lesson_kind_2h:
+    kind: cell
+    description: 'форма занятия: ровно 2 часа'
+    content_type: lesson_kind_2h
+    size: 1+ x 1+
+
+  lesson_kind_4h:
+    kind: cell
+    description: 'форма занятия: ровно 4 часа'
+    content_type: lesson_kind_4h
+    size: 1+ x 1+
+
+  lesson_kind_6h:
+    kind: cell
+    description: 'форма занятия: ровно 6 часов'
+    content_type: lesson_kind_6h
+    size: 1+ x 1+
+
+  lesson_kind_2h_with_room:
+    kind: cell
+    description: 'форма занятия: ровно 2 часа, плюс указана аудитория'
+    content_type: lesson_kind_2h_with_room
+    size: 1+ x 1+
+    extends: ['lesson_kind_2h', 'room']
+
 
