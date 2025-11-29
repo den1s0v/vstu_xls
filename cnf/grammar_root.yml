@@ -306,12 +306,29 @@ patterns:
     kind: cell
     content_type: discipline
 
+  discipline_below_group:
+    description: дисциплина, не пересекающаяся с именем группы из заголовка
+    kind: area
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      _group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # строго ниже группы
 
   discipline_stack:
     description: дисциплина, написанная на нескольких строках
     kind: array
     direction: column
-    item_pattern: discipline
+    item_pattern: discipline_below_group
     item_count: 1..3
 
 
