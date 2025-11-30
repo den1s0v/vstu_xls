@@ -34,6 +34,9 @@ class AreaPattern(NonTerminal):
     # при условии, что не накладываются области, непосредственно занятые внутренними компонентами.
     inner_space_transparent = False
 
+    """ Нужно ли после нахождения матчей-кандидатов фильтровать их для исключения накладок (False) или нет (True) """
+    allows_overlapping: bool = False
+
     def __hash__(self) -> int:
         return hash(self.name)
 

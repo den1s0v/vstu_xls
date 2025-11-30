@@ -65,9 +65,12 @@ class AreaPatternMatcher(PatternMatcher):
         # with time_report('find_match_candidates_') as ch:
         match_candidates = self.find_match_candidates_3(region)
 
-        # Отсеять невозможные / конфликтующие варианты, при наличии.
-        # with time_report('filter_candidates', ch) as ch:
-        matches = self.filter_candidates(match_candidates, match_limit)
+        if self.pattern.allows_overlapping:
+            matches = match_candidates
+        else:
+            # Отсеять невозможные / конфликтующие варианты, при наличии.
+            # with time_report('filter_candidates', ch) as ch:
+            matches = self.filter_candidates(match_candidates, match_limit)
 
         # logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
@@ -414,7 +417,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         ###
         logger.info(f'filtering candidates: {len(match_candidates)}')
-        # logger.info(f'match_candidates: {(match_candidates)}')
+        # logger.info(f'match_candidates (first 2): {match_candidates[:2]}')
 
         arrangements = find_combinations_of_compatible_elements(
             match_candidates,

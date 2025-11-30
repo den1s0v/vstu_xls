@@ -52,7 +52,7 @@ class PatternComponent(WithCache, WithSafeCreate):
     optional = False
 
     # TODO: add type to be recognized as annotation
-    precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого компонент считается не найденным.
+    precision_threshold: float = 0.3  # [0, 1] порог допустимой точности, ниже которого компонент считается не найденным.
 
     _subpattern: 'pt.Pattern2d' = None  # дочерний элемент грамматики
 

@@ -156,6 +156,13 @@ cell_types:
           anchors: both
           preprocess: fix_sparse_words
 
+        - confidence: 0.97
+            # Встречаются слова 2D / 3D / 1С
+          pattern: '(?:2D|3D|1[СC])'
+          pattern_syntax: re
+          anchors: none
+          preprocess: fix_sparse_words
+
         - confidence: 0.95
             # Заглавные буквы с разделителями, но НЕ группы (без дефиса/пробела+цифры)
             # Группы имеют дефис/пробел + цифры, поэтому исключаем такие паттерны
@@ -183,6 +190,7 @@ cell_types:
           pattern: '[А-ЯЁA-Z]{2,}'
           anchors: none
           pattern_syntax: re
+          preprocess: fix_sparse_words
 
         - confidence: 0.05
             # Любые символы (Например, "???")

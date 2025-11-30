@@ -26,7 +26,7 @@ class NonTerminal(Pattern2d):
           - extension_point;
           - ...?
          """
-        return "general"  # ???
+        return "general"
 
     # def dependencies(self, recursive=False) -> list[Pattern2d]:
     #     return super().dependencies(recursive)
