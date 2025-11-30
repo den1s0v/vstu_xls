@@ -28,7 +28,7 @@ class StringPattern:
     `pattern_syntax` — синтаксисы паттерна:
      - 're' (regexp, python's `re` lib), the default.
      - 're-spaces' (regexp in simplified notation @see (…?)).
-     - 'plain' (exact plain text: full, not substring; pattern_flags are ignored).
+     - 'plain' (exact plain text: full, not a substring; pattern_flags are ignored).
 
     `pattern_flags`: optional string of space-separated regexp flags defined in `re` lib (I M S X - IGNORECASE MULTILINE DOTALL VERBOSE)
 
