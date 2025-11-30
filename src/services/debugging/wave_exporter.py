@@ -165,14 +165,8 @@ class WaveDebugExporter:
         # Группируем совпадения по верхней левой ячейке
         matches_by_position = self._group_matches_by_position(matches)
 
-        # Подсвечиваем совпадения и добавляем комментарии
-        for match in matches:
-            fill = PatternFill(
-                start_color=pattern_colors[match.pattern.name],
-                end_color=pattern_colors[match.pattern.name],
-                fill_type="solid",
-            )
-            self._highlight_box(worksheet_copy, match.box, fill, border_style)
+        # Подсвечиваем ячейки, выбирая паттерн с максимальной точностью для каждой ячейки
+        self._highlight_cells_by_best_match(worksheet_copy, matches, pattern_colors, border_style)
 
         # Добавляем комментарии в верхние левые ячейки
         self._add_match_annotations(worksheet_copy, matches_by_position)
@@ -230,6 +224,50 @@ class WaveDebugExporter:
     def _make_border() -> Border:
         side = Side(style="thin", color="FF000000")
         return Border(left=side, right=side, top=side, bottom=side)
+
+    def _highlight_cells_by_best_match(
+        self, 
+        worksheet, 
+        matches: list[Match2d], 
+        pattern_colors: Mapping[str, str], 
+        border: Border
+    ) -> None:
+        """Подсвечивает ячейки, выбирая для каждой ячейки паттерн с максимальной точностью."""
+        # Словарь: (row, col) -> (match, precision)
+        cell_to_best_match: dict[tuple[int, int], tuple[Match2d, float]] = {}
+        
+        # Проходим по всем совпадениям и для каждой ячейки выбираем лучшее
+        for match in matches:
+            if not match.box:
+                continue
+            
+            precision = match.precision if match.precision is not None else match.calc_precision()
+            if precision is None:
+                precision = 0.0
+            
+            # Проходим по всем ячейкам, покрытым этим совпадением
+            for row in range(match.box.top, match.box.bottom):
+                for col in range(match.box.left, match.box.right):
+                    cell_key = (row, col)
+                    
+                    # Если для этой ячейки ещё нет совпадения или текущее лучше
+                    if cell_key not in cell_to_best_match:
+                        cell_to_best_match[cell_key] = (match, precision)
+                    else:
+                        _, best_precision = cell_to_best_match[cell_key]
+                        if precision > best_precision:
+                            cell_to_best_match[cell_key] = (match, precision)
+        
+        # Подсвечиваем ячейки цветом лучшего паттерна
+        for (row, col), (best_match, _) in cell_to_best_match.items():
+            fill = PatternFill(
+                start_color=pattern_colors[best_match.pattern.name],
+                end_color=pattern_colors[best_match.pattern.name],
+                fill_type="solid",
+            )
+            cell = worksheet.cell(row=row + 1, column=col + 1)
+            cell.fill = fill
+            cell.border = border
 
     @staticmethod
     def _highlight_box(worksheet, box: Box | None, fill: PatternFill, border: Border) -> None:
