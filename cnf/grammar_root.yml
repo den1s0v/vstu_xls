@@ -380,6 +380,7 @@ patterns:
   discipline_with_single_group:
     description: дисциплина, сопоставленная с 1 группой
     kind: area
+    allows_overlapping: true   # отключаем пост-фильтрацию найденного (она съедает часть совпадений!!?)
     extends: discipline_with_groups
 
     inner:  # содержимое
@@ -387,7 +388,7 @@ patterns:
         pattern: discipline_for_lesson
         precision_threshold: 0.5
         location:
-          - top  # упаковано целиком
+          - top: 0..1  # упаковано целиком, но может отстоять от верха на 1
           - left
           - right
           - bottom
@@ -404,6 +405,7 @@ patterns:
         location:
           left: 0+  # академ. часы указаны слева
           padding-top: 0
+          padding-bottom: 1-  # возможнен выступ области дисциплины максимум на 1 ниже первого часа
 
 
   discipline_with_groups_lab_left:

@@ -27,6 +27,12 @@ cell_types:
           pattern: '\Я[а-яё-]+  \Я\.? \Я\.? (?:$|,)'
           pattern_syntax: re-spaces+letters
 
+        - confidence: 0.93
+          pattern: '(?:науч[ные.й]* )рук[оводители.ь]*|'
+          pattern_syntax: re-spaces
+          anchors: both
+          pattern_flags: I
+
         - confidence: 0.92
             # Фамилия Имя
           pattern: '\Я\я+ \Я[а-яё-]?\.?  \Я\я*\.? (?:$|,)'
@@ -174,7 +180,7 @@ cell_types:
 
         - confidence: 0.90
             # Заглавные буквы с разделителями, минимум 5 букв
-          pattern: '(?:[А-ЯЁA-Z.,()\s/:-]{5,}[\s\d.,-]{,3})+'
+          pattern: '(?:[А-ЯЁA-Z.,()/:-]{5,}[\s\d.,-]{,3})+'
           pattern_syntax: re
           anchors: none
           preprocess: fix_sparse_words
