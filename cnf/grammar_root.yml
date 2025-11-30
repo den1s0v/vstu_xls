@@ -438,6 +438,53 @@ patterns:
           left: 0+  # академ. часы указаны слева
           padding-top: 0
 
+  discipline_with_groups_horizontal_layout:
+    description: '"ИН." "ЯЗ." по левой стороне, с пропуском в середине'
+    kind: area
+    allows_overlapping: true
+    extends: discipline_with_groups
+    # static_data:
+    #   subgroup: left
+
+    inner:  # содержимое
+      discipline:
+        pattern_definition:
+          kind: area
+          size: '1 x 3'
+          inner:
+            m3:
+              pattern: discipline_below_group
+              precision_threshold: 0.5
+              location: {
+                top: 2, bottom: 0,
+                left: 0, right: 0 }
+            m1:
+              pattern: discipline_below_group
+              precision_threshold: 0.5
+              location: {
+                top: 0, bottom: 2,
+                left: 0, right: 0 }
+
+        precision_threshold: 0.9
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и слева
+          - padding-left: 0
+          - padding-right: -4..-1
+
+      hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
   discipline_with_groups_lab_right:
     description: дисциплина, сопоставленная с правой "половиной" группы
     kind: area
