@@ -103,14 +103,51 @@ class WaveDebugExporter:
 
         precision = match.precision if match.precision is not None else match.calc_precision()
 
+        # Обрабатываем text_content: объединяем отдельные символы в целые строки
+        text_items = match.get_text()
+        text_content = WaveDebugExporter._normalize_text_content(text_items)
+
         return {
             "pattern": match.pattern.name,
             "precision": precision,
             "box": WaveDebugExporter._box_dict(match.box),
-            "text_content": match.get_text(),
+            "text_content": text_content,
             "component_count": len(component_entries),
             "components": component_entries,
         }
+
+    @staticmethod
+    def _normalize_text_content(text_items: list[str]) -> list[str]:
+        """Объединяет отдельные символы в целые строки."""
+        if not text_items:
+            return []
+        
+        result = []
+        current_string = ""
+        
+        for item in text_items:
+            if not isinstance(item, str):
+                # Если накопилась строка, добавляем её
+                if current_string:
+                    result.append(current_string)
+                    current_string = ""
+                result.append(str(item))
+            elif len(item) == 1:
+                # Одиночный символ - накапливаем
+                current_string += item
+            else:
+                # Если накопилась строка, добавляем её
+                if current_string:
+                    result.append(current_string)
+                    current_string = ""
+                # Добавляем целую строку
+                result.append(item)
+        
+        # Добавляем оставшуюся накопленную строку
+        if current_string:
+            result.append(current_string)
+        
+        return result
 
     @staticmethod
     def _box_dict(box: Box | None) -> Mapping:
