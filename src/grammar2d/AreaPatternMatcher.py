@@ -416,7 +416,8 @@ class AreaPatternMatcher(PatternMatcher):
         """
 
         ###
-        logger.info(f'filtering candidates: {len(match_candidates)}')
+        pattern_name = match_candidates[0].pattern.name if match_candidates else None
+        logger.info(f'filtering candidates of pattern `{pattern_name}`: {len(match_candidates)}')
         # logger.info(f'match_candidates (first 2): {match_candidates[:2]}')
 
         arrangements = find_combinations_of_compatible_elements(
@@ -424,6 +425,8 @@ class AreaPatternMatcher(PatternMatcher):
             components_getter=Match2d.get_occupied_points,
             max_elements=match_limit
         )
+
+        # logger.debug(f'Number of arrangements: {len(arrangements)}')
 
         # Рассчитать точность (precision) для каждой комбинации-варианта,
         # получив значения точности для каждого элемента в отдельности.

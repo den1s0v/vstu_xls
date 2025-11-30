@@ -40,6 +40,7 @@ cell_types:
         - confidence: 0.85
             # просто буква 'Х' , типа "вакансия"
           pattern: '[ХX]'
+          anchors: both
           pattern_syntax: re
 
         - confidence: 0.80
@@ -91,10 +92,10 @@ cell_types:
           preprocess: remove_spaces_around_hypen
 
         - confidence: 0.98
-          pattern: 'каф.|кафедра .*'
+          pattern: '\bкаф.|кафедра|БК'
           pattern_syntax: re-spaces
           pattern_flags: I
-          anchors: both
+          anchors: none
           preprocess: remove_spaces_around_hypen
 
         - confidence: 0.95
@@ -171,9 +172,25 @@ cell_types:
           anchors: both
           preprocess: fix_sparse_words
 
+        - confidence: 0.90
+            # Заглавные буквы с разделителями, минимум 5 букв
+          pattern: '(?:[А-ЯЁA-Z.,()\s/:-]{5,}[\s\d.,-]{,3})+'
+          pattern_syntax: re
+          anchors: none
+          preprocess: fix_sparse_words
+
         - confidence: 0.75
             # Заглавные буквы с разделителями
-          pattern: '[А-ЯЁA-Z.,()\s/:-]{2,}[А-ЯЁA-Zа-яёa-z.,()\s/:-]+'
+            # Не: (спортивный) зал, БК
+          pattern: '(?!.*\b(зал|БК|каф|кафедра)\b)[А-ЯЁA-Z.,()\s/:-]{2,}[А-ЯЁA-Zа-яёa-z.,()\s/:-]+'
+          pattern_syntax: re
+          anchors: both
+          preprocess: fix_sparse_words
+
+        - confidence: 0.55
+            # все маленькие буквы с разделителями
+            # Не: (спортивный) зал, БК
+          pattern: '(?!.*\b(зал|БК|каф|кафедра|лаб)\b|(?:доц|проф|асс[истент]*|ст\. пр\w* |пр[еподаватель]*|[кд]\.\я{1,6}\.н))[а-яёa-z.,()\s/:-]{2,}[А-ЯЁA-Zа-яёa-z.,()\s/:-]+'
           pattern_syntax: re
           anchors: both
           preprocess: fix_sparse_words

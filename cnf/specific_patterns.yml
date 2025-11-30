@@ -118,7 +118,8 @@ patterns:
 
     inner:  # содержимое
       discipline:
-        pattern: discipline_with_groups
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
         location:
           - top  # упаковано сверху и по бокам
           - left

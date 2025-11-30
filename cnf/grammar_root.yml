@@ -309,10 +309,12 @@ patterns:
   discipline_below_group:
     description: дисциплина, не пересекающаяся с именем группы из заголовка
     kind: area
+    extends: discipline_for_lesson
 
     inner:  # содержимое
       discipline:
         pattern: discipline
+        precision_threshold: 0.5
         location:
           - top  # упаковано целиком
           - left
@@ -330,7 +332,11 @@ patterns:
     direction: column
     item_pattern: discipline_below_group
     item_count: 1..3
+    extends: discipline_for_lesson
 
+  discipline_for_lesson:
+    description: дисциплина из одной или нескольких строк
+    kind: general
 
   discipline_with_groups:
     description: дисциплина, сопоставленная с группой(-ами)
@@ -344,7 +350,8 @@ patterns:
 
     inner:  # содержимое
       discipline:
-        pattern: discipline_stack
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
         location:
           - top  # упаковано целиком
           - left
@@ -377,7 +384,8 @@ patterns:
 
     inner:  # содержимое
       discipline:
-        pattern: discipline_stack
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
         location:
           - top  # упаковано целиком
           - left
@@ -407,7 +415,8 @@ patterns:
 
     inner:  # содержимое
       discipline:
-        pattern: discipline_stack
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
         location:
           - top  # упаковано целиком
           - left
@@ -436,7 +445,8 @@ patterns:
 
     inner:  # содержимое
       discipline:
-        pattern: discipline_stack
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
         location:
           - top  # упаковано целиком
           - left
@@ -463,6 +473,7 @@ patterns:
     description: занятие-лабораторная (4ч)
     kind: area
     extends: lesson
+    size: '2+ x 3..9'
 
     inner:  # содержимое
       discipline:
@@ -515,6 +526,7 @@ patterns:
   lesson:
     description: занятие
     kind: area
+    size: '2+ x 2..4'  # обычно высота = 3
 
     inner:  # содержимое
       discipline:
