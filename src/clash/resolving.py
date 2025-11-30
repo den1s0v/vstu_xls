@@ -1,3 +1,5 @@
+from loguru import logger
+
 from clash.clashing_element import *
 from utils import sorted_list
 
@@ -28,7 +30,8 @@ def fill_clashing_elements(universe: 'ClashingElementSet'):
 
 @cache
 def resolve_clashes5(clashing_set: 'ClashingElementSet',
-                     element_limit=None) -> set['ClashingElementSet']:
+                     element_limit=None,
+                     _depth=0) -> set['ClashingElementSet']:
     """ Нахождение всех локально оптимальных раскладок элементов, в которых они не пересекаются """
     # кластеризация накладок.
 
@@ -41,6 +44,9 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet',
     if len(clashing_set) == len(always_free):
         # Ничто ни с чем не конфликтуeт
         return {clashing_set, }
+
+    if _depth > 25:
+        logger.warning(f'resolve_clashes5: too high call depth: {_depth}')
 
     # Далее рассматриваем только конфликтующие (заменили входную переменную!)
     clashing_set = clashing_set.with_removed(*always_free)
@@ -107,10 +113,12 @@ def resolve_clashes5(clashing_set: 'ClashingElementSet',
             unresolved = arrangement.select_candidates_from(clashing_set)
 
             # Все несвободные группируются в новый кластер и подаются в рекурсивный вызов.
-            # recursive call !
+            # Note: recursive call !
             sub_arrangements = resolve_clashes5(
                 unresolved,
-                element_limit=element_limit - len(ready) if element_limit is not None else element_limit)
+                element_limit=element_limit - len(ready) if element_limit is not None else element_limit,
+                _depth = _depth + 1,
+            )
 
             # Полученные под-раскладки комбинируются с текущими свободными.
             for sa in sub_arrangements:
