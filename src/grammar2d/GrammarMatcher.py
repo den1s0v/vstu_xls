@@ -169,6 +169,10 @@ class GrammarMatcher:
                 if not match2.box:
                     continue
                 
+                # Проверяем соответствие позиций
+                if match1.box.position != match2.box.position:
+                    continue
+                
                 # Проверяем полное наложение
                 if match1.box in match2.box or match2.box in match1.box:
                     # Сравниваем матчи
