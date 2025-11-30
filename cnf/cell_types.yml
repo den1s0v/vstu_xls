@@ -39,8 +39,8 @@ cell_types:
 
         - confidence: 0.85
             # просто буква 'Х' , типа "вакансия"
-          pattern: 'Х'
-          pattern_syntax: plain
+          pattern: '[ХX]'
+          pattern_syntax: re
 
         - confidence: 0.80
             # Фамилия
@@ -48,10 +48,10 @@ cell_types:
             # Фамилия(<язык>)
             # `Рыжова(1)`
             # `Чечет(нем)`
-          pattern: '\Я[а-яё-]+(\-\Я?\я+)* (?:\((?:\d|(?:нем|англ|фр[анц]*)\.?)\))? \s*(?:,|$)'
-          pattern_syntax: re+letters
+          pattern: '\Я\я+(\-\Я?\я+)* (?:\((?:\d|(?:нем|англ|фр[анц]*)\.?)\))? (?:,|$)'
+          pattern_syntax: re-spaces+letters
 
-        - confidence: 0.40
+        - confidence: 0.60
             # Содержится слово (Фамилия) с Большой буквы
           pattern: '\Я\я+'
           pattern_syntax: re+letters
