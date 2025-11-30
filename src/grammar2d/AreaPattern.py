@@ -71,11 +71,16 @@ class AreaPattern(NonTerminal):
         if not match.component2match:
             return match.box
 
-        union = Box.union(*(
+        inner_boxes = list(
             m.box
             for name, m in match.component2match.items()
             if self.get_component(name).inner  # Filter.
-        ))
+        )
+
+        if not inner_boxes:
+            raise ValueError(f"Can't calculate bounding box for pattern `{match.pattern.name}` since it has no pre-made inner components.")
+
+        union = Box.union(*inner_boxes)
         return union
 
     def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
