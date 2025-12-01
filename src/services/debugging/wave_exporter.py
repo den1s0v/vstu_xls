@@ -186,6 +186,51 @@ class WaveDebugExporter:
 
         target_path.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    def export_unused_patterns_to_excel(
+            self,
+            grid: Grid,
+            unused_by_pattern: Mapping[str, Sequence[Match2d]],
+    ) -> None:
+        """Экспортирует неиспользованные паттерны в Excel с подсветкой ячеек.
+        
+        Аналогично экспорту волн, подсвечивает все неиспользованные совпадения паттернов
+        в документе с использованием той же палитры цветов.
+        """
+        if not self.enable_excel:
+            return
+        
+        if not self._grid_supports_excel(grid):
+            return
+
+        # Собираем все матчи из всех паттернов в один список
+        all_matches: list[Match2d] = []
+        for matches in unused_by_pattern.values():
+            all_matches.extend(matches)
+        
+        if not all_matches:
+            return  # Нет неиспользованных матчей для экспорта
+
+        assert ExcelGrid is not None  # for type-checkers
+        excel_grid: ExcelGrid = grid  # type: ignore[assignment]
+
+        workbook_copy = self._clone_workbook(excel_grid)
+        worksheet_copy = workbook_copy[excel_grid._worksheet.title]
+        self._clear_cell_fills(worksheet_copy)
+        pattern_colors = self._resolve_colors(all_matches)
+        border_style = self._make_border()
+
+        # Группируем совпадения по верхней левой ячейке
+        matches_by_position = self._group_matches_by_position(all_matches)
+
+        # Подсвечиваем ячейки, выбирая паттерн с максимальной точностью для каждой ячейки
+        self._highlight_cells_by_best_match(worksheet_copy, all_matches, pattern_colors, border_style)
+
+        # Добавляем комментарии в верхние левые ячейки
+        self._add_match_annotations(worksheet_copy, matches_by_position)
+
+        target_path = self.output_dir / "unused_patterns.xlsx"
+        workbook_copy.save(target_path)
+
     # endregion ------------------------------------------------------------------------
 
     # region Excel ---------------------------------------------------------------------

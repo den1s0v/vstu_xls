@@ -149,3 +149,9 @@ class DocumentParsingService:
         if self.wave_exporter.enable_json:
             self.wave_exporter.export_unused_patterns_report(unused_by_pattern)
 
+        if self.wave_exporter.enable_excel and self._last_grid:
+            self.wave_exporter.export_unused_patterns_to_excel(
+                grid=self._last_grid,
+                unused_by_pattern=unused_by_pattern,
+            )
+
