@@ -444,7 +444,7 @@ patterns:
     description: '"ИН." "ЯЗ." по левой стороне, с пропуском в середине'
     kind: area
     allows_overlapping: true
-    extends: discipline_with_groups
+    extends: discipline_with_groups_lab_left
     # static_data:
     #   subgroup: left
 
@@ -528,113 +528,118 @@ patterns:
 
 
 
-  lesson_lab:
-    description: занятие-лабораторная (4ч)
-    kind: area
-    extends: lesson
-    size: '2+ x 3..9'
+  # lesson_lab:
+  #   description: занятие-лабораторная (4ч)
+  #   kind: area
+  #   extends: lesson
+  #   size: '2+ x 3..9'
 
-    inner:  # содержимое
-      discipline:
-        pattern: discipline_with_groups
-        location:
-          - top  # упаковано сверху и по бокам
-          - left
-          - right
+  #   inner:  # содержимое
+  #     discipline:
+  #       pattern: discipline_with_groups
+  #       location:
+  #         - top  # упаковано сверху и по бокам
+  #         - left
+  #         - right
 
-      teacher:
-        pattern: teacher_general
-        location:
-          top: 1+
-          left: 0..7
-          right: 0+
-          bottom: 0..1
+  #     teacher:
+  #       pattern: teacher_general
+  #       location:
+  #         top: 1+
+  #         left: 0..7
+  #         right: 0+
+  #         bottom: 0..1
 
-      room:
-        pattern: room_general
-        location:
-          top: 1+
-          right: 0..8
-          left: 0+
-          bottom: 0..3
+  #     room:
+  #       pattern: room_general
+  #       location:
+  #         top: 1+
+  #         right: 0..8
+  #         left: 0+
+  #         bottom: 0..3
 
-    outer:
-      week_day:
-        pattern: week_day
-        location: { left: '0+' }  # день недели указан слева
-      week:
-        pattern: week_datetime
-        location: { left: '0+' }  # неделя указана слева
+  #   outer:
+  #     week_day:
+  #       pattern: week_day
+  #       location: { left: '0+' }  # день недели указан слева
+  #     week:
+  #       pattern: week_datetime
+  #       location: { left: '0+' }  # неделя указана слева
 
-      hour_begin:
-        pattern: hour_range
-        location:
-          left: 0+  # академ. часы указаны слева
-          padding-top: 0
-          padding-bottom: 1+
-      hour_end:
-        pattern: hour_range
-        location:
-          left: 0+  # академ. часы указаны слева
-          padding-top: 1+
-          padding-bottom: 0
+  #     hour_begin:
+  #       pattern: hour_range
+  #       location:
+  #         left: 0+  # академ. часы указаны слева
+  #         padding-top: 0
+  #         padding-bottom: 1+
+  #     hour_end:
+  #       pattern: hour_range
+  #       location:
+  #         left: 0+  # академ. часы указаны слева
+  #         padding-top: 1+
+  #         padding-bottom: 0
 
 
 
-  # обычная пара-лекция на 1 группу
+  # занятие во всём его многообразии
   lesson:
-    description: занятие
-    kind: area
-    size: '2+ x 2..4'  # обычно высота = 3
+    description: занятие во всём его многообразии
+    kind: general
 
-    inner:  # содержимое
-      discipline:
-        pattern: discipline_with_groups
-        location:
-          - top  # упаковано сверху и по бокам
-          - left
-          - right
+  # # обычная пара-лекция на 1 группу
+  # lesson:
+  #   description: занятие
+  #   kind: area
+  #   size: '2+ x 2..4'  # обычно высота = 3
 
-      teacher:
-        pattern: teacher_general
-        location:
-          top: 1+
-          left: 0..6
-          right: 0+
-          bottom: 0..1
+  #   inner:  # содержимое
+  #     discipline:
+  #       pattern: discipline_with_groups
+  #       location:
+  #         - top  # упаковано сверху и по бокам
+  #         - left
+  #         - right
 
-      room:
-        pattern: room_general
-        location:
-          top: 1+
-          right: 0..7
-          left: 0+
-          bottom: 0..2
+  #     teacher:
+  #       pattern: teacher_general
+  #       location:
+  #         top: 1+
+  #         left: 0..6
+  #         right: 0+
+  #         bottom: 0..1
 
-    outer:
-      week_day:
-        pattern: week_day
-        location: { left: '0+' }  # день недели указан слева
-      week:
-        pattern: week_datetime
-        location: { left: '0+' }  # неделя указана слева
+  #     room:
+  #       pattern: room_general
+  #       location:
+  #         top: 1+
+  #         right: 0..7
+  #         left: 0+
+  #         bottom: 0..2
 
-      hour_1:  # для занятий длиной в 1 пару
-        pattern: hour_range
-        location:
-          margin-left: 0+  # академ. часы указаны слева
-          padding-top: 0
-          padding-bottom: 0
+  #   outer:
+  #     week_day:
+  #       pattern: week_day
+  #       location: { left: '0+' }  # день недели указан слева
+  #     week:
+  #       pattern: week_datetime
+  #       location: { left: '0+' }  # неделя указана слева
 
-      # hour_begin:
-      #   pattern: hour_range
-      #   location:
-      #     left: 0+  # академ. часы указаны слева
-      #     top: 0
-      #     bottom: 0-
-      # hour_end:
-      #   pattern: hour_range
-      #   location:
-      #     left: 0+  # академ. часы указаны слева
-      #     top: 0-
-      #     bottom: 0
+  #     hour_1:  # для занятий длиной в 1 пару
+  #       pattern: hour_range
+  #       location:
+  #         margin-left: 0+  # академ. часы указаны слева
+  #         padding-top: 0
+  #         padding-bottom: 0
+
+  #     # hour_begin:
+  #     #   pattern: hour_range
+  #     #   location:
+  #     #     left: 0+  # академ. часы указаны слева
+  #     #     top: 0
+  #     #     bottom: 0-
+  #     # hour_end:
+  #     #   pattern: hour_range
+  #     #   location:
+  #     #     left: 0+  # академ. часы указаны слева
+  #     #     top: 0-
+  #     #     bottom: 0
