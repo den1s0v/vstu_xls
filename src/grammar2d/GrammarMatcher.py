@@ -48,6 +48,9 @@ class GrammarMatcher:
     # scalar info about cells
     type_to_cells: dict[str, list[CellView]] = None
 
+    # кэш отфильтрованных матчей по (pattern, region, match_limit, overlap_mode, criteria)
+    _filtered_matches_cache: dict = None
+
     def get_pattern_matches(
             self,
             pattern: 'Pattern2d',
@@ -65,15 +68,33 @@ class GrammarMatcher:
         """
         # Определяем режим разрешения накладок: из параметра или из паттерна
         if overlap_resolution is None:
-            mode_str = pattern.get_overlap_mode()
-            if mode_str == 'none':
+            mode_enum = pattern.get_overlap_mode_enum()
+            if mode_enum == pt.OverlapModeEnum.NONE:
                 overlap_resolution = OverlapResolutionMode.NONE
-            elif mode_str == 'full':
-                overlap_resolution = OverlapResolutionMode.FULL_OVERLAP
-            elif mode_str == 'partial':
+            elif mode_enum == pt.OverlapModeEnum.PARTIAL:
                 overlap_resolution = OverlapResolutionMode.PARTIAL_OVERLAP
             else:
-                overlap_resolution = OverlapResolutionMode.FULL_OVERLAP  # по умолчанию
+                # По умолчанию FULL
+                overlap_resolution = OverlapResolutionMode.FULL_OVERLAP
+
+        # Попытка использовать кэш только для простого случая:
+        # независимый паттерн, нет region и match_limit.
+        use_cache = (
+            pattern.independently_matchable()
+            and region is None
+            and match_limit is None
+        )
+
+        cache_key = None
+        if use_cache:
+            criteria = pattern.get_overlap_criteria()
+            criteria_sig = tuple((c.metric.value, c.order.value) for c in criteria)
+            cache_key = (pattern, overlap_resolution, criteria_sig)
+            if self._filtered_matches_cache is None:
+                self._filtered_matches_cache = {}
+            cached = self._filtered_matches_cache.get(cache_key)
+            if cached is not None:
+                return cached
         
         if pattern.independently_matchable():
             matches = self.matches_by_element[pattern] or []
@@ -88,9 +109,13 @@ class GrammarMatcher:
                 # Drop unexpected matches.
                 matches = matches[:match_limit]
 
-            return self._apply_overlap_resolution(matches, overlap_resolution, pattern)
+            result = self._apply_overlap_resolution(matches, overlap_resolution, pattern)
+            if use_cache and cache_key is not None:
+                self._filtered_matches_cache[cache_key] = result
+            return result
         else:
             matches = self._find_matches_of_dependent_pattern(pattern, region, match_limit)
+            # Для зависимых паттернов кэш пока не используем (поведение сложнее)
             return self._apply_overlap_resolution(matches, overlap_resolution, pattern)
 
     def _apply_overlap_resolution(
@@ -116,15 +141,16 @@ class GrammarMatcher:
         return match.calc_precision()
 
     @staticmethod
-    def _compare_matches_by_criteria(match1: Match2d, match2: Match2d, criteria: list[str]) -> int:
+    def _compare_matches_by_criteria(
+            match1: Match2d,
+            match2: Match2d,
+            criteria: list[pt.OverlapCriterion]) -> int:
         """Сравнить два матча по списку критериев с приоритетами.
         
         Args:
             match1: Первый матч для сравнения
             match2: Второй матч для сравнения
-            criteria: Список критериев вида ['area-max', 'precision-max', ...]
-                     Поддерживаемые метрики: area, width, height, precision
-                     Поддерживаемые режимы: max (больше лучше), min (меньше лучше)
+            criteria: Список критериев с приоритетами (метрика + max/min)
         
         Returns:
             -1 если match1 < match2 (проигрывает по критериям)
@@ -132,28 +158,24 @@ class GrammarMatcher:
             1 если match1 > match2 (выигрывает по критериям)
         """
         for criterion in criteria:
-            # Парсим критерий: 'area-max' -> ('area', 'max')
-            parts = criterion.split('-')
-            if len(parts) != 2:
-                continue  # Пропускаем некорректные критерии
-            
-            metric, mode = parts[0].lower(), parts[1].lower()
-            
+            metric = criterion.metric
+            mode = criterion.order
+
             # Получаем значения для сравнения
             value1 = GrammarMatcher._get_match_metric_value(match1, metric)
             value2 = GrammarMatcher._get_match_metric_value(match2, metric)
-            
+
             if value1 is None or value2 is None:
                 continue  # Пропускаем, если метрику нельзя вычислить
-            
+
             # Сравниваем в зависимости от режима
-            if mode == 'max':
+            if mode == pt.OverlapOrderEnum.MAX:
                 # Больше лучше
                 if value1 < value2:
                     return -1
                 elif value1 > value2:
                     return 1
-            elif mode == 'min':
+            elif mode == pt.OverlapOrderEnum.MIN:
                 # Меньше лучше
                 if value1 > value2:
                     return -1
@@ -164,7 +186,7 @@ class GrammarMatcher:
         return 0
     
     @staticmethod
-    def _get_match_metric_value(match: Match2d, metric: str) -> float | None:
+    def _get_match_metric_value(match: Match2d, metric: pt.OverlapMetricEnum) -> float | None:
         """Получить значение метрики для матча.
         
         Args:
@@ -176,17 +198,17 @@ class GrammarMatcher:
         """
         if not match.box:
             # Если нет box, можем вернуть только precision
-            if metric == 'precision':
+            if metric == pt.OverlapMetricEnum.PRECISION:
                 return GrammarMatcher._get_match_precision(match)
             return None
-        
-        if metric == 'area':
+
+        if metric == pt.OverlapMetricEnum.AREA:
             return float(match.box.w * match.box.h)
-        elif metric == 'width':
+        elif metric == pt.OverlapMetricEnum.WIDTH:
             return float(match.box.w)
-        elif metric == 'height':
+        elif metric == pt.OverlapMetricEnum.HEIGHT:
             return float(match.box.h)
-        elif metric == 'precision':
+        elif metric == pt.OverlapMetricEnum.PRECISION:
             return GrammarMatcher._get_match_precision(match)
         
         return None
@@ -202,7 +224,7 @@ class GrammarMatcher:
             return matches
         
         # Получаем критерии из конфигурации паттерна
-        criteria = pattern.get_overlap_resolution()
+        criteria = pattern.get_overlap_criteria()
         
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
@@ -262,7 +284,7 @@ class GrammarMatcher:
         
         # Шаг 2: Теперь обрабатываем частичные перекрытия среди оставшихся матчей
         # Получаем критерии из конфигурации паттерна
-        criteria = pattern.get_overlap_resolution()
+        criteria = pattern.get_overlap_criteria()
         
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
@@ -306,6 +328,8 @@ class GrammarMatcher:
 
     def run_match(self, grid: Grid) -> list[Match2d]:
         self.matches_by_element.clear()
+        # сбрасываем кэш отфильтрованных матчей
+        self._filtered_matches_cache = {}
         self._grid_view = grid.get_view()
         self._recognise_all_cells_content()
         self._roll_matching_waves()

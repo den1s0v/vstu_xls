@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
+from enum import Enum
 
 import grammar2d.Grammar as ns
 import grammar2d.Match2d as m2
@@ -11,7 +12,97 @@ from geom2d import open_range, Box
 from utils import WithCache, WithSafeCreate, sorted_list, safe_adict
 
 
-@dataclass(kw_only=True, )
+class OverlapModeEnum(Enum):
+    """Режимы разрешения накладок на уровне паттерна."""
+    NONE = "none"
+    FULL = "full"
+    PARTIAL = "partial"
+
+
+class OverlapMetricEnum(Enum):
+    """Метрики, по которым можно сравнивать матчи."""
+    AREA = "area"
+    WIDTH = "width"
+    HEIGHT = "height"
+    PRECISION = "precision"
+
+
+class OverlapOrderEnum(Enum):
+    """Направление сравнения: max/min."""
+    MAX = "max"
+    MIN = "min"
+
+
+@dataclass
+class OverlapCriterion:
+    """Один критерий сравнения: метрика + направление (max/min)."""
+    metric: OverlapMetricEnum
+    order: OverlapOrderEnum
+
+
+@dataclass
+class OverlapConfig:
+    """Полная конфигурация разрешения накладок для паттерна."""
+    mode: OverlapModeEnum
+    criteria: list[OverlapCriterion]
+
+    @classmethod
+    def default(cls) -> "OverlapConfig":
+        """Значения по умолчанию: full overlap + [area-max, precision-max]."""
+        return cls(
+            mode=OverlapModeEnum.FULL,
+            criteria=[
+                OverlapCriterion(OverlapMetricEnum.AREA, OverlapOrderEnum.MAX),
+                OverlapCriterion(OverlapMetricEnum.PRECISION, OverlapOrderEnum.MAX),
+            ],
+        )
+
+    @classmethod
+    def from_yaml(cls, overlap_data: dict, pattern_name: str | None = None) -> "OverlapConfig":
+        """Создаёт OverlapConfig из YAML-секции overlap."""
+        overlap_data = overlap_data or {}
+
+        mode_str = overlap_data.get("mode", "full")
+        try:
+            mode = OverlapModeEnum(mode_str)
+        except ValueError:
+            print(
+                f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.mode: "
+                f"{mode_str!r}, using 'full'"
+            )
+            mode = OverlapModeEnum.FULL
+
+        raw_resolution = overlap_data.get("resolution", ["area-max", "precision-max"])
+        if not isinstance(raw_resolution, list):
+            print(
+                f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.resolution, using default"
+            )
+            raw_resolution = ["area-max", "precision-max"]
+
+        criteria: list[OverlapCriterion] = []
+        for item in raw_resolution:
+            if not isinstance(item, str):
+                continue
+            parts = item.split("-")
+            if len(parts) != 2:
+                continue
+            metric_str, order_str = parts[0].lower(), parts[1].lower()
+            try:
+                metric = OverlapMetricEnum(metric_str)
+                order = OverlapOrderEnum(order_str)
+            except ValueError:
+                # Некорректная пара метрика/режим — пропускаем
+                continue
+            criteria.append(OverlapCriterion(metric=metric, order=order))
+
+        if not criteria:
+            # Если ничего не удалось распарсить – используем значения по умолчанию
+            return cls.default()
+
+        return cls(mode=mode, criteria=criteria)
+
+
+@dataclass(kw_only=True)
 class Pattern2d(WithCache, WithSafeCreate):
     """Паттерн — элемент 2D-грамматики:
     Базовый класс для терминала и нетерминалов грамматики """
@@ -32,8 +123,8 @@ class Pattern2d(WithCache, WithSafeCreate):
     static_data: dict = None  # static data for the pattern, not used for matching. Will be included in any match of this pattern.
 
     constraints: list[SpatialConstraint] = ()
-    
-    overlap_config: dict = None  # конфигурация разрешения накладок: {mode: 'none'|'full'|'partial', resolution: ['area-max', ...]}
+
+    overlap_config: OverlapConfig | None = None  # конфигурация разрешения накладок
 
     _grammar: 'ns.Grammar' = None
     _size_constraint: SizeConstraint = ...
@@ -47,13 +138,10 @@ class Pattern2d(WithCache, WithSafeCreate):
                 str(self.count_in_document)) if self.count_in_document else open_range(0, None)
         if self.extends and not isinstance(self.extends, list):
             self.extends = [str(self.extends)]
-        
+
         # Устанавливаем значения по умолчанию для overlap_config, если не задано
         if self.overlap_config is None:
-            self.overlap_config = {
-                'mode': 'full',
-                'resolution': ['area-max', 'precision-max']
-            }
+            self.overlap_config = OverlapConfig.default()
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -73,17 +161,17 @@ class Pattern2d(WithCache, WithSafeCreate):
     def __lt__(self, other):
         return self.name < other.name
 
-    def get_overlap_mode(self) -> str:
-        """Возвращает режим разрешения накладок: 'none', 'full' или 'partial'."""
+    def get_overlap_mode_enum(self) -> OverlapModeEnum:
+        """Возвращает режим разрешения накладок."""
         if self.overlap_config:
-            return self.overlap_config.get('mode', 'full')
-        return 'full'
+            return self.overlap_config.mode
+        return OverlapModeEnum.FULL
 
-    def get_overlap_resolution(self) -> list[str]:
-        """Возвращает список критериев разрешения конфликтов, например ['area-max', 'precision-max']."""
+    def get_overlap_criteria(self) -> list[OverlapCriterion]:
+        """Возвращает критерии разрешения конфликтов."""
         if self.overlap_config:
-            return self.overlap_config.get('resolution', ['area-max', 'precision-max'])
-        return ['area-max', 'precision-max']
+            return list(self.overlap_config.criteria)
+        return OverlapConfig.default().criteria
 
     @classmethod
     def get_kind(cls):
@@ -364,26 +452,15 @@ def read_pattern(data: dict) -> Pattern2d | None:
     pattern_name = data.get('name')
     components = read_pattern_components(data, pattern_name)
     constraints = extract_pattern_constraints(data, pattern_name)
-    
-    # Парсим секцию overlap
-    overlap_config = None
+
+    # Парсим секцию overlap в типизированный OverlapConfig
+    overlap_config: OverlapConfig | None = None
     if 'overlap' in data:
         overlap_data = data['overlap']
         del data['overlap']
         if isinstance(overlap_data, dict):
-            overlap_config = {
-                'mode': overlap_data.get('mode', 'full'),
-                'resolution': overlap_data.get('resolution', ['area-max', 'precision-max'])
-            }
-            # Валидация mode
-            if overlap_config['mode'] not in ('none', 'full', 'partial'):
-                print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.mode: {overlap_config['mode']}, using 'full'")
-                overlap_config['mode'] = 'full'
-            # Валидация resolution
-            if not isinstance(overlap_config['resolution'], list):
-                print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.resolution, using default")
-                overlap_config['resolution'] = ['area-max', 'precision-max']
-    
+            overlap_config = OverlapConfig.from_yaml(overlap_data, pattern_name)
+
     if components:
         data['components'] = components
     if constraints:
