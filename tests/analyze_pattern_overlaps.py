@@ -39,6 +39,7 @@ def load_test_data():
         ('../materials/ОН_Магистратура_ 1 курс ФТКМ - unique-values.txt', 'Магистратура_ФТКМ'),
         ('../materials/groupnames.txt', 'groupnames'),
         ('../materials/vstu-discipline-shortnames.txt', 'discipline_shortnames'),
+        ('../materials/Сборник_1 - unique-values.txt', 'Сборник_1'),
     ]
     
     values_by_file = {}

@@ -41,6 +41,7 @@ def load_test_data():
         (os.path.join(materials_dir, 'ОН_Магистратура_ 1 курс ФТКМ - unique-values.txt'), 'Магистратура_ФТКМ'),
         (os.path.join(materials_dir, 'groupnames.txt'), 'groupnames'),
         (os.path.join(materials_dir, 'vstu-discipline-shortnames.txt'), 'discipline_shortnames'),
+        (os.path.join(materials_dir, 'Сборник_1 - unique-values.txt'), 'Сборник_1'),
     ]
     
     values_by_file = {}
