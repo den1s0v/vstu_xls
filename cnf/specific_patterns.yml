@@ -68,18 +68,18 @@ patterns:
     extends:
       - discipline_stack
     inner:  # содержимое
-      m1:
-        pattern: discipline_below_group
-        precision_threshold: 0.5
-        location: {
-          top: 0, bottom: 1,
-          left: 0, right: '1..1' }
       m2:
         pattern: discipline_below_group
         precision_threshold: 0.5
         location: {
           top: 1, bottom: 0,
           left: 0, right: '0..0' }   # 0..1
+      m1:
+        pattern: discipline_below_group
+        precision_threshold: 0.5
+        location: {
+          top: 0, bottom: 1,
+          left: 0, right: '1..1' }
 
 
 
