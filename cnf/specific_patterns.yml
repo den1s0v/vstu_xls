@@ -150,6 +150,14 @@ patterns:
     extends: ['lesson_kind_2h', 'room']
 
 
+  teacher_with_room:
+    kind: cell
+    description: 'преподаватель и аудитория в одной ячейке'
+    content_type: teacher_with_room
+    size: 1+ x 1+
+    extends: ['teacher', 'room']
+
+
 
 
 
