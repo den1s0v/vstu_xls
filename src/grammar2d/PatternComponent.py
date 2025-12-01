@@ -49,7 +49,7 @@ class PatternComponent(WithCache, WithSafeCreate):
 
     # Если True, компонент считается опциональным и может отсутствовать.
     # Если False, то его наличие обязательно требуется для существования родительского элемента.
-    optional = False
+    optional: bool = False
 
     # TODO: add type to be recognized as annotation
     precision_threshold: float = 0.3  # [0, 1] порог допустимой точности, ниже которого компонент считается не найденным.
