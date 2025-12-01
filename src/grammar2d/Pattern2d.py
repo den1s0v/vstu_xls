@@ -32,6 +32,8 @@ class Pattern2d(WithCache, WithSafeCreate):
     static_data: dict = None  # static data for the pattern, not used for matching. Will be included in any match of this pattern.
 
     constraints: list[SpatialConstraint] = ()
+    
+    overlap_config: dict = None  # конфигурация разрешения накладок: {mode: 'none'|'full'|'partial', resolution: ['area-max', ...]}
 
     _grammar: 'ns.Grammar' = None
     _size_constraint: SizeConstraint = ...
@@ -45,6 +47,13 @@ class Pattern2d(WithCache, WithSafeCreate):
                 str(self.count_in_document)) if self.count_in_document else open_range(0, None)
         if self.extends and not isinstance(self.extends, list):
             self.extends = [str(self.extends)]
+        
+        # Устанавливаем значения по умолчанию для overlap_config, если не задано
+        if self.overlap_config is None:
+            self.overlap_config = {
+                'mode': 'full',
+                'resolution': ['area-max', 'precision-max']
+            }
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -63,6 +72,18 @@ class Pattern2d(WithCache, WithSafeCreate):
 
     def __lt__(self, other):
         return self.name < other.name
+
+    def get_overlap_mode(self) -> str:
+        """Возвращает режим разрешения накладок: 'none', 'full' или 'partial'."""
+        if self.overlap_config:
+            return self.overlap_config.get('mode', 'full')
+        return 'full'
+
+    def get_overlap_resolution(self) -> list[str]:
+        """Возвращает список критериев разрешения конфликтов, например ['area-max', 'precision-max']."""
+        if self.overlap_config:
+            return self.overlap_config.get('resolution', ['area-max', 'precision-max'])
+        return ['area-max', 'precision-max']
 
     @classmethod
     def get_kind(cls):
@@ -343,11 +364,32 @@ def read_pattern(data: dict) -> Pattern2d | None:
     pattern_name = data.get('name')
     components = read_pattern_components(data, pattern_name)
     constraints = extract_pattern_constraints(data, pattern_name)
-
+    
+    # Парсим секцию overlap
+    overlap_config = None
+    if 'overlap' in data:
+        overlap_data = data['overlap']
+        del data['overlap']
+        if isinstance(overlap_data, dict):
+            overlap_config = {
+                'mode': overlap_data.get('mode', 'full'),
+                'resolution': overlap_data.get('resolution', ['area-max', 'precision-max'])
+            }
+            # Валидация mode
+            if overlap_config['mode'] not in ('none', 'full', 'partial'):
+                print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.mode: {overlap_config['mode']}, using 'full'")
+                overlap_config['mode'] = 'full'
+            # Валидация resolution
+            if not isinstance(overlap_config['resolution'], list):
+                print(f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.resolution, using default")
+                overlap_config['resolution'] = ['area-max', 'precision-max']
+    
     if components:
         data['components'] = components
     if constraints:
         data['constraints'] = constraints
+    if overlap_config:
+        data['overlap_config'] = overlap_config
 
     # create new Pattern of specific subclass.
     try:

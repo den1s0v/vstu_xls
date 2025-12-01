@@ -53,7 +53,7 @@ class GrammarMatcher:
             pattern: 'Pattern2d',
             region: Box | RangedBox = None,
             match_limit: int = None,
-            overlap_resolution: OverlapResolutionMode = OverlapResolutionMode.FULL_OVERLAP) -> list[Match2d]:
+            overlap_resolution: OverlapResolutionMode | None = None) -> list[Match2d]:
         """ Get all currently known matches of given pattern.
         If region specified, return only matches that are within the region.
         
@@ -61,8 +61,20 @@ class GrammarMatcher:
             pattern: Pattern to get matches for
             region: Optional region to filter matches
             match_limit: Optional limit on number of matches
-            overlap_resolution: Mode for resolving overlapping matches
+            overlap_resolution: Mode for resolving overlapping matches. If None, uses pattern's overlap_config
         """
+        # Определяем режим разрешения накладок: из параметра или из паттерна
+        if overlap_resolution is None:
+            mode_str = pattern.get_overlap_mode()
+            if mode_str == 'none':
+                overlap_resolution = OverlapResolutionMode.NONE
+            elif mode_str == 'full':
+                overlap_resolution = OverlapResolutionMode.FULL_OVERLAP
+            elif mode_str == 'partial':
+                overlap_resolution = OverlapResolutionMode.PARTIAL_OVERLAP
+            else:
+                overlap_resolution = OverlapResolutionMode.FULL_OVERLAP  # по умолчанию
+        
         if pattern.independently_matchable():
             matches = self.matches_by_element[pattern] or []
 
@@ -76,22 +88,23 @@ class GrammarMatcher:
                 # Drop unexpected matches.
                 matches = matches[:match_limit]
 
-            return self._apply_overlap_resolution(matches, overlap_resolution)
+            return self._apply_overlap_resolution(matches, overlap_resolution, pattern)
         else:
             matches = self._find_matches_of_dependent_pattern(pattern, region, match_limit)
-            return self._apply_overlap_resolution(matches, overlap_resolution)
+            return self._apply_overlap_resolution(matches, overlap_resolution, pattern)
 
     def _apply_overlap_resolution(
             self,
             matches: list[Match2d],
-            overlap_resolution: OverlapResolutionMode) -> list[Match2d]:
+            overlap_resolution: OverlapResolutionMode,
+            pattern: 'Pattern2d') -> list[Match2d]:
         """Применяет фильтрацию перекрывающихся матчей в соответствии с режимом."""
         if overlap_resolution == OverlapResolutionMode.NONE:
             return matches
         elif overlap_resolution == OverlapResolutionMode.FULL_OVERLAP:
-            return self._filter_full_overlaps(matches)
+            return self._filter_full_overlaps(matches, pattern)
         elif overlap_resolution == OverlapResolutionMode.PARTIAL_OVERLAP:
-            return self._filter_partial_overlaps(matches)
+            return self._filter_partial_overlaps(matches, pattern)
         else:
             return matches
 
@@ -103,52 +116,93 @@ class GrammarMatcher:
         return match.calc_precision()
 
     @staticmethod
-    def _compare_matches_by_size_and_precision(match1: Match2d, match2: Match2d) -> int:
-        """Сравнить два матча по размеру и точности.
+    def _compare_matches_by_criteria(match1: Match2d, match2: Match2d, criteria: list[str]) -> int:
+        """Сравнить два матча по списку критериев с приоритетами.
+        
+        Args:
+            match1: Первый матч для сравнения
+            match2: Второй матч для сравнения
+            criteria: Список критериев вида ['area-max', 'precision-max', ...]
+                     Поддерживаемые метрики: area, width, height, precision
+                     Поддерживаемые режимы: max (больше лучше), min (меньше лучше)
         
         Returns:
-            -1 если match1 < match2 (меньший или менее точный)
-            0 если match1 == match2
-            1 если match1 > match2 (больший или более точный)
+            -1 если match1 < match2 (проигрывает по критериям)
+            0 если match1 == match2 (равны по всем критериям)
+            1 если match1 > match2 (выигрывает по критериям)
         """
-        if not match1.box or not match2.box:
-            # Если у одного из матчей нет box, сравниваем только по точности
-            prec1 = GrammarMatcher._get_match_precision(match1)
-            prec2 = GrammarMatcher._get_match_precision(match2)
-            if prec1 < prec2:
-                return -1
-            elif prec1 > prec2:
-                return 1
-            return 0
+        for criterion in criteria:
+            # Парсим критерий: 'area-max' -> ('area', 'max')
+            parts = criterion.split('-')
+            if len(parts) != 2:
+                continue  # Пропускаем некорректные критерии
+            
+            metric, mode = parts[0].lower(), parts[1].lower()
+            
+            # Получаем значения для сравнения
+            value1 = GrammarMatcher._get_match_metric_value(match1, metric)
+            value2 = GrammarMatcher._get_match_metric_value(match2, metric)
+            
+            if value1 is None or value2 is None:
+                continue  # Пропускаем, если метрику нельзя вычислить
+            
+            # Сравниваем в зависимости от режима
+            if mode == 'max':
+                # Больше лучше
+                if value1 < value2:
+                    return -1
+                elif value1 > value2:
+                    return 1
+            elif mode == 'min':
+                # Меньше лучше
+                if value1 > value2:
+                    return -1
+                elif value1 < value2:
+                    return 1
         
-        # Сравниваем по площади
-        area1 = match1.box.w * match1.box.h
-        area2 = match2.box.w * match2.box.h
-        
-        if area1 < area2:
-            return -1
-        elif area1 > area2:
-            return 1
-        
-        # При равной площади сравниваем по точности
-        prec1 = GrammarMatcher._get_match_precision(match1)
-        prec2 = GrammarMatcher._get_match_precision(match2)
-        
-        if prec1 < prec2:
-            return -1
-        elif prec1 > prec2:
-            return 1
+        # Если все критерии равны
         return 0
+    
+    @staticmethod
+    def _get_match_metric_value(match: Match2d, metric: str) -> float | None:
+        """Получить значение метрики для матча.
+        
+        Args:
+            match: Матч
+            metric: Название метрики: 'area', 'width', 'height', 'precision'
+        
+        Returns:
+            Значение метрики или None, если нельзя вычислить
+        """
+        if not match.box:
+            # Если нет box, можем вернуть только precision
+            if metric == 'precision':
+                return GrammarMatcher._get_match_precision(match)
+            return None
+        
+        if metric == 'area':
+            return float(match.box.w * match.box.h)
+        elif metric == 'width':
+            return float(match.box.w)
+        elif metric == 'height':
+            return float(match.box.h)
+        elif metric == 'precision':
+            return GrammarMatcher._get_match_precision(match)
+        
+        return None
 
     @staticmethod
-    def _filter_full_overlaps(matches: list[Match2d]) -> list[Match2d]:
-        """Фильтрует полные наложения матчей, оставляя более крупные.
+    def _filter_full_overlaps(matches: list[Match2d], pattern: 'Pattern2d') -> list[Match2d]:
+        """Фильтрует полные наложения матчей, оставляя лучшие по критериям из конфигурации паттерна.
         
-        Если один Box полностью содержит другой, оставляется более крупный матч
-        (сначала по площади, затем по точности).
+        Если один Box полностью содержит другой, оставляется лучший матч
+        согласно критериям из pattern.get_overlap_resolution().
         """
         if not matches:
             return matches
+        
+        # Получаем критерии из конфигурации паттерна
+        criteria = pattern.get_overlap_resolution()
         
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
@@ -175,15 +229,15 @@ class GrammarMatcher:
                 
                 # Проверяем полное наложение
                 if match1.box in match2.box or match2.box in match1.box:
-                    # Сравниваем матчи
-                    comparison = GrammarMatcher._compare_matches_by_size_and_precision(match1, match2)
+                    # Сравниваем матчи по критериям из конфигурации
+                    comparison = GrammarMatcher._compare_matches_by_criteria(match1, match2, criteria)
                     
                     if comparison < 0:
-                        # match1 меньше, удаляем его
+                        # match1 проигрывает, удаляем его
                         to_remove.add(i)
                         break  # Переходим к следующему match1
                     elif comparison > 0:
-                        # match2 меньше, удаляем его
+                        # match2 проигрывает, удаляем его
                         to_remove.add(j)
                     # Если равны, оставляем оба (не добавляем в to_remove)
         
@@ -191,13 +245,24 @@ class GrammarMatcher:
         return [match for idx, match in enumerate(matches) if idx not in to_remove]
 
     @staticmethod
-    def _filter_partial_overlaps(matches: list[Match2d]) -> list[Match2d]:
-        """Фильтрует частичные наложения матчей, оставляя более точные.
+    def _filter_partial_overlaps(matches: list[Match2d], pattern: 'Pattern2d') -> list[Match2d]:
+        """Фильтрует частичные наложения матчей, оставляя лучшие по критериям из конфигурации паттерна.
         
-        При любом перекрытии матчей оставляется матч с большей точностью.
+        Сначала исчерпывающе разрешаются все полные перекрытия, затем обрабатываются
+        оставшиеся частичные перекрытия.
         """
         if not matches:
             return matches
+        
+        # Шаг 1: Сначала исчерпывающе разрешаем все полные перекрытия
+        matches = GrammarMatcher._filter_full_overlaps(matches, pattern)
+        
+        if not matches:
+            return matches
+        
+        # Шаг 2: Теперь обрабатываем частичные перекрытия среди оставшихся матчей
+        # Получаем критерии из конфигурации паттерна
+        criteria = pattern.get_overlap_resolution()
         
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
@@ -210,8 +275,6 @@ class GrammarMatcher:
             if not match1.box:
                 continue
             
-            prec1 = GrammarMatcher._get_match_precision(match1)
-            
             for j in range(i + 1, len(matches)):
                 if j in to_remove:
                     continue
@@ -220,18 +283,23 @@ class GrammarMatcher:
                 if not match2.box:
                     continue
                 
-                # Проверяем любое перекрытие
+                # Проверяем частичное перекрытие (но не полное, так как полные уже обработаны)
                 if match1.box.overlaps(match2.box):
-                    prec2 = GrammarMatcher._get_match_precision(match2)
+                    # Убеждаемся, что это именно частичное, а не полное наложение
+                    if match1.box in match2.box or match2.box in match1.box:
+                        continue  # Полные наложения уже обработаны на шаге 1
                     
-                    if prec1 < prec2:
-                        # match1 менее точный, удаляем его
+                    # Сравниваем матчи по критериям из конфигурации
+                    comparison = GrammarMatcher._compare_matches_by_criteria(match1, match2, criteria)
+                    
+                    if comparison < 0:
+                        # match1 проигрывает, удаляем его
                         to_remove.add(i)
                         break  # Переходим к следующему match1
-                    elif prec1 > prec2:
-                        # match2 менее точный, удаляем его
+                    elif comparison > 0:
+                        # match2 проигрывает, удаляем его
                         to_remove.add(j)
-                    # Если точности равны, оставляем оба (не добавляем в to_remove)
+                    # Если равны, оставляем оба (не добавляем в to_remove)
         
         # Возвращаем матчи, которые не были помечены для удаления
         return [match for idx, match in enumerate(matches) if idx not in to_remove]
