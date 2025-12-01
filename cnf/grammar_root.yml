@@ -412,6 +412,7 @@ patterns:
     description: дисциплина, сопоставленная с левой "половиной" группы
     kind: area
     extends: discipline_with_groups
+    confidence: 0.90
     static_data:
       subgroup: left
 
@@ -449,21 +450,28 @@ patterns:
     inner:  # содержимое
       discipline:
         pattern_definition:
-          kind: area
+          kind: array
           size: '1 x 3'
-          inner:
-            m3:
-              pattern: discipline_below_group
-              precision_threshold: 0.5
-              location: {
-                top: 2, bottom: 0,
-                left: 0, right: 0 }
-            m1:
-              pattern: discipline_below_group
-              precision_threshold: 0.5
-              location: {
-                top: 0, bottom: 2,
-                left: 0, right: 0 }
+          item_pattern: discipline_below_group
+          gap: 1
+          direction: column
+          item_count: 2
+          confidence: +1.40
+          # kind: area
+          # size: '1 x 3'
+          # inner:
+          #   m3:
+          #     pattern: discipline_below_group
+          #     precision_threshold: 0.5
+          #     location: {
+          #       top: 2, bottom: 0,
+          #       left: 0, right: 0 }
+          #   m1:
+          #     pattern: discipline_below_group
+          #     precision_threshold: 0.5
+          #     location: {
+          #       top: 0, bottom: 2,
+          #       left: 0, right: 0 }
 
         precision_threshold: 0.9
         location:
@@ -484,6 +492,7 @@ patterns:
         location:
           left: 0+  # академ. часы указаны слева
           padding-top: 0
+          padding-bottom: 0
 
   discipline_with_groups_lab_right:
     description: дисциплина, сопоставленная с правой "половиной" группы
