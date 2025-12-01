@@ -15,6 +15,10 @@ if TYPE_CHECKING:
     from grammar2d.Pattern2d import Pattern2d
 
 
+# Флаг для включения отладочной печати разрешённых накладок
+DEBUG_OVERLAP_RESOLUTION = False
+
+
 class _WaveObserver(Protocol):
     def notify_wave_started(self, wave_index: int, patterns: Iterable[str]) -> None:
         ...
@@ -215,9 +219,11 @@ class GrammarMatcher:
         
         # Получаем критерии из конфигурации паттерна
         criteria = pattern.get_overlap_criteria()
+        criteria_str = ', '.join(f'{c.metric.value}-{c.order.value}' for c in criteria)
         
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
+        resolved_overlaps = []  # Для отладочной печати
         
         for i in range(len(matches)):
             if i in to_remove:
@@ -247,11 +253,55 @@ class GrammarMatcher:
                     if comparison < 0:
                         # match1 проигрывает, удаляем его
                         to_remove.add(i)
+                        if DEBUG_OVERLAP_RESOLUTION:
+                            resolved_overlaps.append({
+                                'mode': 'FULL',
+                                'pattern': pattern.name,
+                                'removed': {
+                                    'name': match1.pattern.name,
+                                    'box': f"({match1.box.left},{match1.box.top}) {match1.box.w}x{match1.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match1)
+                                },
+                                'kept': {
+                                    'name': match2.pattern.name,
+                                    'box': f"({match2.box.left},{match2.box.top}) {match2.box.w}x{match2.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match2)
+                                },
+                                'criteria': criteria_str
+                            })
                         break  # Переходим к следующему match1
                     elif comparison > 0:
                         # match2 проигрывает, удаляем его
                         to_remove.add(j)
+                        if DEBUG_OVERLAP_RESOLUTION:
+                            resolved_overlaps.append({
+                                'mode': 'FULL',
+                                'pattern': pattern.name,
+                                'removed': {
+                                    'name': match2.pattern.name,
+                                    'box': f"({match2.box.left},{match2.box.top}) {match2.box.w}x{match2.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match2)
+                                },
+                                'kept': {
+                                    'name': match1.pattern.name,
+                                    'box': f"({match1.box.left},{match1.box.top}) {match1.box.w}x{match1.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match1)
+                                },
+                                'criteria': criteria_str
+                            })
                     # Если равны, оставляем оба (не добавляем в to_remove)
+        
+        # Отладочная печать разрешённых накладок
+        if DEBUG_OVERLAP_RESOLUTION and resolved_overlaps:
+            logger.debug(f"Resolved {len(resolved_overlaps)} FULL overlap(s) for pattern '{pattern.name}':")
+            for overlap in resolved_overlaps:
+                logger.debug(
+                    f"  [{overlap['mode']}] Removed: {overlap['removed']['name']} "
+                    f"at {overlap['removed']['box']} (precision={overlap['removed']['precision']:.3f}), "
+                    f"kept: {overlap['kept']['name']} at {overlap['kept']['box']} "
+                    f"(precision={overlap['kept']['precision']:.3f}), "
+                    f"criteria: {overlap['criteria']}"
+                )
         
         # Возвращаем матчи, которые не были помечены для удаления
         return [match for idx, match in enumerate(matches) if idx not in to_remove]
@@ -275,9 +325,11 @@ class GrammarMatcher:
         # Шаг 2: Теперь обрабатываем частичные перекрытия среди оставшихся матчей
         # Получаем критерии из конфигурации паттерна
         criteria = pattern.get_overlap_criteria()
+        criteria_str = ', '.join(f'{c.metric.value}-{c.order.value}' for c in criteria) if DEBUG_OVERLAP_RESOLUTION else None
         
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
+        resolved_overlaps = [] if DEBUG_OVERLAP_RESOLUTION else None  # Для отладочной печати
         
         for i in range(len(matches)):
             if i in to_remove:
@@ -307,11 +359,55 @@ class GrammarMatcher:
                     if comparison < 0:
                         # match1 проигрывает, удаляем его
                         to_remove.add(i)
+                        if DEBUG_OVERLAP_RESOLUTION:
+                            resolved_overlaps.append({
+                                'mode': 'PARTIAL',
+                                'pattern': pattern.name,
+                                'removed': {
+                                    'name': match1.pattern.name,
+                                    'box': f"({match1.box.left},{match1.box.top}) {match1.box.w}x{match1.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match1)
+                                },
+                                'kept': {
+                                    'name': match2.pattern.name,
+                                    'box': f"({match2.box.left},{match2.box.top}) {match2.box.w}x{match2.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match2)
+                                },
+                                'criteria': criteria_str
+                            })
                         break  # Переходим к следующему match1
                     elif comparison > 0:
                         # match2 проигрывает, удаляем его
                         to_remove.add(j)
+                        if DEBUG_OVERLAP_RESOLUTION:
+                            resolved_overlaps.append({
+                                'mode': 'PARTIAL',
+                                'pattern': pattern.name,
+                                'removed': {
+                                    'name': match2.pattern.name,
+                                    'box': f"({match2.box.left},{match2.box.top}) {match2.box.w}x{match2.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match2)
+                                },
+                                'kept': {
+                                    'name': match1.pattern.name,
+                                    'box': f"({match1.box.left},{match1.box.top}) {match1.box.w}x{match1.box.h}",
+                                    'precision': GrammarMatcher._get_match_precision(match1)
+                                },
+                                'criteria': criteria_str
+                            })
                     # Если равны, оставляем оба (не добавляем в to_remove)
+        
+        # Отладочная печать разрешённых частичных накладок
+        if DEBUG_OVERLAP_RESOLUTION and resolved_overlaps:
+            logger.debug(f"Resolved {len(resolved_overlaps)} PARTIAL overlap(s) for pattern '{pattern.name}':")
+            for overlap in resolved_overlaps:
+                logger.debug(
+                    f"  [{overlap['mode']}] Removed: {overlap['removed']['name']} "
+                    f"at {overlap['removed']['box']} (precision={overlap['removed']['precision']:.3f}), "
+                    f"kept: {overlap['kept']['name']} at {overlap['kept']['box']} "
+                    f"(precision={overlap['kept']['precision']:.3f}), "
+                    f"criteria: {overlap['criteria']}"
+                )
         
         # Возвращаем матчи, которые не были помечены для удаления
         return [match for idx, match in enumerate(matches) if idx not in to_remove]

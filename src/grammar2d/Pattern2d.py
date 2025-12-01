@@ -48,9 +48,9 @@ class OverlapConfig:
 
     @classmethod
     def default(cls) -> "OverlapConfig":
-        """Значения по умолчанию: full overlap + [area-max, precision-max]."""
+        """Значения по умолчанию: no overlap filtering (NONE mode)."""
         return cls(
-            mode=OverlapResolutionMode.FULL,
+            mode=OverlapResolutionMode.NONE,
             criteria=[
                 OverlapCriterion(OverlapMetricEnum.AREA, OverlapOrderEnum.MAX),
                 OverlapCriterion(OverlapMetricEnum.PRECISION, OverlapOrderEnum.MAX),
