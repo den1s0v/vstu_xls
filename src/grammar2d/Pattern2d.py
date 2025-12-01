@@ -18,6 +18,7 @@ class Pattern2d(WithCache, WithSafeCreate):
     name: str  # имя узла грамматики (определяет тип содержимого)
     root: bool = False  # whether this element is the grammar's root.
     precision_threshold = 0.3  # [0, 1] порог допустимой точности, ниже которого элемент считается не найденным.
+    confidence: float = 1.0  # confidence level in range [0..1] associated with the pattern.
 
     description: str = None  # текстовое описание
     style: dict = None  # оформление области; пока никак не используется.

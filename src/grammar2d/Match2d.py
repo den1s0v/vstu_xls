@@ -28,8 +28,9 @@ class Match2d:
             self.pattern.prepare_match(self)
 
     def calc_precision(self, force=False) -> float:
+        """ precision depends on actual score & pattern's confidence. """
         if self.precision is None or force:
-            self.precision = self.pattern.score_of_match(self) / self.pattern.max_score()
+            self.precision = self.pattern.confidence * (self.pattern.score_of_match(self) / self.pattern.max_score())
         return self.precision
 
     def get_occupied_points(self) -> list[Point]:
