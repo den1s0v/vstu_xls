@@ -249,6 +249,19 @@ cell_types:
           pattern: '.+'
           pattern_syntax: re
 
+  - discipline_without_teacher:  # Название предмета
+      description: спец. дисциплина без учителя
+      update_content: replace_with_preprocessed
+      patterns:
+        - confidence: 1.00
+            # `ИНФОРМАЦИОННАЯ КУЛЬТУРА СТУДЕНТОВ`
+            # `ИНФ.   КУЛЬТУРА`
+            # `ОСНОВЫ   ВОЕННОЙ`
+          pattern: 'ИНФ.+  КУЛЬТУРА|ОСНОВЫ  ВОЕННОЙ'
+          pattern_syntax: re-spaces
+          anchors: none
+          preprocess: fix_sparse_words
+
   # - group_list:
   #     description: несколько учебных групп через запятую
   #     patterns:

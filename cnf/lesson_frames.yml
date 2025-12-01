@@ -185,7 +185,14 @@ patterns:
           padding-bottom: 0
 
 
+
+
+
 ####
+
+
+
+
 
   lesson_frame_1_group_2h_assumed:
     description: занятие на одну группу и на 1 пару (2 ак. часа)
@@ -307,3 +314,48 @@ patterns:
         pattern: teacher_burst
       room:
         pattern: room_burst
+
+      explicit_hours:
+        pattern: explicit_hours
+        optional: true
+      explicit_dates:
+        pattern: explicit_dates_burst
+        optional: true
+
+
+  frame_based_lesson_without_teacher:
+    description: занятие любой формы
+    kind: area
+    allows_overlapping: true
+    size: '2+ x 3..9'
+    extends: lesson
+
+    inner:  # содержимое
+      frame:
+        pattern: lesson_frame
+        location:
+          - top  # упаковано полностью
+          - left
+          - right
+          - bottom
+
+      _discipline_without_teacher:
+        pattern: discipline_without_teacher
+      room:
+        pattern: room_burst
+
+      # проверка отсутствия:
+      _absent_teacher:
+        pattern: teacher
+        precision_threshold: 0.7
+        optional: true
+        weight: -10.0
+        location:
+          top: 2+
+
+      explicit_hours:
+        pattern: explicit_hours
+        optional: true
+      explicit_dates:
+        pattern: explicit_dates_burst
+        optional: true

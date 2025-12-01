@@ -12,7 +12,7 @@ from services.debugging import WaveDebugExporter
 # Список паттернов для анализа неиспользованных совпадений
 DEFAULT_UNUSED_PATTERNS_TO_ANALYZE = [
     'discipline_with_groups',
-    'lesson_frame',
+    # 'lesson_frame',
 ]
 
 
