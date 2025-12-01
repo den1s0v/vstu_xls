@@ -254,50 +254,14 @@ patterns:
         pattern: room_general
         location:
           top: 1+
-
-    outer:
-      hour_begin:
-        pattern: hour_range
-        location:
-          left: 0+  # академ. часы указаны слева
-          padding-top: 0
-          padding-bottom: 1+
-      hour_end:
-        pattern: hour_range
-        location:
-          left: 0+  # академ. часы указаны слева
-          padding-top: 1+
-          padding-bottom: 0
-
-
-  lesson_frame_1_group_6h_assumed:
-    description: занятие на одну группу и на 3 пары (6 ак. часа)
-    kind: area
-    allows_overlapping: true
-    extends: lesson_frame
-    confidence: 0.80
-
-    inner:  # содержимое
-      discipline:
-        size: '2+ x 9'
+      # проверка отсутствия:
+      _other_discipline:
         pattern: discipline_with_groups
+        precision_threshold: 0.7
+        optional: true
+        weight: -10.0
         location:
-          - top  # упаковано: влево + верх и низ
-          - left
-          - right
-          - bottom: 1..9
-
-      # _explicit_lesson_kind: pattern: lesson_kind_6h
-
-      # проверка наличия:
-      teacher:
-        pattern: teacher_general
-        location:
-          top: 1+
-      room:
-        pattern: room_general
-        location:
-          top: 1+
+          top: 2+
 
     outer:
       hour_begin:
