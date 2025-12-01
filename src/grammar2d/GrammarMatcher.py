@@ -348,7 +348,7 @@ class GrammarMatcher:
                     continue
                 
                 # Проверяем частичное перекрытие (но не полное, так как полные уже обработаны)
-                if match1.box.overlaps(match2.box):
+                if match1.box.manhattan_distance_to_overlap(match2.box) == 0:
                     # Убеждаемся, что это именно частичное, а не полное наложение
                     if match1.box in match2.box or match2.box in match1.box:
                         continue  # Полные наложения уже обработаны на шаге 1
@@ -619,11 +619,11 @@ class GrammarMatcher:
             # register Match globally
             self.register_match(m)
         ###
-        logger.debug('')
-        logger.debug(f':: {len(matches)} matches of DEPENDENT pattern `{pattern.name}` ↓')
-        for m in matches:
-            logger.debug([m.box, m.get_content()])
-        # ...
+        # logger.debug('')
+        # logger.debug(f':: {len(matches)} matches of DEPENDENT pattern `{pattern.name}` ↓')
+        # for m in matches:
+        #     logger.debug([m.box, m.get_content()])
+        ###
         return matches
 
     def find_unused_pattern_matches(

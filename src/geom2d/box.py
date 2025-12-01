@@ -168,6 +168,7 @@ class Box:
         return False
 
     def overlaps(self, other: Self | Point) -> bool:
+        """ True, если перекрываются. Касание тоже считается! """
         if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
             return any(p in self for p in other.iterate_corners()) or \
                 other in self or \

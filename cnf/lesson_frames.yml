@@ -7,6 +7,12 @@ patterns:
   lesson_frame:
     description: обощённая обёртка над местом, в котором размещается занятие
     kind: general
+    overlap:
+      mode: partial
+      resolution: ['height-min', 'width-min', 'precision-max']
+
+
+
 
 
   lesson_frame_1_group_2h__hor_layout:
@@ -287,9 +293,6 @@ patterns:
     allows_overlapping: true
     size: '2+ x 3..9'
     extends: lesson
-    overlap:
-      mode: partial
-      resolution: ['height-min', 'width-max', 'precision-max']
 
     inner:  # содержимое
       frame:

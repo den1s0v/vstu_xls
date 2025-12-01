@@ -338,10 +338,16 @@ patterns:
   discipline_for_lesson:
     description: дисциплина из одной или нескольких строк
     kind: general
+    overlap:
+      mode: full
+      resolution: ['height-max', 'precision-max']
 
   discipline_with_groups:
     description: дисциплина, сопоставленная с группой(-ами)
     kind: general
+    overlap:
+      mode: full
+      resolution: ['height-max', 'precision-max']
 
 
   discipline_with_several_groups:
