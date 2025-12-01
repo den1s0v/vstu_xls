@@ -375,7 +375,7 @@ class PatternComponent(WithCache, WithSafeCreate):
 
         return rbox
 
-    def get_ranged_box_for_component_location(self, parent_partial_area: RangedBox) -> RangedBox:
+    def get_ranged_box_for_component_location(self, parent_partial_area: RangedBox | None) -> RangedBox:
         """Получить ограничения на позицию компонента (ребёнка)
          по предположениям о позиции родителя и известным ограничениям на позицию ребёнка в родителе.
 
@@ -403,7 +403,7 @@ class PatternComponent(WithCache, WithSafeCreate):
 
         На результат наложить ограничения по размеру ребёнка, если заданы.
         """
-        parent = parent_partial_area
+        parent = parent_partial_area or RangedBox()
 
         # Init result as default when no constraints specified
         if self.inner:

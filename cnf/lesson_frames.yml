@@ -70,18 +70,18 @@ patterns:
           - right   ###: 0..2
           - bottom: 1..3
 
-      # _explicit_lesson_kind:
-      #   pattern: lesson_kind_2h
+      _explicit_lesson_kind:
+        pattern: lesson_kind_2h
 
       # проверка наличия:
       teacher:
         pattern: teacher_general
         location:
-          left: 1+
+          top: 1+
       room:
         pattern: room_general
         location:
-          left: 1+
+          top: 1+
 
     outer:
       hour_begin:  # для занятий длиной в 1 пару
@@ -91,12 +91,233 @@ patterns:
           padding-top: 0
           padding-bottom: 0
 
+  lesson_frame_1_group_4h_explicitly:
+    description: занятие на одну группу и на 2 пары (4 ак. часа)
+    kind: area
+    allows_overlapping: true
+    extends: lesson_frame
+
+    inner:  # содержимое
+      discipline:
+        size: '2+ x 6'
+        pattern: discipline_with_groups
+        location:
+          - top  # упаковано: влево + верх и низ
+          - left
+          - right
+          - bottom: 1..6
+
+      _explicit_lesson_kind:
+        pattern: lesson_kind_4h
+
+      # проверка наличия:
+      teacher:
+        pattern: teacher_general
+        location:
+          top: 1+
+      room:
+        pattern: room_general
+        location:
+          top: 1+
+
+    outer:
+      hour_begin:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 1+
+      hour_end:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 1+
+          padding-bottom: 0
+
+
+  lesson_frame_1_group_6h_explicitly:
+    description: занятие на одну группу и на 3 пары (6 ак. часа)
+    kind: area
+    allows_overlapping: true
+    extends: lesson_frame
+
+    inner:  # содержимое
+      discipline:
+        size: '2+ x 9'
+        pattern: discipline_with_groups
+        location:
+          - top  # упаковано: влево + верх и низ
+          - left
+          - right
+          - bottom: 1..9
+
+      _explicit_lesson_kind:
+        pattern: lesson_kind_6h
+
+      # проверка наличия:
+      teacher:
+        pattern: teacher_general
+        location:
+          top: 1+
+      room:
+        pattern: room_general
+        location:
+          top: 1+
+
+    outer:
+      hour_begin:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 1+
+      hour_end:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 1+
+          padding-bottom: 0
+
+
+####
+
+  lesson_frame_1_group_2h_assumed:
+    description: занятие на одну группу и на 1 пару (2 ак. часа)
+    kind: area
+    allows_overlapping: true
+    extends: lesson_frame
+    confidence: 0.80
+
+    inner:  # содержимое
+      discipline:
+        size: '2+ x 3'
+        pattern: discipline_with_groups
+        location:
+          - top  # упаковано: влево + верх и низ
+          - left   ###: 0..2
+          - right   ###: 0..2
+          - bottom: 1..3
+
+      # _explicit_lesson_kind: pattern: lesson_kind_2h
+
+      # проверка наличия:
+      teacher:
+        pattern: teacher_general
+        location:
+          top: 1+
+      room:
+        pattern: room_general
+        location:
+          top: 1+
+
+    outer:
+      hour_begin:  # для занятий длиной в 1 пару
+        pattern: hour_range
+        location:
+          margin-left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 0
+
+      # first_group:
+      #   pattern: group_in_header
+      #   location:
+      #     - margin-top: 0+  # упаковано и слева, и справа
+      #     - padding-left: 0
+      #     - padding-right: 0
+
+
+  lesson_frame_1_group_4h_assumed:
+    description: занятие на одну группу и на 2 пары (4 ак. часа)
+    kind: area
+    allows_overlapping: true
+    extends: lesson_frame
+    confidence: 0.80
+
+    inner:  # содержимое
+      discipline:
+        size: '2+ x 6'
+        pattern: discipline_with_groups
+        location:
+          - top  # упаковано: влево + верх и низ
+          - left
+          - right
+          - bottom: 1..6
+
+      # _explicit_lesson_kind: pattern: lesson_kind_4h
+
+      # проверка наличия:
+      teacher:
+        pattern: teacher_general
+        location:
+          top: 1+
+      room:
+        pattern: room_general
+        location:
+          top: 1+
+
+    outer:
+      hour_begin:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 1+
+      hour_end:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 1+
+          padding-bottom: 0
+
+
+  lesson_frame_1_group_6h_assumed:
+    description: занятие на одну группу и на 3 пары (6 ак. часа)
+    kind: area
+    allows_overlapping: true
+    extends: lesson_frame
+    confidence: 0.80
+
+    inner:  # содержимое
+      discipline:
+        size: '2+ x 9'
+        pattern: discipline_with_groups
+        location:
+          - top  # упаковано: влево + верх и низ
+          - left
+          - right
+          - bottom: 1..9
+
+      # _explicit_lesson_kind: pattern: lesson_kind_6h
+
+      # проверка наличия:
+      teacher:
+        pattern: teacher_general
+        location:
+          top: 1+
+      room:
+        pattern: room_general
+        location:
+          top: 1+
+
+    outer:
+      hour_begin:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 1+
+      hour_end:
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 1+
+          padding-bottom: 0
 
 
 
 
 
-  frame_based_lesson_2h:
+  frame_based_lesson:
     description: занятие любой формы
     kind: area
     allows_overlapping: true

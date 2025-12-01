@@ -15,6 +15,10 @@ cell_types:
 
   - teacher:
       description: преподаватель
+
+      # TODO:
+      # `Коробейникова      В-602`
+
       patterns:
             # имя преподавателя может содержать префикс должности, обязательно фамилию (с допустимым дефисом в середине) а также опциональные инициалы
         - confidence: 1.00
@@ -98,7 +102,7 @@ cell_types:
           preprocess: remove_spaces_around_hypen
 
         - confidence: 0.99
-          pattern: '\bкаф.|кафедра|\bБК|КЦУНЦ'
+          pattern: '\bкаф.|кафедра|\bБК|ВКФ|КЦУНЦ'
           pattern_syntax: re  #-spaces
           # pattern_flags: I
           anchors: none
@@ -456,7 +460,7 @@ cell_types:
           # `лекция 6 часа`
           # `лаб. 6 час.`
           # `пр.` , `лаб.`
-          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:6 час[.а]?)'
+          pattern: '(?:лек[ция]*|пр[актика]*|лаб[ораторная. работа]*)\.? (?:6 час[ов.а]{0,2})'
           pattern_syntax: re-spaces
           anchors: both
           pattern_flags: I
