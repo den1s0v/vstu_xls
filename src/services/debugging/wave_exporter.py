@@ -44,6 +44,7 @@ class WaveDebugExporter:
     enable_json: bool = True
     enable_excel: bool = True
     palette: Sequence[str] = field(default_factory=lambda: tuple(DEFAULT_COLOR_PALETTE))
+    only_wave_indices: Sequence[int] = field(default_factory=tuple)
 
     def export_wave(
             self,
@@ -51,10 +52,9 @@ class WaveDebugExporter:
             grid: Grid | None,
             pattern_names: Sequence[str],
             matches: Iterable[Match2d],
-            only_indices=()
     ) -> None:
         """Export wave results in configured formats."""
-        if only_indices and wave_index not in only_indices:
+        if self.only_wave_indices and wave_index not in self.only_wave_indices:
             return
 
         if not (self.enable_json or self.enable_excel):
