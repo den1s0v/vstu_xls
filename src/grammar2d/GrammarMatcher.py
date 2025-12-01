@@ -7,7 +7,6 @@ from loguru import logger
 from geom2d import Point, Box, RangedBox
 from grammar2d import Grammar
 import grammar2d.Pattern2d as pt
-from grammar2d.Pattern2d import OverlapResolutionMode
 from grammar2d.Match2d import Match2d
 from grid import GridView, CellView, Grid
 from string_matching import CellClassifier
@@ -49,7 +48,7 @@ class GrammarMatcher:
             pattern: 'Pattern2d',
             region: Box | RangedBox = None,
             match_limit: int = None,
-            overlap_resolution: OverlapResolutionMode | None = None) -> list[Match2d]:
+            overlap_resolution: 'pt.OverlapResolutionMode | None' = None) -> list[Match2d]:
         """ Get all currently known matches of given pattern.
         If region specified, return only matches that are within the region.
         
@@ -107,14 +106,14 @@ class GrammarMatcher:
     def _apply_overlap_resolution(
             self,
             matches: list[Match2d],
-            overlap_resolution: OverlapResolutionMode,
+            overlap_resolution: 'pt.OverlapResolutionMode',
             pattern: 'Pattern2d') -> list[Match2d]:
         """Применяет фильтрацию перекрывающихся матчей в соответствии с режимом."""
-        if overlap_resolution == OverlapResolutionMode.NONE:
+        if overlap_resolution == pt.OverlapResolutionMode.NONE:
             return matches
-        elif overlap_resolution == OverlapResolutionMode.FULL:
+        elif overlap_resolution == pt.OverlapResolutionMode.FULL:
             return self._filter_full_overlaps(matches, pattern)
-        elif overlap_resolution == OverlapResolutionMode.PARTIAL:
+        elif overlap_resolution == pt.OverlapResolutionMode.PARTIAL:
             return self._filter_partial_overlaps(matches, pattern)
         else:
             return matches
@@ -130,7 +129,7 @@ class GrammarMatcher:
     def _compare_matches_by_criteria(
             match1: Match2d,
             match2: Match2d,
-            criteria: list[pt.OverlapCriterion]) -> int:
+            criteria: list['pt.OverlapCriterion']) -> int:
         """Сравнить два матча по списку критериев с приоритетами.
         
         Args:
@@ -172,7 +171,7 @@ class GrammarMatcher:
         return 0
     
     @staticmethod
-    def _get_match_metric_value(match: Match2d, metric: pt.OverlapMetricEnum) -> float | None:
+    def _get_match_metric_value(match: Match2d, metric: 'pt.OverlapMetricEnum') -> float | None:
         """Получить значение метрики для матча.
         
         Args:
