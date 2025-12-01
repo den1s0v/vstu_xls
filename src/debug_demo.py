@@ -12,6 +12,7 @@ from services import DocumentParsingService, WaveDebugExporter
 # DEFAULT_XLSX_NAME = 'ОН_ФЭВТ_4 курс 2023.xlsx'
 # DEFAULT_XLSX_NAME = 'ОН_ФЭУ_3 курс_v2.xlsx'
 DEFAULT_XLSX_NAME = 'Сборник_расписаний_1.xlsx'
+# DEFAULT_XLSX_NAME = 'Сборник_расписаний_2.xlsx'
 
 def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
@@ -79,6 +80,7 @@ def main() -> None:
         output_dir=args.output,
         enable_json=args.waves_json,
         enable_excel=args.waves_excel,
+        only_wave_indices=(1, 4,5,6,7,8, )  # for all: omit / pass empty
     )
 
     service = DocumentParsingService(
