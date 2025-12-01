@@ -27,9 +27,10 @@ def xls_to_json(xlsx_path: str):
     doc, service = extract_schedule_data(grid, vstu_grammar, inspect=True)
     ch.hit('Schedule data extracted')
 
-    # Сохраняем сырые данные для анализа
-    save_raw_document_data(doc)
-    ch.hit('Raw document data saved')
+    if 0:
+        # Сохраняем сырые данные для анализа
+        save_raw_document_data(doc)
+        ch.hit('Raw document data saved')
 
     export_schedule_document_as_json(doc)
     ch.hit('Schedule data exported')
@@ -267,7 +268,7 @@ def _extract_weeks(datatime_match: Match2d) -> list[dict]:
                     # month days for this weekday
                     "calendar": make_calendar_for_weekday(day),
                 }
-                for day in week["days"].get_children()
+                for day in week["_days"].get_children()
             ]
         })
 
@@ -305,22 +306,37 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             teacher_match = lesson_match['teacher']
             teacher_content = teacher_match.get_content()
             
-            # teacher_burst может быть массивом
+            # teacher_burst может быть массивом строк
             if isinstance(teacher_content, list):
                 for item in teacher_content:
-                    if isinstance(item, dict) and 'teacher' in item:
+                    if isinstance(item, str):
+                        # Фильтруем пустые строки
+                        if item.strip():
+                            teachers.append(item.strip())
+                    elif isinstance(item, dict) and 'teacher' in item:
                         teachers.append(plain(item['teacher']))
-                    elif isinstance(item, str):
-                        teachers.append(item)
             elif isinstance(teacher_content, dict):
                 if 'teacher' in teacher_content:
                     teachers.append(plain(teacher_content['teacher']))
                 # Может быть массивом через teacher_burst
                 if 'teachers' in teacher_content:
                     for t in teacher_content['teachers']:
-                        teachers.append(plain(t))
+                        if isinstance(t, str) and t.strip():
+                            teachers.append(t.strip())
+                        else:
+                            teachers.append(plain(t))
             elif isinstance(teacher_content, str):
-                teachers.append(teacher_content)
+                if teacher_content.strip():
+                    teachers.append(teacher_content.strip())
+        
+        # Также проверяем frame.teacher (может быть строка)
+        if not teachers and 'frame' in lesson_match:
+            frame_match = lesson_match['frame']
+            frame_content = frame_match.get_content()
+            if isinstance(frame_content, dict) and 'teacher' in frame_content:
+                teacher_str = frame_content['teacher']
+                if isinstance(teacher_str, str) and teacher_str.strip():
+                    teachers.append(teacher_str.strip())
         
         return teachers if teachers else []
 
@@ -331,22 +347,37 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             room_match = lesson_match['room']
             room_content = room_match.get_content()
             
-            # room_burst может быть массивом
+            # room_burst может быть массивом строк
             if isinstance(room_content, list):
                 for item in room_content:
-                    if isinstance(item, dict) and 'room' in item:
+                    if isinstance(item, str):
+                        # Фильтруем пустые строки
+                        if item.strip():
+                            rooms.append(item.strip())
+                    elif isinstance(item, dict) and 'room' in item:
                         rooms.append(plain(item['room']))
-                    elif isinstance(item, str):
-                        rooms.append(item)
             elif isinstance(room_content, dict):
                 if 'room' in room_content:
                     rooms.append(plain(room_content['room']))
                 # Может быть массивом через room_burst
                 if 'rooms' in room_content:
                     for r in room_content['rooms']:
-                        rooms.append(plain(r))
+                        if isinstance(r, str) and r.strip():
+                            rooms.append(r.strip())
+                        else:
+                            rooms.append(plain(r))
             elif isinstance(room_content, str):
-                rooms.append(room_content)
+                if room_content.strip():
+                    rooms.append(room_content.strip())
+        
+        # Также проверяем frame.room (может быть строка)
+        if not rooms and 'frame' in lesson_match:
+            frame_match = lesson_match['frame']
+            frame_content = frame_match.get_content()
+            if isinstance(frame_content, dict) and 'room' in frame_content:
+                room_str = frame_content['room']
+                if isinstance(room_str, str) and room_str.strip():
+                    rooms.append(room_str.strip())
         
         return rooms if rooms else []
 
@@ -369,25 +400,39 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             frame_content = frame_match.get_content()
             
             if isinstance(frame_content, dict):
-                # Проверяем hour_1 (для занятий длиной в 1 пару)
-                if 'hour_1' in frame_content:
+                # Проверяем hour_begin в frame (может быть один час или начало диапазона)
+                if 'hour_begin' in frame_content:
+                    hour_begin = frame_content['hour_begin']
+                    if isinstance(hour_begin, dict) and 'hour_range' in hour_begin:
+                        hours.append(plain(hour_begin['hour_range']))
+                    elif isinstance(hour_begin, str):
+                        hours.append(hour_begin)
+                
+                # Проверяем hour_end (для занятий длиной в несколько пар)
+                if 'hour_end' in frame_content:
+                    hour_end = frame_content['hour_end']
+                    if isinstance(hour_end, dict) and 'hour_range' in hour_end:
+                        hours.append(plain(hour_end['hour_range']))
+                    elif isinstance(hour_end, str):
+                        hours.append(hour_end)
+                
+                # Проверяем hour_1 (для занятий длиной в 1 пару) - альтернативный вариант
+                if not hours and 'hour_1' in frame_content:
                     hour_1_content = frame_content['hour_1']
                     if isinstance(hour_1_content, dict) and 'hour_range' in hour_1_content:
                         hours.append(plain(hour_1_content['hour_range']))
                     elif isinstance(hour_1_content, str):
                         hours.append(hour_1_content)
-                # Проверяем hour_begin и hour_end (для занятий длиной в несколько пар)
-                elif 'hour_begin' in frame_content and 'hour_end' in frame_content:
-                    hour_begin = frame_content['hour_begin']
-                    hour_end = frame_content['hour_end']
-                    if isinstance(hour_begin, dict) and 'hour_range' in hour_begin:
-                        hours.append(plain(hour_begin['hour_range']))
-                    elif isinstance(hour_begin, str):
-                        hours.append(hour_begin)
-                    if isinstance(hour_end, dict) and 'hour_range' in hour_end:
-                        hours.append(plain(hour_end['hour_range']))
-                    elif isinstance(hour_end, str):
-                        hours.append(hour_end)
+                
+                # Также проверяем в frame.discipline.hour_begin
+                if not hours and 'discipline' in frame_content:
+                    discipline_content = frame_content['discipline']
+                    if isinstance(discipline_content, dict) and 'hour_begin' in discipline_content:
+                        hour_begin = discipline_content['hour_begin']
+                        if isinstance(hour_begin, dict) and 'hour_range' in hour_begin:
+                            hours.append(plain(hour_begin['hour_range']))
+                        elif isinstance(hour_begin, str):
+                            hours.append(hour_begin)
         
         if not hours:
             raise ValueError(f"Cannot extract hours: unknown lesson format")
@@ -409,8 +454,15 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         # Извлекаем название дисциплины
         subject = ""
         if isinstance(discipline_content, dict):
+            # Проверяем вложенную структуру discipline.discipline.discipline
             if 'discipline' in discipline_content:
-                subject = plain(discipline_content['discipline'])
+                disc = discipline_content['discipline']
+                if isinstance(disc, dict) and 'discipline' in disc:
+                    subject = plain(disc['discipline'])
+                elif isinstance(disc, str):
+                    subject = disc
+                else:
+                    subject = plain(disc)
             elif 'discipline_name' in discipline_content:
                 subject = plain(discipline_content['discipline_name'])
         
@@ -419,25 +471,78 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         
         return subject, groups
 
-    def extract_week_info(lesson_match: Match2d, grid_match: Match2d) -> tuple[int, str]:
-        """Извлекает информацию о неделе и дне недели из контекста grid.
+    def extract_week_info(lesson_match: Match2d, grid_match: Match2d, datetime_match: Match2d) -> tuple[int, str]:
+        """Извлекает информацию о неделе и дне недели.
         
-        В новой структуре информация о неделе и дне недели может быть:
-        1. В outer контексте урока (но в грамматике это закомментировано)
-        2. В позиции урока в grid относительно структуры datetime (weeks_calendar)
-        3. В структуре grid как метаданные
-        
-        TODO: Нужно проанализировать сохранённые сырые данные (raw_document_*.json)
-        чтобы определить точную структуру и доработать эту функцию.
+        День недели извлекается из frame.hour_begin.week_day или frame.discipline.hour_begin.week_day.
+        Неделя определяется по позиции урока в grid относительно структуры datetime.
         """
-        # Временная заглушка - нужно будет доработать после анализа сырых данных
-        # Пока возвращаем значения по умолчанию
         week_day_index = 0
         week = "first_week"
         
-        # Попытка извлечь из позиции урока в grid
-        # Можно попробовать определить по box урока относительно datetime структуры
-        # Но это требует анализа сырых данных для понимания точной структуры
+        # Извлекаем день недели из frame.hour_begin.week_day или frame.discipline.hour_begin.week_day
+        if 'frame' in lesson_match:
+            frame_match = lesson_match['frame']
+            frame_content = frame_match.get_content()
+            
+            if isinstance(frame_content, dict):
+                # Проверяем frame.hour_begin.week_day
+                if 'hour_begin' in frame_content:
+                    hour_begin = frame_content['hour_begin']
+                    if isinstance(hour_begin, dict) and 'week_day' in hour_begin:
+                        week_day_str = plain(hour_begin['week_day'])
+                        try:
+                            week_day_index = LOOKUP.index_of_weekday(week_day_str)
+                        except (ValueError, AssertionError):
+                            pass
+                
+                # Также проверяем frame.discipline.hour_begin.week_day
+                if week_day_index == 0 and 'discipline' in frame_content:
+                    discipline_content = frame_content['discipline']
+                    if isinstance(discipline_content, dict) and 'hour_begin' in discipline_content:
+                        hour_begin = discipline_content['hour_begin']
+                        if isinstance(hour_begin, dict) and 'week_day' in hour_begin:
+                            week_day_str = plain(hour_begin['week_day'])
+                            try:
+                                week_day_index = LOOKUP.index_of_weekday(week_day_str)
+                            except (ValueError, AssertionError):
+                                pass
+        
+        # Определяем неделю по позиции урока относительно структуры datetime
+        if datetime_match and lesson_match.box:
+            # Получаем структуру weeks из datetime
+            if 'weeks' in datetime_match:
+                weeks_match = datetime_match['weeks']
+                week_children = weeks_match.get_children()
+                
+                if len(week_children) >= 2:
+                    # Сравниваем позицию урока с позициями недель
+                    lesson_top = lesson_match.box.top
+                    week1_match = week_children[0]
+                    week2_match = week_children[1] if len(week_children) > 1 else None
+                    
+                    if week1_match.box and week2_match and week2_match.box:
+                        # Определяем, к какой неделе относится урок по вертикальной позиции
+                        week1_bottom = week1_match.box.bottom
+                        if lesson_top < week1_bottom:
+                            # Урок в первой неделе
+                            week_content = week1_match.get_content()
+                            if isinstance(week_content, dict) and '@index_in_array' in week_content:
+                                week_index = week_content['@index_in_array']
+                                week = LOOKUP.name_of_week(week_index) or "first_week"
+                        else:
+                            # Урок во второй неделе
+                            week_content = week2_match.get_content()
+                            if isinstance(week_content, dict) and '@index_in_array' in week_content:
+                                week_index = week_content['@index_in_array']
+                                week = LOOKUP.name_of_week(week_index) or "second_week"
+                    elif week1_match.box:
+                        # Только одна неделя
+                        week_content = week1_match.get_content()
+                        if isinstance(week_content, dict) and '@index_in_array' in week_content:
+                            week_index = week_content['@index_in_array']
+                            week = LOOKUP.name_of_week(week_index) or "first_week"
+        
         return week_day_index, week
 
     def extract_explicit_dates(lesson_match: Match2d) -> list[str]:
@@ -449,21 +554,37 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             
             if isinstance(explicit_dates_content, list):
                 for item in explicit_dates_content:
-                    if isinstance(item, dict) and 'date' in item:
+                    if isinstance(item, str):
+                        # Может быть строка с датами, разделёнными запятыми или переносами строк
+                        if item.strip():
+                            # Разбиваем по переносам строк и запятым
+                            for date_part in item.replace('\\n', '\n').split('\n'):
+                                for date in date_part.split(','):
+                                    date_clean = date.strip()
+                                    if date_clean:
+                                        dates.append(date_clean)
+                    elif isinstance(item, dict) and 'date' in item:
                         dates.append(plain(item['date']))
-                    elif isinstance(item, str):
-                        dates.append(item)
             elif isinstance(explicit_dates_content, dict):
                 if 'dates' in explicit_dates_content:
                     for d in explicit_dates_content['dates']:
                         dates.append(plain(d))
                 elif 'date' in explicit_dates_content:
                     dates.append(plain(explicit_dates_content['date']))
+            elif isinstance(explicit_dates_content, str):
+                # Может быть строка с датами
+                if explicit_dates_content.strip():
+                    for date_part in explicit_dates_content.replace('\\n', '\n').split('\n'):
+                        for date in date_part.split(','):
+                            date_clean = date.strip()
+                            if date_clean:
+                                dates.append(date_clean)
         
         return dates
 
     out_lessons = []
     grid_match = matched_document['table']['grid']
+    datetime_match = matched_document['table']['datetime']
     
     # В новой структуре grid - это массив Match2d объектов (уроков)
     lesson_matches = grid_match.get_children()
@@ -483,7 +604,7 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             hours = extract_hours(lesson_match)
             
             # Извлекаем информацию о неделе и дне недели
-            week_day_index, week = extract_week_info(lesson_match, grid_match)
+            week_day_index, week = extract_week_info(lesson_match, grid_match, datetime_match)
             
             # Извлекаем переопределённые даты
             explicit_dates = extract_explicit_dates(lesson_match)
