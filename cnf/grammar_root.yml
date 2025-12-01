@@ -6,6 +6,7 @@ cell_types_filepath: 'cnf/cell_types.yml'
 include_grammars:
   # Файлы c дополнительными паттернами
   - 'cnf/specific_patterns.yml'
+  - 'cnf/lesson_frames.yml'
 
 patterns:
   # На этом уровне перечисляются все элементы грамматики.
