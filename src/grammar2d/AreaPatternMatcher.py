@@ -72,9 +72,16 @@ class AreaPatternMatcher(PatternMatcher):
             # with time_report('filter_candidates', ch) as ch:
             matches = self.filter_candidates(match_candidates, match_limit)
 
+        # Отсеять совпадения с точностью ниже порога
+        filtered_matches = []
+        for match in matches:
+            precision = match.precision if match.precision is not None else match.calc_precision()
+            if precision is not None and precision >= self.pattern.precision_threshold:
+                filtered_matches.append(match)
+
         # logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
 
-        return matches
+        return filtered_matches
 
     def get_component_matches(
             self,

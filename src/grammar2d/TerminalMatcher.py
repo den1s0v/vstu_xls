@@ -27,9 +27,6 @@ class TerminalMatcher(PatternMatcher):
             if precision < self.pattern.precision_threshold:
                 continue
 
-            if precision < self.pattern.precision_threshold:
-                continue
-
             # make Match
             m = Match2d(self.pattern, precision=precision, box=cw, data=safe_adict(
                     string_match=string_match,

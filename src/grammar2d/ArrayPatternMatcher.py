@@ -65,7 +65,14 @@ class ArrayPatternMatcher(PatternMatcher):
         if self.pattern.index_items:
             self._assign_indexes(matches)
 
-        return matches
+        # Отсеять совпадения с точностью ниже порога
+        filtered_matches = []
+        for match in matches:
+            precision = match.precision if match.precision is not None else match.calc_precision()
+            if precision is not None and precision >= self.pattern.precision_threshold:
+                filtered_matches.append(match)
+        
+        return filtered_matches
 
     def _find_element_candidates(self):
         item = self.pattern.subpattern
