@@ -75,28 +75,58 @@ class OverlapConfig:
         raw_resolution = overlap_data.get("resolution", ["area-max", "precision-max"])
         if not isinstance(raw_resolution, list):
             print(
-                f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.resolution, using default"
+                f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.resolution "
+                f"(expected list, got {type(raw_resolution).__name__}), using default"
             )
             raw_resolution = ["area-max", "precision-max"]
 
         criteria: list[OverlapCriterion] = []
+        invalid_items: list[str] = []
+        
         for item in raw_resolution:
             if not isinstance(item, str):
+                invalid_items.append(f"{item!r} (not a string)")
                 continue
+            
             parts = item.split("-")
             if len(parts) != 2:
+                invalid_items.append(f"{item!r} (expected format 'metric-order', e.g. 'area-max')")
                 continue
+            
             metric_str, order_str = parts[0].lower(), parts[1].lower()
             try:
                 metric = OverlapMetricEnum(metric_str)
+            except ValueError:
+                invalid_items.append(
+                    f"{item!r} (invalid metric '{metric_str}', "
+                    f"expected one of: {', '.join(e.value for e in OverlapMetricEnum)})"
+                )
+                continue
+            
+            try:
                 order = OverlapOrderEnum(order_str)
             except ValueError:
-                # Некорректная пара метрика/режим — пропускаем
+                invalid_items.append(
+                    f"{item!r} (invalid order '{order_str}', "
+                    f"expected one of: {', '.join(e.value for e in OverlapOrderEnum)})"
+                )
                 continue
+            
             criteria.append(OverlapCriterion(metric=metric, order=order))
+
+        if invalid_items:
+            print(
+                f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.resolution items:\n"
+                + "\n".join(f"  - {item}" for item in invalid_items)
+            )
 
         if not criteria:
             # Если ничего не удалось распарсить – используем значения по умолчанию
+            if raw_resolution:  # Предупреждаем только если был непустой список
+                print(
+                    f"SYNTAX WARN: grammar pattern `{pattern_name}` has no valid overlap.resolution items, "
+                    f"using default: {[f'{c.metric.value}-{c.order.value}' for c in cls.default().criteria]}"
+                )
             return cls.default()
 
         return cls(mode=mode, criteria=criteria)
@@ -460,6 +490,11 @@ def read_pattern(data: dict) -> Pattern2d | None:
         del data['overlap']
         if isinstance(overlap_data, dict):
             overlap_config = OverlapConfig.from_yaml(overlap_data, pattern_name)
+        else:
+            print(
+                f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap section "
+                f"(expected dict, got {type(overlap_data).__name__}), using default overlap config"
+            )
 
     if components:
         data['components'] = components
