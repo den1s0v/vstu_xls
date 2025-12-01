@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from enum import Enum
 from typing import TYPE_CHECKING, Iterable, Protocol
 
 from loguru import logger
@@ -8,19 +7,13 @@ from loguru import logger
 from geom2d import Point, Box, RangedBox
 from grammar2d import Grammar
 import grammar2d.Pattern2d as pt
+from grammar2d.Pattern2d import OverlapResolutionMode
 from grammar2d.Match2d import Match2d
 from grid import GridView, CellView, Grid
 from string_matching import CellClassifier
 
 if TYPE_CHECKING:
     from grammar2d.Pattern2d import Pattern2d
-
-
-class OverlapResolutionMode(Enum):
-    """Режимы разрешения накладок между матчами."""
-    NONE = "none"  # не убирать никакие накладки
-    FULL_OVERLAP = "full_overlap"  # убирать полное наложение (по умолчанию)
-    PARTIAL_OVERLAP = "partial_overlap"  # убирать частичное наложение в пользу более точного
 
 
 class _WaveObserver(Protocol):
@@ -68,14 +61,7 @@ class GrammarMatcher:
         """
         # Определяем режим разрешения накладок: из параметра или из паттерна
         if overlap_resolution is None:
-            mode_enum = pattern.get_overlap_mode_enum()
-            if mode_enum == pt.OverlapModeEnum.NONE:
-                overlap_resolution = OverlapResolutionMode.NONE
-            elif mode_enum == pt.OverlapModeEnum.PARTIAL:
-                overlap_resolution = OverlapResolutionMode.PARTIAL_OVERLAP
-            else:
-                # По умолчанию FULL
-                overlap_resolution = OverlapResolutionMode.FULL_OVERLAP
+            overlap_resolution = pattern.get_overlap_mode_enum()
 
         # Попытка использовать кэш только для простого случая:
         # независимый паттерн, нет region и match_limit.
@@ -126,9 +112,9 @@ class GrammarMatcher:
         """Применяет фильтрацию перекрывающихся матчей в соответствии с режимом."""
         if overlap_resolution == OverlapResolutionMode.NONE:
             return matches
-        elif overlap_resolution == OverlapResolutionMode.FULL_OVERLAP:
+        elif overlap_resolution == OverlapResolutionMode.FULL:
             return self._filter_full_overlaps(matches, pattern)
-        elif overlap_resolution == OverlapResolutionMode.PARTIAL_OVERLAP:
+        elif overlap_resolution == OverlapResolutionMode.PARTIAL:
             return self._filter_partial_overlaps(matches, pattern)
         else:
             return matches

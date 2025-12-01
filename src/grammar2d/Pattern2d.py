@@ -12,11 +12,11 @@ from geom2d import open_range, Box
 from utils import WithCache, WithSafeCreate, sorted_list, safe_adict
 
 
-class OverlapModeEnum(Enum):
-    """Режимы разрешения накладок на уровне паттерна."""
-    NONE = "none"
-    FULL = "full"
-    PARTIAL = "partial"
+class OverlapResolutionMode(Enum):
+    """Режимы разрешения накладок между матчами."""
+    NONE = "none"  # не убирать никакие накладки
+    FULL = "full"  # убирать полное наложение (по умолчанию)
+    PARTIAL = "partial"  # убирать частичное наложение в пользу более точного
 
 
 class OverlapMetricEnum(Enum):
@@ -43,14 +43,14 @@ class OverlapCriterion:
 @dataclass
 class OverlapConfig:
     """Полная конфигурация разрешения накладок для паттерна."""
-    mode: OverlapModeEnum
+    mode: OverlapResolutionMode
     criteria: list[OverlapCriterion]
 
     @classmethod
     def default(cls) -> "OverlapConfig":
         """Значения по умолчанию: full overlap + [area-max, precision-max]."""
         return cls(
-            mode=OverlapModeEnum.FULL,
+            mode=OverlapResolutionMode.FULL,
             criteria=[
                 OverlapCriterion(OverlapMetricEnum.AREA, OverlapOrderEnum.MAX),
                 OverlapCriterion(OverlapMetricEnum.PRECISION, OverlapOrderEnum.MAX),
@@ -64,13 +64,13 @@ class OverlapConfig:
 
         mode_str = overlap_data.get("mode", "full")
         try:
-            mode = OverlapModeEnum(mode_str)
+            mode = OverlapResolutionMode(mode_str)
         except ValueError:
             print(
                 f"SYNTAX WARN: grammar pattern `{pattern_name}` has invalid overlap.mode: "
                 f"{mode_str!r}, using 'full'"
             )
-            mode = OverlapModeEnum.FULL
+            mode = OverlapResolutionMode.FULL
 
         raw_resolution = overlap_data.get("resolution", ["area-max", "precision-max"])
         if not isinstance(raw_resolution, list):
@@ -161,11 +161,11 @@ class Pattern2d(WithCache, WithSafeCreate):
     def __lt__(self, other):
         return self.name < other.name
 
-    def get_overlap_mode_enum(self) -> OverlapModeEnum:
+    def get_overlap_mode_enum(self) -> OverlapResolutionMode:
         """Возвращает режим разрешения накладок."""
         if self.overlap_config:
             return self.overlap_config.mode
-        return OverlapModeEnum.FULL
+        return OverlapResolutionMode.FULL
 
     def get_overlap_criteria(self) -> list[OverlapCriterion]:
         """Возвращает критерии разрешения конфликтов."""
