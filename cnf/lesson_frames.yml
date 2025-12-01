@@ -287,6 +287,9 @@ patterns:
     allows_overlapping: true
     size: '2+ x 3..9'
     extends: lesson
+    overlap:
+      mode: partial
+      resolution: ['height-min', 'width-max', 'precision-max']
 
     inner:  # содержимое
       frame:

@@ -116,6 +116,11 @@ class GrammarMatcher:
         elif overlap_resolution == pt.OverlapResolutionMode.PARTIAL:
             return self._filter_partial_overlaps(matches, pattern)
         else:
+            # Неожиданный режим - логируем и возвращаем без фильтрации
+            logger.warning(
+                f"Unexpected overlap_resolution mode: {overlap_resolution} for pattern {pattern.name}, "
+                f"returning matches without filtering"
+            )
             return matches
 
     @staticmethod

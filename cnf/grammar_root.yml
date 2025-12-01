@@ -585,6 +585,9 @@ patterns:
   lesson:
     description: занятие во всём его многообразии
     kind: general
+    overlap:
+      mode: partial
+      resolution: ['height-min', 'width-max', 'precision-max']
 
   # # обычная пара-лекция на 1 группу
   # lesson:
