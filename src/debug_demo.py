@@ -80,7 +80,7 @@ def main() -> None:
         output_dir=args.output,
         enable_json=args.waves_json,
         enable_excel=args.waves_excel,
-        only_wave_indices=(1, 4,5,6,7,8, )  # for all: omit / pass empty
+        only_wave_indices=(0, 1, 4,5,6,7,8, )  # for all: omit / pass empty
     )
 
     service = DocumentParsingService(

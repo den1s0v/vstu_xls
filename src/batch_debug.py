@@ -6,6 +6,7 @@ from pathlib import Path
 from loguru import logger
 
 from converters.xlsx import ExcelGrid
+from export.vstu import export_schedule_document_as_json
 from grammar2d import read_grammar
 from services import DocumentParsingService, WaveDebugExporter
 from utils import Checkpointer
@@ -106,8 +107,19 @@ def process_single_file(
 
         # Экспортируем финальный отчёт о неиспользованных паттернах
         if matches:
-            service.export_final_report(document_match=matches[0])
+            document_match = matches[0]
+
+            service.export_final_report(document_match=document_match)
             logger.info("  Saved reports to {}", output_dir.resolve())
+
+            # Экспортируем JSON-расписание в общую папку импорта
+            root_dir = Path(__file__).resolve().parent.parent
+            json_output_dir = root_dir / "data" / "imports"
+            json_output_dir.mkdir(parents=True, exist_ok=True)
+            json_path = json_output_dir / f"{file_stem}.json"
+
+            export_schedule_document_as_json(document_match, dst_path=str(json_path))
+            logger.info("  Exported JSON schedule to {}", json_path.resolve())
 
         return True
 
