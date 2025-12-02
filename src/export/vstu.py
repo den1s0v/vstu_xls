@@ -178,28 +178,20 @@ def export_schedule_document_as_json(matched_document: Match2d, dst_path: str = 
 
     out.title = plain(matched_document['title'].get_text())
 
+    # Подготовка структуры таблицы
     out.table = adict({
         'grid': [],
         'datetime': adict({
-            "weeks": {},
-			"week_days": LOOKUP.WEEK_DAYS,
-			"months": [
-				# "февраль",
-				# "март",
-				# "апрель",
-				# "май",
-				# "июнь",
-				"сентябрь",
-				"октябрь",
-				"ноябрь",
-				"декабрь",
-			],
+            "weeks": {},          # заполним ниже
+            "week_days": LOOKUP.WEEK_DAYS,
+            "months": [],         # заполним ниже
         }),
     })
 
-    #
-    # weeks = out.table['datetime'].weeks
-    out.table['datetime'].weeks = _extract_weeks(matched_document['table']['datetime'])
+    # Извлекаем weeks и список имён месяцев из datetime-раздела документа
+    weeks, months = _extract_weeks(matched_document['table']['datetime'])
+    out.table['datetime'].weeks = weeks
+    out.table['datetime'].months = months
 
     out.table['grid'] = _extract_lessons(matched_document)
 
@@ -232,54 +224,70 @@ def index_of_weekday(name: str) -> int:
         return LOOKUP.WEEK_DAYS.index(name)
 LOOKUP.index_of_weekday = index_of_weekday
 
-def _extract_weeks(datatime_match: Match2d) -> list[dict]:
+def _extract_weeks(datatime_match: Match2d) -> tuple[dict, list[str]]:
+    """Формирует структуру `weeks` и список месяцев в формате, ожидаемом ImportAPI.
 
+    Возвращает:
+        weeks: dict вида {"first_week": [...], "second_week": [...]}
+        months: список названий месяцев в порядке их появления
+    """
+    # Список имён месяцев, распознанных грамматикой
     month_names: list[str] = datatime_match["month_names"].get_content()
+
     def index_of_month(name: str) -> int:
         assert name in month_names, f"{name} not in {month_names}"
         return month_names.index(name)
 
-
     def make_calendar_for_weekday(month_days_match: Match2d) -> list[dict]:
-        out_calendar = []
+        out_calendar: list[dict] = []
+
         def add(month: str, day_number: str):
             month_index = index_of_month(month)
             for calendar_month_info in out_calendar:
                 if calendar_month_info['month_index'] == month_index:
-                    # дописываем в список дней месяца
                     calendar_month_info['month_days'].append(day_number)
                     break
             else:
                 out_calendar.append({
                     'month_index': month_index,
-                    'month_days': [day_number],  # init list
+                    'month_days': [day_number],
                 })
             return out_calendar
 
-        for month_days in month_days_match["month_days"].get_children():  ### .get_content():
+        for month_days in month_days_match["month_days"].get_children():
             for month_day in month_days.get_children():
                 add(
                     plain(month_day["month_name"].get_text()),
-                    plain(month_day["month_day"].get_text())
+                    plain(month_day["month_day"].get_text()),
                 )
         return out_calendar
 
-    out_weeks = []
+    # Целевая структура:
+    # "weeks": {
+    #   "first_week": [ {week_day_index, calendar}, ... ],
+    #   "second_week": [ ... ]
+    # }
+    out_weeks: dict[str, list[dict]] = {}
+
     for week in datatime_match["weeks"].get_children():
-        out_weeks.append({
-            LOOKUP.name_of_week(week.get_content()["@index_in_array"]): [
-                # days in week
-                {
-                    "week_day_index": LOOKUP.index_of_weekday(plain(day["week_day"].get_text())),
+        content = week.get_content()
+        week_index = content.get("@index_in_array")
+        week_name = LOOKUP.name_of_week(week_index)
+        if not week_name:
+            continue
 
-                    # month days for this weekday
-                    "calendar": make_calendar_for_weekday(day),
-                }
-                for day in week["_days"].get_children()
-            ]
-        })
+        days_info = [
+            {
+                "week_day_index": LOOKUP.index_of_weekday(plain(day["week_day"].get_text())),
+                "calendar": make_calendar_for_weekday(day),
+            }
+            for day in week["_days"].get_children()
+        ]
 
-    return out_weeks
+        # Накопим все дни для каждой недели в один список
+        out_weeks.setdefault(week_name, []).extend(days_info)
+
+    return out_weeks, month_names
 
 def _extract_lessons(matched_document: Match2d) -> list[dict]:
     """Извлекает занятия из разобранного документа.
