@@ -882,32 +882,34 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
 
         normalized: list[str] = []
         for raw in dates:
-            s = (raw or "").strip().rstrip(".")
-            if not s:
-                continue
+            # В одной строке могут быть несколько дат, разделённых `,` или `;`
+            for token in re.split(r"[;,]", raw or ""):
+                s = token.strip().rstrip(".")
+                if not s:
+                    continue
 
-            # Уже полный формат?
-            m_full = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", s)
-            if m_full:
-                d, m_, y = m_full.groups()
-                normalized.append(f"{int(d):02d}.{int(m_):02d}.{int(y):04d}")
-                continue
+                # Уже полный формат?
+                m_full = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", s)
+                if m_full:
+                    d, m_, y = m_full.groups()
+                    normalized.append(f"{int(d):02d}.{int(m_):02d}.{int(y):04d}")
+                    continue
 
-            # Форматы без года: d.m , d.m. , dd.mm
-            m_partial = re.fullmatch(r"(\d{1,2})\.(\d{1,2})", s)
-            if m_partial:
-                d, m_ = m_partial.groups()
-                month = int(m_)
-                year = resolve_year(month)
-                if year is not None:
-                    normalized.append(f"{int(d):02d}.{month:02d}.{year:04d}")
-                else:
-                    # fallback: без информации о годе оставляем как есть
-                    normalized.append(f"{int(d):02d}.{month:02d}.0000")
-                continue
+                # Форматы без года: d.m , d.m. , dd.mm
+                m_partial = re.fullmatch(r"(\d{1,2})\.(\d{1,2})", s)
+                if m_partial:
+                    d, m_ = m_partial.groups()
+                    month = int(m_)
+                    year = resolve_year(month)
+                    if year is not None:
+                        normalized.append(f"{int(d):02d}.{month:02d}.{year:04d}")
+                    else:
+                        # fallback: без информации о годе оставляем как есть
+                        normalized.append(f"{int(d):02d}.{month:02d}.0000")
+                    continue
 
-            # Если не распознали — оставляем исходное значение
-            normalized.append(s)
+                # Если не распознали — оставляем исходное значение
+                normalized.append(s)
 
         return normalized
 
