@@ -63,7 +63,10 @@ def parse_args() -> argparse.Namespace:
         action="store_false",
         help=argparse.SUPPRESS,
     )
-    parser.set_defaults(waves_json=True, waves_excel=True)
+    parser.set_defaults(
+        waves_json=True,
+        waves_excel=True,
+    )
     return parser.parse_args()
 
 

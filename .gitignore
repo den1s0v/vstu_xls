@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 ~$*.*
 *.prof
+*.xls*
 tests/test_data/debug/
 materials/vstu-reference-tables
 
