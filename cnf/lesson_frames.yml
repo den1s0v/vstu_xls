@@ -321,6 +321,9 @@ patterns:
       explicit_dates:
         pattern: explicit_dates_burst
         optional: true
+      lesson_kind:
+        pattern: lesson_kind
+        optional: true
 
 
   frame_based_lesson_without_teacher:
@@ -359,3 +362,7 @@ patterns:
       explicit_dates:
         pattern: explicit_dates_burst
         optional: true
+      lesson_kind:
+        pattern: lesson_kind
+        optional: true
+
