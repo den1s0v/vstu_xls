@@ -388,6 +388,61 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         
         return rooms if rooms else []
 
+    def extract_kind(lesson_match: Match2d, hours: list[str]) -> str:
+        """Определяет тип занятия (лекция / практика / лабораторная).
+        
+        Источники (в порядке приоритета):
+        - frame._explicit_lesson_kind (lesson_kind_* из грамматики)
+        - lesson_match.lesson_kind / lesson_match._explicit_lesson_kind (если появятся в будущих версиях)
+        
+        Если распознать тип не удалось, по умолчанию возвращаем «лекция».
+        """
+
+        def _raw_kind_text() -> str | None:
+            # 1) Явный тип внутри frame: _explicit_lesson_kind
+            if 'frame' in lesson_match:
+                frame_match = lesson_match['frame']
+                if isinstance(frame_match, Match2d):
+                    if '_explicit_lesson_kind' in frame_match:
+                        km = frame_match['_explicit_lesson_kind']
+                        return plain(km.get_text())
+
+            # 2) Возможные прямые поля на верхнем уровне урока
+            for key in ('lesson_kind', '_explicit_lesson_kind'):
+                if key in lesson_match:
+                    km = lesson_match[key]
+                    if isinstance(km, Match2d):
+                        return plain(km.get_text())
+
+            return None
+
+        text = _raw_kind_text()
+        if text:
+            t = text.lower()
+            # Нормализуем по ключевым подстрокам
+            if 'лаб' in t:
+                return 'лабораторная работа'
+            if 'пр.' in t or 'практ' in t:
+                return 'практика'
+            if 'лек' in t:
+                return 'лекция'
+
+        # Если явный текст не дал результата — пробуем вывести тип из структуры
+        box = lesson_match.box
+        height = box.h if box else None
+        hour_ranges = len(hours or [])
+
+        # 4 академических часа: обычно 2 hour_range и около 6 строк высоты
+        if hour_ranges >= 2 and height is not None and height >= 6:
+            return 'лабораторная работа'
+
+        # 2 академических часа: один hour_range и ~3 строки высоты
+        if hour_ranges == 1 and height is not None and 3 <= height <= 4:
+            return 'лекция'
+
+        # По умолчанию считаем, что это лекция
+        return 'лекция'
+
     def extract_hours(lesson_match: Match2d) -> list[str]:
         """Извлекает часы занятия."""
         hours = []
@@ -627,7 +682,7 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             
             out_lessons.append({
                 "subject": subject,
-                "kind": "лекция",  # TODO: определить тип занятия из frame
+                "kind": extract_kind(lesson_match, hours),
                 "participants": {
                     "teachers": teachers,
                     "student_groups": groups,
