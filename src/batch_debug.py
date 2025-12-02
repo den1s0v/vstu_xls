@@ -94,6 +94,7 @@ def process_single_file(
             output_dir=output_dir,
             enable_json=enable_json,
             enable_excel=enable_excel,
+            only_wave_indices=(999, ),
         )
 
         # Создаём сервис

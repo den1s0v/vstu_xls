@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Mapping
+import re
 
 from adict import adict
 
@@ -278,7 +279,10 @@ def export_schedule_document_as_json(
 
     # Для EventImporter ожидается строковый title
     original_title = plain(matched_document['title'].get_text())
-    out.title = original_title
+
+    # Нормализуем формулировку степени: "магистров" → "магистратура"
+    normalized_title = original_title.replace("магистров", "магистратура").replace("Магистров", "магистратура")
+    out.title = normalized_title
 
     # Подготовка структуры таблицы
     out.table = adict({
@@ -295,7 +299,7 @@ def export_schedule_document_as_json(
     out.table['datetime'].weeks = weeks
     out.table['datetime'].months = months
 
-    out.table['grid'] = _extract_lessons(matched_document)
+    out.table['grid'] = _extract_lessons(matched_document, years=normalized_title)
 
     # save to disk
     with open(dst_path, 'w', encoding='utf8') as f:
@@ -391,7 +395,7 @@ def _extract_weeks(datatime_match: Match2d) -> tuple[dict, list[str]]:
 
     return out_weeks, month_names
 
-def _extract_lessons(matched_document: Match2d) -> list[dict]:
+def _extract_lessons(matched_document: Match2d, years: str | None = None) -> list[dict]:
     """Извлекает занятия из разобранного документа.
     
     Работает с новой структурой, где занятия представлены как frame_based_lesson.
@@ -611,6 +615,64 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         
         return hours
 
+    def normalize_hour_ranges(hours: list[str]) -> list[str]:
+        """Нормализует список описаний часов в список alt_name-диапазонов пар (`1-2`, `3-4`, ...).
+
+        Поддерживаем варианты:
+        - уже нормальные alt_name: `1-2`, `3 - 4`
+        - текстовые диапазоны: `5 - 8 час.`, `5-8`, `5 - 8 час`
+        Логика:
+        - если в строке два числа (start, end) и end == start + 1 → одна пара: `start-end`
+        - если end > start и (end - start + 1) чётно → разбиваем на пары:
+          5-8 → `5-6`, `7-8`; 1-4 → `1-2`, `3-4`
+        """
+        result: list[str] = []
+
+        for raw in hours:
+            if not raw:
+                continue
+
+            s = raw.strip()
+
+            # Уже alt_name без лишних суффиксов
+            if re.fullmatch(r"\d{1,2}\s*-\s*\d{1,2}", s):
+                # Нормализуем пробелы
+                a, b = [p.strip() for p in s.split("-", 1)]
+                result.append(f"{int(a)}-{int(b)}")
+                continue
+
+            # Выделяем все числа
+            nums = [int(n) for n in re.findall(r"\d+", s)]
+            if len(nums) == 2:
+                start, end = nums
+                if end <= start:
+                    result.append(f"{start}-{end}")
+                    continue
+
+                length = end - start + 1
+                # Одиночная пара
+                if length == 2:
+                    result.append(f"{start}-{end}")
+                    continue
+
+                # Разбиваем на пары, если количество чётное
+                if length % 2 == 0:
+                    cur = start
+                    while cur < end:
+                        pair_end = cur + 1
+                        result.append(f"{cur}-{pair_end}")
+                        cur += 2
+                    continue
+
+                # Нечётная длина — оставляем как есть
+                result.append(f"{start}-{end}")
+                continue
+
+            # Если ничего не распознали — оставляем исходное, пусть парсер решает
+            result.append(s)
+
+        return result
+
     def extract_discipline(lesson_match: Match2d) -> tuple[str, list[str]]:
         """Извлекает название дисциплины и группы из frame->discipline."""
         if 'frame' not in lesson_match:
@@ -727,7 +789,7 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         return week_day_index, week
 
     def extract_explicit_dates(lesson_match: Match2d) -> list[str]:
-        """Извлекает переопределённые даты из explicit_dates."""
+        """Извлекает переопределённые даты из explicit_dates (как есть в документе)."""
         dates = []
         if 'explicit_dates' in lesson_match:
             explicit_dates_match = lesson_match['explicit_dates']
@@ -763,6 +825,62 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         
         return dates
 
+    def normalize_explicit_dates(dates: list[str], years_hint: str | None) -> list[str]:
+        """Нормализует переопределённые даты в формат `%d.%m.%Y`.
+
+        Ожидаемые входы: `18.09.`, `18.9`, `18.09.2025`, `18.09`.
+        Если в записи нет года, он выводится из диапазона лет вида `2025-2026`:
+        - месяцы > 6 (июль–декабрь) → левый год (2025)
+        - месяцы <= 6 (январь–июнь) → правый год (2026)
+        """
+        if not dates:
+            return []
+
+        left_year = right_year = None
+        if years_hint:
+            # Пытаемся вытащить "2025-2026" из строки
+            m = re.search(r"(\d{4})\s*-\s*(\d{4})", years_hint)
+            if m:
+                left_year = int(m.group(1))
+                right_year = int(m.group(2))
+
+        def resolve_year(month: int) -> int | None:
+            if left_year is None or right_year is None:
+                return None
+            # как в make_calendar: месяцы > 6 относятся к левому году
+            return left_year if month > 6 else right_year
+
+        normalized: list[str] = []
+        for raw in dates:
+            s = (raw or "").strip().rstrip(".")
+            if not s:
+                continue
+
+            # Уже полный формат?
+            m_full = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", s)
+            if m_full:
+                d, m_, y = m_full.groups()
+                normalized.append(f"{int(d):02d}.{int(m_):02d}.{int(y):04d}")
+                continue
+
+            # Форматы без года: d.m , d.m. , dd.mm
+            m_partial = re.fullmatch(r"(\d{1,2})\.(\d{1,2})", s)
+            if m_partial:
+                d, m_ = m_partial.groups()
+                month = int(m_)
+                year = resolve_year(month)
+                if year is not None:
+                    normalized.append(f"{int(d):02d}.{month:02d}.{year:04d}")
+                else:
+                    # fallback: без информации о годе оставляем как есть
+                    normalized.append(f"{int(d):02d}.{month:02d}.0000")
+                continue
+
+            # Если не распознали — оставляем исходное значение
+            normalized.append(s)
+
+        return normalized
+
     out_lessons = []
     grid_match = matched_document['table']['grid']
     datetime_match = matched_document['table']['datetime']
@@ -782,13 +900,15 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
             rooms = extract_rooms(lesson_match)
             
             # Извлекаем часы
-            hours = extract_hours(lesson_match)
+            hours_raw = extract_hours(lesson_match)
+            hours = normalize_hour_ranges(hours_raw)
             
             # Извлекаем информацию о неделе и дне недели
             week_day_index, week = extract_week_info(lesson_match, grid_match, datetime_match)
             
             # Извлекаем переопределённые даты
-            explicit_dates = extract_explicit_dates(lesson_match)
+            explicit_dates_raw = extract_explicit_dates(lesson_match)
+            explicit_dates = normalize_explicit_dates(explicit_dates_raw, years_hint=years)
             
             out_lessons.append({
                 "subject": subject,
