@@ -515,8 +515,17 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                 room_str = frame_content['room']
                 if isinstance(room_str, str) and room_str.strip():
                     rooms.append(room_str.strip())
-        
-        return rooms if rooms else []
+
+        # Лёгкая нормализация: устраняем «разрывы» вида `Б--514` → `Б-514`
+        def _normalize_room(r: str) -> str:
+            s = r.strip()
+            # схлопываем повторяющиеся дефисы
+            while "--" in s:
+                s = s.replace("--", "-")
+            return s
+
+        rooms = [_normalize_room(r) for r in rooms] if rooms else []
+        return rooms
 
     def extract_kind(lesson_match: Match2d, hours: list[str]) -> str:
         """Определяет тип занятия (лекция / практика / лабораторная).
@@ -882,8 +891,9 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
 
         normalized: list[str] = []
         for raw in dates:
-            # В одной строке могут быть несколько дат, разделённых `,` или `;`
-            for token in re.split(r"[;,]", raw or ""):
+            # В одной строке могут быть несколько дат, разделённых `,`, `;` или `..`
+            # Примеры: "24.09;22.10;", "03.09..01.10"
+            for token in re.split(r"[;,]|\.\.+", raw or ""):
                 s = token.strip().rstrip(".")
                 if not s:
                     continue
@@ -908,7 +918,8 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                         normalized.append(f"{int(d):02d}.{month:02d}.0000")
                     continue
 
-                # Если не распознали — оставляем исходное значение
+                # Если не распознали — оставляем исходное значение и печатаем отладку
+                print(f"[normalize_explicit_dates] Unrecognized date format: {raw!r} -> {s!r} (years_hint={years_hint!r})")
                 normalized.append(s)
 
         return normalized
