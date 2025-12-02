@@ -157,7 +157,14 @@ def plain(s: str | list[str]) -> str:
     if isinstance(s, str):
         return s
     elif isinstance(s, list):
-        return ''.join(s)
+        # Безопасно конкатенируем элементы, приводя не-строки к строке
+        parts: list[str] = []
+        for item in s:
+            if isinstance(item, str):
+                parts.append(item)
+            else:
+                parts.append(str(item))
+        return ''.join(parts)
     else:
         return str(s)
 
@@ -454,10 +461,19 @@ def _extract_lessons(matched_document: Match2d) -> list[dict]:
         # Извлекаем название дисциплины
         subject = ""
         if isinstance(discipline_content, dict):
-            # Проверяем вложенную структуру discipline.discipline.discipline
+            # Проверяем вложенную структуру discipline.discipline.*
             if 'discipline' in discipline_content:
                 disc = discipline_content['discipline']
-                if isinstance(disc, dict) and 'discipline' in disc:
+                # Случай: список вложенных структур с полем 'discipline'
+                if isinstance(disc, list):
+                    parts: list[str] = []
+                    for item in disc:
+                        if isinstance(item, dict) and 'discipline' in item:
+                            parts.append(plain(item['discipline']))
+                        else:
+                            parts.append(plain(item))
+                    subject = ' '.join(p.strip() for p in parts if p.strip())
+                elif isinstance(disc, dict) and 'discipline' in disc:
                     subject = plain(disc['discipline'])
                 elif isinstance(disc, str):
                     subject = disc
