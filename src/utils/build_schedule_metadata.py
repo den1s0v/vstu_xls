@@ -6,17 +6,19 @@ from pathlib import Path
 
 from loguru import logger
 
+from export.vstu import build_schedule_metadata
+
 
 def collect_metadata_from_dir(imports_dir: Path) -> list[dict]:
     """Собирает метаданные расписаний из всех JSON-файлов в директории.
 
     Ожидается формат наших экспортов:
         {
-          "title": { ...метаданные расписания... },
+          "title": "<строковый заголовок>",
           "table": { ... }
         }
 
-    Возвращается список объектов `title` (как в schedule_reference_import.json).
+    Возвращается список объектов метаданных (как в schedule_reference_import.json).
     """
     entries: list[dict] = []
 
@@ -33,11 +35,13 @@ def collect_metadata_from_dir(imports_dir: Path) -> list[dict]:
             continue
 
         title = data.get("title")
-        if not isinstance(title, dict):
-            logger.warning("File {} has no dict `title` field, skipping", path)
+        if not isinstance(title, str):
+            logger.warning("File {} has non-string `title` field, skipping", path)
             continue
 
-        entries.append(title)
+        # Восстанавливаем объект метаданных по имени файла и текстовому title
+        metadata = build_schedule_metadata(path, title)
+        entries.append(metadata)
 
     return entries
 

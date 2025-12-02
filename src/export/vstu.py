@@ -176,7 +176,7 @@ def build_schedule_metadata(source_path: Path | None, original_title: str | None
     # Безопасно нормализуем путь
     path = source_path.resolve() if isinstance(source_path, Path) else None
 
-    # 1) Определяем scope по частям пути
+    # 1) Определяем scope по частям пути и/или по тексту заголовка
     scope = "бакалавриат"
     if path:
         parts_lower = [p.lower() for p in path.parts]
@@ -184,6 +184,16 @@ def build_schedule_metadata(source_path: Path | None, original_title: str | None
             if "магистратура" in part:
                 scope = "магистратура"
                 break
+            if "аспирантура" in part:
+                scope = "Аспирантура"
+                break
+
+    if original_title:
+        t = original_title.lower()
+        if "магистратура" in t:
+            scope = "магистратура"
+        elif "аспирантура" in t:
+            scope = "Аспирантура"
 
     # 2) Определяем факультет по имени файла
     faculty_shortnames = [
@@ -258,7 +268,7 @@ def plain(s: str | list[str]) -> str:
 def export_schedule_document_as_json(
     matched_document: Match2d,
     dst_path: str = '../data/import.json',
-    source_path: Path | None = None,
+    source_path: Path | None = None,  # оставляем для совместимости и возможного использования
 ) -> None:
     """
     The doc must be matched with grammar_root grammar.
@@ -266,9 +276,9 @@ def export_schedule_document_as_json(
     """
     out = adict()
 
+    # Для EventImporter ожидается строковый title
     original_title = plain(matched_document['title'].get_text())
-    metadata = build_schedule_metadata(source_path, original_title)
-    out.title = metadata
+    out.title = original_title
 
     # Подготовка структуры таблицы
     out.table = adict({
