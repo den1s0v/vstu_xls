@@ -282,6 +282,22 @@ def export_schedule_document_as_json(
 
     # Нормализуем формулировку степени: "магистров" → "магистратура"
     normalized_title = original_title.replace("магистров", "магистратура").replace("Магистров", "магистратура")
+
+    # Пытаемся определить scope (бакалавриат / магистратура / Аспирантура / Консультация)
+    scope_word = None
+    if source_path is not None:
+        try:
+            md = build_schedule_metadata(source_path, original_title)
+            scope_word = (md.get("scope") or "").strip()
+        except Exception:
+            scope_word = None
+
+    # Если scope известен и ещё не фигурирует в заголовке — добавим его в конец
+    if scope_word:
+        low_title = normalized_title.lower()
+        if scope_word.lower() not in low_title:
+            normalized_title = f"{normalized_title} {scope_word}"
+
     out.title = normalized_title
 
     # Подготовка структуры таблицы

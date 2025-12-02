@@ -82,6 +82,8 @@ def process_single_file(
         # Генерируем уникальное имя для подпапки (на основе имени исходного файла, без подпути)
         file_stem = input_path.stem
         output_dir = output_base / file_stem
+        # Убеждаемся, что директория для отчётов существует, прежде чем экспортировать unused_patterns.*
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         # Читаем грамматику
         grammar = read_grammar(grammar_path)
