@@ -852,13 +852,27 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         if not dates:
             return []
 
+        # Значения по умолчанию на случай, если ничего не получится определить из years_hint
+        DEFAULT_LEFT_YEAR = 2025
+        DEFAULT_RIGHT_YEAR = 2026
+
         left_year = right_year = None
         if years_hint:
-            # Пытаемся вытащить "2025-2026" из строки
+            # Пытаемся вытащить "2025-2026" или хотя бы два года из строки
             m = re.search(r"(\d{4})\s*-\s*(\d{4})", years_hint)
             if m:
                 left_year = int(m.group(1))
                 right_year = int(m.group(2))
+            else:
+                nums = re.findall(r"\d{4}", years_hint)
+                if len(nums) >= 2:
+                    left_year = int(nums[0])
+                    right_year = int(nums[1])
+
+        # Если так и не смогли определить годы — используем дефолтный диапазон
+        if left_year is None or right_year is None:
+            left_year = DEFAULT_LEFT_YEAR
+            right_year = DEFAULT_RIGHT_YEAR
 
         def resolve_year(month: int) -> int | None:
             if left_year is None or right_year is None:
