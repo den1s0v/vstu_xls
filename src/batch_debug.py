@@ -9,6 +9,7 @@ from converters.xlsx import ExcelGrid
 from export.vstu import export_schedule_document_as_json
 from grammar2d import read_grammar
 from services import DocumentParsingService, WaveDebugExporter
+from utils.convert import convert_all_in_dir
 from utils import Checkpointer
 
 
@@ -147,7 +148,15 @@ def process_all_in_dir(
     enable_json: bool = True,
     enable_excel: bool = True,
 ) -> None:
-    """Обрабатывает все XLSX файлы в указанной папке (рекурсивно)."""
+    """Обрабатывает все XLSX файлы в указанной папке (рекурсивно).
+
+    Дополнительно: перед обработкой пытается сконвертировать все `.xls` в `.xlsx`
+    в том же дереве каталогов, если для них ещё нет соседнего `.xlsx` файла.
+    """
+    # Сначала конвертируем старые `.xls` → `.xlsx`, если такие файлы есть
+    convert_all_in_dir(folder_path)
+
+    # Теперь собираем все `.xlsx` для основной обработки
     paths = list(folder_path.rglob('*.xlsx'))
     logger.info("Found {} XLSX files in {}", len(paths), folder_path)
     process_many(paths, grammar_path, output_base, enable_json, enable_excel)

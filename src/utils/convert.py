@@ -91,9 +91,25 @@ def convert_many(paths: list[str | Path]):
     ch.hit(f'COMPLETE! files converted: {len(paths)}')
 
 
-def convert_all_in_dir(folder_path = '.'):
-    paths = list(Path(folder_path).rglob('*.xls'))
-    convert_many(paths)
+def convert_all_in_dir(folder_path='.') -> None:
+    """Найти все `.xls` и сконвертировать только те, у которых рядом нет `.xlsx`."""
+    root = Path(folder_path)
+    xls_paths = list(root.rglob('*.xls'))
+
+    to_convert: list[Path] = []
+    for xls_path in xls_paths:
+        xlsx_candidate = xls_path.with_suffix('.xlsx')
+        if xlsx_candidate.exists():
+            # Уже есть сконвертированный файл — пропускаем
+            print(f'SKIP (xlsx exists): {xls_path} -> {xlsx_candidate}')
+            continue
+        to_convert.append(xls_path)
+
+    if not to_convert:
+        print(f'No .xls files to convert in {root} (all have .xlsx siblings).')
+        return
+
+    convert_many(to_convert)
 
 def main():
     # paths = (
