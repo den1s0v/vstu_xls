@@ -32,7 +32,7 @@ def xls_to_json(xlsx_path: str):
         save_raw_document_data(doc)
         ch.hit('Raw document data saved')
 
-    export_schedule_document_as_json(doc)
+    export_schedule_document_as_json(doc, source_path=Path(xlsx_path))
     ch.hit('Schedule data exported')
 
     ch.since_start('... Whole process took')
@@ -152,6 +152,92 @@ def _box_dict(box) -> Mapping:
     }
 
 
+def build_schedule_metadata(source_path: Path | None, original_title: str | None) -> dict:
+    """Формирует объект метаданных расписания для поля `title` в JSON.
+
+    Формат соответствует `materials/schedule_reference_import.json`:
+        {
+            "course": "4",
+            "schedule_template_metadata_faculty_shortname": "ФЭВТ",
+            "semester": "1",
+            "years": "2025-2026",
+            "start_date": "01.09.2025",
+            "end_date": "01.02.2026",
+            "scope": "бакалавриат" | "магистратура",
+            "department_shortname": "ФЭВТ"
+        }
+    """
+    # Хардкоды по заданию
+    years = "2025-2026"
+    semester = "1"
+    start_date = "01.09.2025"
+    end_date = "01.02.2026"
+
+    # Безопасно нормализуем путь
+    path = source_path.resolve() if isinstance(source_path, Path) else None
+
+    # 1) Определяем scope по частям пути
+    scope = "бакалавриат"
+    if path:
+        parts_lower = [p.lower() for p in path.parts]
+        for part in parts_lower:
+            if "магистратура" in part:
+                scope = "магистратура"
+                break
+
+    # 2) Определяем факультет по имени файла
+    faculty_shortnames = [
+        "ФЭВТ",
+        "ХТФ",
+        "ФЭУ",
+        "ФТПП",
+        "ФАТ",
+        "ФАСТИВ",
+        "ФТКМ",
+        "ВМЦЭ",
+    ]
+
+    faculty = None
+    filename = ""
+    if path:
+        filename = path.name
+    elif original_title:
+        filename = original_title
+
+    for short in faculty_shortnames:
+        if short in filename:
+            faculty = short
+            break
+
+    # Если не нашли, можно попытаться взять из title или оставить пустым
+    if faculty is None and original_title:
+        for short in faculty_shortnames:
+            if short in original_title:
+                faculty = short
+                break
+
+    if faculty is None:
+        faculty = ""
+
+    # 3) Курс — первая цифра в имени файла
+    course = "1"
+    for ch in filename:
+        if ch.isdigit():
+            course = ch
+            break
+
+    return {
+        "course": course,
+        "schedule_template_metadata_faculty_shortname": faculty,
+        "semester": semester,
+        "years": years,
+        "start_date": start_date,
+        "end_date": end_date,
+        "scope": scope,
+        "department_shortname": faculty,
+        "original_title": original_title or "",
+    }
+
 def plain(s: str | list[str]) -> str:
     """ Ensure value is plain string """
     if isinstance(s, str):
@@ -169,14 +255,20 @@ def plain(s: str | list[str]) -> str:
         return str(s)
 
 
-def export_schedule_document_as_json(matched_document: Match2d, dst_path: str = '../data/import.json'):
+def export_schedule_document_as_json(
+    matched_document: Match2d,
+    dst_path: str = '../data/import.json',
+    source_path: Path | None = None,
+) -> None:
     """
     The doc must be matched with grammar_root grammar.
     Output is adopted for VSTU-Schedule / api.utilities.ImportAPI.import_data.
     """
     out = adict()
 
-    out.title = plain(matched_document['title'].get_text())
+    original_title = plain(matched_document['title'].get_text())
+    metadata = build_schedule_metadata(source_path, original_title)
+    out.title = metadata
 
     # Подготовка структуры таблицы
     out.table = adict({

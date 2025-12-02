@@ -120,7 +120,11 @@ def process_single_file(
             json_output_dir.mkdir(parents=True, exist_ok=True)
             json_path = json_output_dir / f"{file_stem}.json"
 
-            export_schedule_document_as_json(document_match, dst_path=str(json_path))
+            export_schedule_document_as_json(
+                document_match,
+                dst_path=str(json_path),
+                source_path=input_path,
+            )
             logger.info("  Exported JSON schedule to {}", json_path.resolve())
 
         return True
