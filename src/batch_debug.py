@@ -16,7 +16,8 @@ from utils import Checkpointer
 def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
     default_grammar = root_dir / "cnf" / "grammar_root.yml"
-    default_input_dir = root_dir / "tests" / "test_data"
+    # default_input_dir = root_dir / "tests" / "test_data"
+    default_input_dir = root_dir / "materials/2025-12/магистратура"
     default_output_base = root_dir / "data" / "batch_debug"
 
     parser = argparse.ArgumentParser(
