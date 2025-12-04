@@ -720,19 +720,35 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                 if isinstance(disc, list):
                     parts: list[str] = []
                     for item in disc:
-                        if isinstance(item, dict) and 'discipline' in item:
-                            parts.append(plain(item['discipline']))
+                        if isinstance(item, dict):
+                            if 'discipline' in item:
+                                parts.append(plain(item['discipline']))
+                            else:
+                                # Структурированный объект, который мы не умеем разворачивать —
+                                # лучше явно упасть, чем превратить его в строку.
+                                raise ValueError(f"Unexpected discipline item structure: {item!r}")
+                        elif isinstance(item, str):
+                            parts.append(item)
                         else:
-                            parts.append(plain(item))
+                            raise ValueError(f"Unexpected discipline item type: {type(item)!r} in {disc!r}")
                     subject = ' '.join(p.strip() for p in parts if p.strip())
-                elif isinstance(disc, dict) and 'discipline' in disc:
-                    subject = plain(disc['discipline'])
+                elif isinstance(disc, dict):
+                    if 'discipline' in disc:
+                        subject = plain(disc['discipline'])
+                    else:
+                        # Неизвестная структура словаря дисциплины
+                        raise ValueError(f"Unexpected discipline dict structure: {disc!r}")
                 elif isinstance(disc, str):
                     subject = disc
                 else:
+                    # Для прочих простых типов (числа и т.п.) допустимо привести к строке
                     subject = plain(disc)
             elif 'discipline_name' in discipline_content:
                 subject = plain(discipline_content['discipline_name'])
+            else:
+                # Словарь без ожидаемых ключей discipline / discipline_name:
+                # пример: {'m2': {...}, 'm1': {...}}. Не пытаемся превращать в строку.
+                raise ValueError(f"Unknown discipline content structure: {discipline_content!r}")
         
         # Извлекаем группы
         groups = resolve_groups(discipline_match)
