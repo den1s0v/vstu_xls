@@ -2,12 +2,11 @@ import unittest
 
 from tests_bootstrapper import init_testing_environment
 
-from vstuxls.constraints_2d import SizeConstraint
-
 init_testing_environment()
 
 from pathlib import Path
 
+from vstuxls.constraints_2d import SizeConstraint
 from vstuxls.constraints_2d.LocationConstraint import LocationConstraint
 from vstuxls.geom2d import DOWN, LEFT, UP, Box, RangedBox, RangedSegment, open_range
 from vstuxls.grammar2d import read_grammar

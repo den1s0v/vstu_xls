@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 
 import yaml
@@ -223,7 +224,7 @@ def read_grammar_data(
 
 
 def read_grammar(
-        config_file: str | Path,
+        config_file: str | Path = Path(str(files('vstuxls').joinpath('cnf', 'grammar_root.yml'))),
         data: dict | None = None,
         require_cell_types: bool = True,
   ) -> Grammar | None:

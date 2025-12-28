@@ -1,5 +1,5 @@
-from importlib.resources import files
 import sys
+from importlib.resources import files
 from pathlib import Path
 from pprint import pprint
 
@@ -14,7 +14,7 @@ if __name__ == '__main__':
     logger.add(sys.stderr, level='INFO')
 
     lib_dir = files("vstuxls")
-    grammar_path = Path(str(lib_dir)) / "cnf" / "grammar_root.yml"
+    grammar_path = Path(str(lib_dir / "cnf" / "grammar_root.yml"))
     vstu_grammar = read_grammar(grammar_path)
     # grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
     grid_vstu_feu3 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭУ_3 курс.xlsx'))

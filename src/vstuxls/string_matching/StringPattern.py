@@ -1,9 +1,12 @@
 import re
-from typing import Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Union
 
 import vstuxls.string_matching.CellType as ns
-from vstuxls.string_matching.StringMatch import StringMatch
 from vstuxls.string_matching.StringTransformer import StringTransformer
+
+if TYPE_CHECKING:
+    from vstuxls.string_matching.StringMatch import StringMatch
 
 # A comma or a mandatory space with optional spaces around.
 RE_COMMON_SEPARATOR = re.compile(r'\s*[,\s]\s*')
@@ -58,7 +61,7 @@ class StringPattern:
 
     # inner data
     _compiled_re: re.Pattern = None
-    _re_match_method: callable = None
+    _re_match_method: Callable = None
 
     def __init__(self, *args, **kwargs):
         """Valid calls:
@@ -214,7 +217,7 @@ class StringPattern:
         except (ValueError, IndexError):
             return None
 
-    def calc_precision_of_match(self, match: StringMatch) -> float:
+    def calc_precision_of_match(self, match: 'StringMatch') -> float:
         """ Precision of `match` in range [0..1], by default defined as `pattern.confidence * match.coverage_ratio`. """
         return self.confidence * match.coverage_ratio
 

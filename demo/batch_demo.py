@@ -15,7 +15,7 @@ from vstuxls.utils.convert import convert_all_in_dir
 def parse_args() -> argparse.Namespace:
     lib_dir = files("vstuxls")
     root_dir = Path(__file__).resolve().parent.parent
-    default_grammar = lib_dir / "cnf" / "grammar_root.yml"
+    default_grammar = Path(str(lib_dir / "cnf" / "grammar_root.yml"))
     # default_input_dir = root_dir / "tests" / "test_data"
     default_input_dir = root_dir / "materials/2025-12/магистратура"
     default_output_base = root_dir / "data" / "batch_debug"

@@ -1,15 +1,17 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import vstuxls.grammar2d.Grammar as ns
-import vstuxls.grammar2d.Match2d as m2
-import vstuxls.grammar2d.PatternComponent as pc
 import vstuxls.grammar2d.PatternMatcher as pm
 from vstuxls.constraints_2d import BoolExprRegistry, SizeConstraint, SpatialConstraint
 from vstuxls.geom2d import Box, Point, open_range
 from vstuxls.utils import WithCache, WithSafeCreate, safe_adict, sorted_list
 
+if TYPE_CHECKING:
+    from vstuxls.grammar2d import PatternComponent
+    from vstuxls.grammar2d.Match2d import Match2d
 
 class OverlapResolutionMode(Enum):
     """Режимы разрешения накладок между матчами."""
@@ -212,7 +214,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         rather in a context of another pattern. """
         return True
 
-    def recalc_box_for_match(self, match: 'm2.Match2d') -> Box:
+    def recalc_box_for_match(self, match: 'Match2d') -> Box:
         """ Calc bounding box simply as union of all components
         """
         if not match.component2match:
@@ -224,44 +226,44 @@ class Pattern2d(WithCache, WithSafeCreate):
         ))
         return union
 
-    def get_points_occupied_by_match(self, match: 'm2.Match2d') -> list[Point]:
+    def get_points_occupied_by_match(self, match: 'Match2d') -> list[Point]:
         """ Default: opaque.
         Реализация по умолчанию: Просто берём внутреннюю прямоугольную область.
         """
         return sorted_list(match.box.iterate_points())
 
-    def get_text_of_match(self, match: 'm2.Match2d') -> list[str]:
+    def get_text_of_match(self, match: 'Match2d') -> list[str]:
         """ Просто всё содержимое всех ячеек.
         """
         return [s
                 for m in match.component2match.values()
                 for s in m.get_content()]
 
-    def prepare_match(self, match: 'm2.Match2d') -> None:
+    def prepare_match(self, match: 'Match2d') -> None:
         """Хук для инициализации данных совпадения."""
         self._ensure_match_data(match)
         self._attach_static_data(match)
 
-    def _attach_static_data(self, match: 'm2.Match2d') -> None:
+    def _attach_static_data(self, match: 'Match2d') -> None:
         data = self._ensure_match_data(match)
 
         static_data = self._static_data_for_match(match)
         if static_data:
             data.update(static_data)
 
-    def _ensure_match_data(self, match: 'm2.Match2d') -> safe_adict:
+    def _ensure_match_data(self, match: 'Match2d') -> safe_adict:
         if match.data is None or not isinstance(match.data, safe_adict):
             match.data = safe_adict(match.data or {})
         return match.data
 
-    def set_match_metadata(self, match: 'm2.Match2d', **metadata) -> None:
+    def set_match_metadata(self, match: 'Match2d', **metadata) -> None:
         """Служебные данные, используемые при экспорте содержимого."""
         if not metadata:
             return
         data = self._ensure_match_data(match)
         data.update(metadata)
 
-    def _static_data_for_match(self, match: 'm2.Match2d') -> dict | None:
+    def _static_data_for_match(self, match: 'Match2d') -> dict | None:
         if not self.static_data:
             return None
         try:
@@ -269,7 +271,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         except Exception:
             return dict(self.static_data)
 
-    def _exportable_match_metadata(self, match: 'm2.Match2d') -> dict:
+    def _exportable_match_metadata(self, match: 'Match2d') -> dict:
         data = getattr(match, 'data', None)
         if not data:
             return {}
@@ -280,7 +282,7 @@ class Pattern2d(WithCache, WithSafeCreate):
             if isinstance(key, str) and key.startswith('@')
         }
 
-    def _merge_static_data_into_content(self, match: 'm2.Match2d', content):
+    def _merge_static_data_into_content(self, match: 'Match2d', content):
         static_data = self._static_data_for_match(match)
         metadata = self._exportable_match_metadata(match)
 
@@ -315,7 +317,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         merged.setdefault('@content', content)
         return merged
 
-    def _build_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict:
+    def _build_content_of_match(self, match: 'Match2d', include_position=False) -> dict:
         """Игнорирует поля, начинающиеся с "_". Этот префикс может быть использован 
         специально, чтобы скрывать избыточные данные из результата."""
         return ({
@@ -326,7 +328,7 @@ class Pattern2d(WithCache, WithSafeCreate):
             if not name.startswith('_')
         }
 
-    def get_content_of_match(self, match: 'm2.Match2d', include_position=False):
+    def get_content_of_match(self, match: 'Match2d', include_position=False):
         """Компактные данные для экспорта в JSON."""
         content = self._build_content_of_match(match, include_position)
         return self._merge_static_data_into_content(match, content)
@@ -426,7 +428,7 @@ class Pattern2d(WithCache, WithSafeCreate):
         """ Ex. precision = score / max_score """
         raise NotImplementedError(type(self))
 
-    def score_of_match(self, match: 'm2.Match2d') -> float:
+    def score_of_match(self, match: 'Match2d') -> float:
         """ Calc score for given match """
         raise NotImplementedError(type(self))
 
@@ -510,7 +512,7 @@ def read_pattern(data: dict) -> Pattern2d | None:
     return None
 
 
-def read_pattern_components(data: dict, pattern_name=None) -> list[pc.PatternComponent]:
+def read_pattern_components(data: dict, pattern_name=None) -> list['PatternComponent']:
     components = []
 
     for component_section_key in ('inner', 'outer'):
@@ -536,7 +538,9 @@ def read_pattern_component(
         name: str,
         data: dict,
         role: str = 'outer',
-        pattern_name: str = None) -> pc.PatternComponent | None:
+        pattern_name: str = None) -> 'PatternComponent | None':
+
+    from vstuxls.grammar2d import PatternComponent
     component_name = (pattern_name or '') + '.' + name
 
     assert isinstance(data, dict), data
@@ -580,7 +584,7 @@ def read_pattern_component(
         data['constraints'] = constraints
     data['name'] = name
 
-    component = pc.PatternComponent.safe_create(**data)
+    component = PatternComponent.safe_create(**data)
     keys_ignored &= set(component._kwargs_ignored)
 
     if keys_ignored:
@@ -590,7 +594,7 @@ def read_pattern_component(
     return component
 
 
-def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list[pc.SpatialConstraint]:
+def extract_pattern_constraints(data: dict, pattern_name: str = None) -> list['SpatialConstraint']:
     """ Finds keys 'size', 'location' (so far) and parses them as `SpatialConstraint`s.
      By the way, deletes corresponding keys from `data`!
      """

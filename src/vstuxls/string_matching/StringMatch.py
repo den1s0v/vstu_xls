@@ -1,14 +1,13 @@
 import re
 from dataclasses import dataclass
 
-# Circular import workaround: https://stackoverflow.com/a/17229804/12824563
-import vstuxls.string_matching.StringPattern as ns
+from vstuxls.string_matching.StringPattern import StringPattern
 
 
 @dataclass
 class StringMatch:
     re_match: re.Match | list[str]
-    pattern: 'ns.StringPattern'
+    pattern: StringPattern
     text: str
 
     @property

@@ -142,7 +142,7 @@ class Region(Box):
                 yield cw
                 cells_seen.add(cw)
 
-    def find_cell(self, predicate: Callable[[bool]], directions=(RIGHT, DOWN)) -> Optional['CellView']:
+    def find_cell(self, predicate: Callable[..., bool], directions=(RIGHT, DOWN)) -> Optional['CellView']:
         """ Найти первую ячейку, удовлетворяющую условию `predicate`.
             Перебор осуществляется в заданных направлениях.
             Find the first `cellView` that satisfies the `predicate` condition.
@@ -153,7 +153,7 @@ class Region(Box):
             return cw
         return None
 
-    def find_all_cells(self, predicate: Callable[[bool]], directions=(RIGHT, DOWN)):
+    def find_all_cells(self, predicate: Callable[..., bool], directions=(RIGHT, DOWN)):
         for cw in self.iterate_cells(directions):
             if predicate(cw):
                 yield cw

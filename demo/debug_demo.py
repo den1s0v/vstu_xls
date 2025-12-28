@@ -16,7 +16,7 @@ DEFAULT_XLSX_NAME = 'ОН_ФЭВТ_4 курс 2023.xlsx'
 def parse_args() -> argparse.Namespace:
     lib_dir = files("vstuxls")
     root_dir = Path(__file__).parent.parent
-    default_grammar = lib_dir / "cnf" / "grammar_root.yml"
+    default_grammar = Path(str(lib_dir / "cnf" / "grammar_root.yml"))
     default_input = root_dir / "tests" / "test_data" / DEFAULT_XLSX_NAME
     default_output = root_dir / "data" / "debug_waves"
 

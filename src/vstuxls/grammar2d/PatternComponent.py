@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from functools import reduce
 from operator import and_
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from loguru import logger
 
-import vstuxls.grammar2d.Grammar as ns
-import vstuxls.grammar2d.Pattern2d as pt
+if TYPE_CHECKING:
+    import vstuxls.grammar2d.Grammar as ns
+    import vstuxls.grammar2d.Pattern2d as pt
 from vstuxls.constraints_2d import LocationConstraint, SizeConstraint, SpatialConstraint
 from vstuxls.geom2d import Box, RangedBox, aggregate_flexibility_estimations, open_range
 from vstuxls.grammar2d.Match2d import Match2d

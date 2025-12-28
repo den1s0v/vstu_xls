@@ -17,14 +17,13 @@
 """
 
 import yaml
-from utils import find_file_under_path
 
-from vstuxls.string_matching import CellClassifier
 from vstuxls.string_matching.CellClassifier import CellClassifier
 from vstuxls.string_matching.CellType import CellType
 from vstuxls.string_matching.helper_transformers import fix_sparse_words, shrink_extra_inner_spaces
 from vstuxls.string_matching.StringMatch import StringMatch
 from vstuxls.string_matching.StringPattern import StringPattern
+from vstuxls.utils import find_file_under_path
 
 
 def read_cell_types(
