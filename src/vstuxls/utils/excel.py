@@ -3,14 +3,15 @@
 """
 Пред-обработка Excel-таблиц и вспомогательные операции над ними.
 """
-from typing import Optional
+
+from contextlib import suppress
 
 from openpyxl import load_workbook
 from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill
-
 from string_matching.CellClassifier import CellClassifier
 from string_matching.StringMatch import StringMatch
+
 from utils import Checkpointer
 
 
@@ -71,11 +72,8 @@ def colorize_values_on_sheet(sheet) -> None:
                 cell.fill = PatternFill("solid", fgColor=color)
                 comment = Comment(text=comment, author='Cell classifier')
                 # Assign the comment to the cell.
-                try:
+                with suppress(AttributeError):
                     cell.comment = comment
-                except AttributeError:
-                    # print('failed to add a comment to cell', cell.coordinate)
-                    pass
 
 
 def mark_recognized_values_in_sheet(filename_xlsx_in, filename_txt_out=None):

@@ -22,16 +22,17 @@
 Чтобы указать, что некоторая пара элементов конфликтует, нужно снабдить эти элементы одинаковыми компонентами.
 """
 
+from utils import sorted_list
+
 from clash.clashing_element import *
 from clash.resolving import fill_clashing_elements, resolve_clashes5
-from utils import sorted_list
 
 
 def find_combinations_of_compatible_elements(
         elements: Iterable,
         pair_compatibility_checker=None,
         components_getter=None,
-        max_elements: int = None
+        max_elements: int | None = None
     ) -> list[list]:
     """ Главная функция.
 

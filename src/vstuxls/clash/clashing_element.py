@@ -1,14 +1,14 @@
 # clashing_element.py
 
+from collections.abc import Callable, Hashable, Iterable, Sized
 from functools import cache
-from typing import Hashable, Iterable, override, Self
+from typing import Self, override
 
 from adict import adict
-
 from utils import safe_adict
 
 # Функция (obj1, obj2) -> bool
-_pair_compatibility_checker: callable = None
+_pair_compatibility_checker: Callable | None = None
 
 
 def trivial_components_getter(container):
@@ -22,13 +22,13 @@ def set_pair_compatibility_checker(func):
     _pair_compatibility_checker = func
 
 
-def retain_longest_only(objects: set | list | Iterable) -> set:
-    if len(objects) > 1:
+def retain_longest_only(objects: Iterable) -> set:
+    if isinstance(objects, Sized) and len(objects) > 1:
         with_sizes = [(len(obj), obj) for obj in objects]
         with_sizes.sort(reverse=True, key=lambda t: t[0])
         top_len = with_sizes[0][0]
         objects = {t[1] for t in with_sizes if len(t[1]) == top_len}
-    return objects
+    return set(objects)
 
 
 class ObjWithDataWrapper(Hashable):
@@ -39,7 +39,7 @@ class ObjWithDataWrapper(Hashable):
     data: safe_adict
     _hash: int
 
-    def __init__(self, obj: Hashable, data: adict = None):
+    def __init__(self, obj: Hashable, data: adict | None = None):
         self._obj = obj
         self.data = safe_adict(data or {})
         try:
@@ -60,7 +60,7 @@ class ObjWithDataWrapper(Hashable):
 
     def __lt__(self, other):
         if isinstance(other, ObjWithDataWrapper):
-            return self._obj < other._obj
+            return self._obj < other._obj # type: ignore
         else:
             raise TypeError(
                 f"'<' not supported between instances of '{type(self).__name__}' and '{type(other).__name__}'")
@@ -127,7 +127,7 @@ class ClashingContainer(ClashingElement):
     presence of common components. """
     _components: frozenset['ClashingComponent']
 
-    def __init__(self, obj: Hashable, data: adict = None, components: set['ClashingComponent'] = None):
+    def __init__(self, obj: Hashable, data: adict | None = None, components: set['ClashingComponent'] | None = None):
         super().__init__(obj, data)
         self._components = frozenset(components) if components is not None else frozenset()
 
@@ -140,6 +140,7 @@ class ClashingContainer(ClashingElement):
 
     # _all_directly_overlapping_cache = None
 
+    @cache
     def clashes_with(self, other: 'ClashingContainer') -> bool:
         assert isinstance(other, ClashingContainer), type(other)
         return any(component in other.components for component in self.components)
@@ -182,7 +183,7 @@ class ClashingContainer(ClashingElement):
 class ClashingComponent(ObjWithDataWrapper):
     """ A part of one or more `ClashingContainer`s. """
 
-    def __init__(self, obj: Hashable, data: adict = None):
+    def __init__(self, obj: Hashable, data: adict | None = None):
         super().__init__(obj, data)
 
     def __str__(self):
@@ -233,6 +234,8 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
+            if not el.data:
+                continue
             for sub_el in el.data.globally_clashing:
                 s.add(sub_el.clone())
 

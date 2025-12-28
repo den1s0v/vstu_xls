@@ -1,4 +1,3 @@
-# xlrd  (not used directly)
 openpyxl
 lxml
 xls2xlsx
@@ -6,4 +5,4 @@ adict
 PyYAML
 sympy
 loguru
-# pywin32 (optional, Windows only)
+pywin32; sys_platform == 'win32'
