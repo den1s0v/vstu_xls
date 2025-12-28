@@ -1,9 +1,9 @@
 import re
 from typing import Union
 
-import string_matching.CellType as ns
-from string_matching.StringMatch import StringMatch
-from string_matching.StringTransformer import StringTransformer
+import vstuxls.string_matching.CellType as ns
+from vstuxls.string_matching.StringMatch import StringMatch
+from vstuxls.string_matching.StringTransformer import StringTransformer
 
 # A comma or a mandatory space with optional spaces around.
 RE_COMMON_SEPARATOR = re.compile(r'\s*[,\s]\s*')

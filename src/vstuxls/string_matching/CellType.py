@@ -1,10 +1,6 @@
-from typing import List
-from typing import Optional
 
-from string_matching.StringPattern import RE_COMMON_SEPARATOR
-from string_matching.StringMatch import StringMatch
-from string_matching.StringPattern import StringPattern
-
+from vstuxls.string_matching.StringMatch import StringMatch
+from vstuxls.string_matching.StringPattern import RE_COMMON_SEPARATOR, StringPattern
 
 VALID_update_content = {'clear', 'replace_with_preprocessed'}
 
@@ -23,8 +19,8 @@ class CellType:
     """
     name: str  # id-like name
     description: str  # comment for humans
-    patterns: List[StringPattern]  # patterns with confidence level
-    update_content: list[str] = ()  # optional names of transformations to apply to content
+    patterns: list[StringPattern]  # patterns with confidence level
+    update_content: list[str] = []  # optional names of transformations to apply to content
 
     def __init__(self, name='a', description='no info', patterns=None, update_content=None):
         self.name = name
@@ -54,7 +50,7 @@ class CellType:
         ps.sort(key=lambda p: p.confidence, reverse=True)
         return ps
 
-    def match(self, cell_text: str) -> Optional[StringMatch]:
+    def match(self, cell_text: str) -> StringMatch | None:
         """Return match according to pattern with the highest confidence."""
         for p in self.patterns:
             if m := p.match(cell_text):

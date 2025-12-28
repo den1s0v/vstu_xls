@@ -1,4 +1,7 @@
 # Базовый класс для всех преобразователей строк
+from collections.abc import Callable
+
+
 class StringTransformer:
     registry = {}
 
@@ -12,16 +15,16 @@ class StringTransformer:
         raise NotImplementedError('StringTransformer class is intended for subclassing only.')
 
     @classmethod
-    def apply(cls, transformer_id: 'str | callable', string: str) -> str:
+    def apply(cls, transformer_id: str | Callable, string: str) -> str:
         # Получение класса преобразователя по id и применение его к строке
-        
+
         if callable(transformer_id):
-            f = transformer_id  # 
+            f = transformer_id  #
             return f(string)
-        
+
         transformer_cls = cls.registry.get(transformer_id)
         if transformer_cls is None:
             raise ValueError(f"No transformer registered for id: {transformer_id}")
-        
+
         transformer = transformer_cls()  # Note: excessive creation for just one call
         return transformer.transform(string)

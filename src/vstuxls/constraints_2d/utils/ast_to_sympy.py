@@ -26,7 +26,8 @@ I've corrected your code so it works (see below). Please add support for boolean
  """
 
 import ast
-from sympy import symbols, And, Or, Not, Eq, Ne, Piecewise, Min, Max, S
+
+from sympy import And, Eq, Ne, Not, Or, Piecewise, S, symbols
 
 # Define a mapping from Python operators to SymPy functions
 operator_map = {
@@ -83,13 +84,13 @@ def ast_to_sympy(node):
         return left
 
     elif isinstance(node, ast.Call):
-        func_name = node.func.id
+        func_name = getattr(node.func, 'id', None) or (node.func.attr if isinstance(node.func, ast.Attribute) else None)
         args_n = len(node.args)
         if func_name == 'abs':
-            assert 1 == args_n, f"Exact one argument for abs() expected, but got {args_n} arguments."
+            assert args_n == 1, f"Exact one argument for abs() expected, but got {args_n} arguments."
             return abs(ast_to_sympy(node.args[0]))
         if func_name in ('min', 'max'):
-            assert 1 <= args_n, f"At least one argument for {func_name}() expected, but got {args_n} arguments."
+            assert args_n >= 1, f"At least one argument for {func_name}() expected, but got {args_n} arguments."
             sympy_func = globals()[func_name.capitalize()]
             return sympy_func(*(ast_to_sympy(arg) for arg in node.args))
 

@@ -1,20 +1,21 @@
+from importlib.resources import files
+import sys
 from pathlib import Path
 from pprint import pprint
-import sys
 
 from loguru import logger
 
-from converters.xlsx import ExcelGrid
-from grammar2d import read_grammar, GrammarMatcher
-
+from vstuxls.converters.xlsx import ExcelGrid
+from vstuxls.grammar2d import GrammarMatcher, read_grammar
 
 if __name__ == '__main__':
     # redefine logging level defaulting to DEBUG
     logger.remove()
     logger.add(sys.stderr, level='INFO')
 
-
-    vstu_grammar = read_grammar('../cnf/grammar_root.yml')
+    lib_dir = files("vstuxls")
+    grammar_path = Path(str(lib_dir)) / "cnf" / "grammar_root.yml"
+    vstu_grammar = read_grammar(grammar_path)
     # grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
     grid_vstu_feu3 = ExcelGrid.read_xlsx(Path('../tests/test_data/ОН_ФЭУ_3 курс.xlsx'))
 

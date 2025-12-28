@@ -1,13 +1,12 @@
 # grid.py
-from dataclasses import dataclass
-
 from abc import ABC
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Optional
 
 from adict import adict
 
-from geom2d import Point, Size, Box, Direction, LEFT, RIGHT, UP, DOWN
-
+from vstuxls.geom2d import DOWN, RIGHT, Box, Direction, Point, Size
 
 # Данные 2D-сетки.
 
@@ -19,7 +18,7 @@ class Grid(ABC):
     point2cell: dict[Point, 'Cell']
 
     def __init__(self) -> None:
-        self.point2cell = dict()
+        self.point2cell = {}
         self._bb_cache = None
 
     def _clear_cells(self) -> None:
@@ -121,7 +120,7 @@ class Region(Box):
 
     def get_region(self, box) -> Optional['Region']:
         if not (box in self or
-                box.overlaps(self) and (box := box.intersect(self)) and box):
+                (box.overlaps(self) and (box := box.intersect(self)) and box)):
             return None  # не показывать ничего за пределами области проекции.
         return self.grid_view.get_region(box)
 
@@ -143,7 +142,7 @@ class Region(Box):
                 yield cw
                 cells_seen.add(cw)
 
-    def find_cell(self, predicate: callable, directions=(RIGHT, DOWN)) -> Optional['CellView']:
+    def find_cell(self, predicate: Callable[[bool]], directions=(RIGHT, DOWN)) -> Optional['CellView']:
         """ Найти первую ячейку, удовлетворяющую условию `predicate`.
             Перебор осуществляется в заданных направлениях.
             Find the first `cellView` that satisfies the `predicate` condition.
@@ -154,7 +153,7 @@ class Region(Box):
             return cw
         return None
 
-    def find_all_cells(self, predicate: callable, directions=(RIGHT, DOWN)):
+    def find_all_cells(self, predicate: Callable[[bool]], directions=(RIGHT, DOWN)):
         for cw in self.iterate_cells(directions):
             if predicate(cw):
                 yield cw
@@ -248,7 +247,7 @@ class GridView(Region):
 
     def get_region(self, box: Box) -> Optional['Region']:
         if not (box in self or
-                box.overlaps(self) and (box := box.intersect(self)) and box):
+                (box.overlaps(self) and (box := box.intersect(self)) and box)):
             return None  # не показывать ничего за пределами области проекции.
 
         rg = self.region_cache.get(box)

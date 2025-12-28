@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 
-from geom2d import Box
-from grammar2d import Terminal
-from grammar2d.PatternMatcher import PatternMatcher
-from grammar2d.Match2d import Match2d
-from grid import Region
-from string_matching import StringMatch
-from utils import safe_adict
+from vstuxls.geom2d import Box
+from vstuxls.grammar2d import Terminal
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.PatternMatcher import PatternMatcher
+from vstuxls.string_matching import StringMatch
+from vstuxls.utils import safe_adict
 
 
 @dataclass

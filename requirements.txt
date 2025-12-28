@@ -1,8 +1,0 @@
-openpyxl
-lxml
-xls2xlsx
-adict
-PyYAML
-sympy
-loguru
-pywin32; sys_platform == 'win32'

@@ -1,16 +1,16 @@
 import unittest
 from pprint import pprint
 
-from geom2d import Point, Box
 from tests_bootstrapper import init_testing_environment
+
+from vstuxls.geom2d import Box, Point
 
 init_testing_environment()
 
 from pathlib import Path
 
-from converters.xlsx import ExcelGrid
-from converters.text import TxtGrid
-from grammar2d import read_grammar, GrammarMatcher
+from vstuxls.converters.xlsx import ExcelGrid
+from vstuxls.grammar2d import GrammarMatcher, read_grammar
 
 
 class GrammarMatchingTestCase(unittest.TestCase):
@@ -129,9 +129,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
             root_content = root.get_content()
             root_content['field'] = set(root_content['field'])
             self.assertEqual({
-                'field': {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', '*', '*', '*', '*', '*', '*', '*',
-                          '*', '*',
-                          '*', '*', '*', },
+                'field': {'o', '*', },
                 'numbers': ['8', '7', '6', '5', '4', '3', '2', '1'],
                 'letters': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']},
                 root_content)

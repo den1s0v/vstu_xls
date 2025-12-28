@@ -5,7 +5,8 @@ from functools import cache
 from typing import Self, override
 
 from adict import adict
-from utils import safe_adict
+
+from vstuxls.utils import safe_adict
 
 # Функция (obj1, obj2) -> bool
 _pair_compatibility_checker: Callable | None = None
@@ -234,7 +235,7 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
         """ Make a subset that it contains only elements not clashing with any other (in this) """
         s = type(self)()
         for el in self:
-            if not el.data:
+            if not el.data.globally_clashing:
                 continue
             for sub_el in el.data.globally_clashing:
                 s.add(sub_el.clone())
@@ -280,12 +281,12 @@ class ClashingElementSet(set['ClashingElement'], Hashable):
 
     def get_bare_objs(self) -> list:
         # Extract objects back, sort for stability
-        arr = [clash_elem.obj for clash_elem in self]
-        arr.sort()
+        arr: list[Hashable] = [clash_elem.obj for clash_elem in self]
+        arr.sort() # pyright: ignore[reportCallIssue]
         return arr
 
-    def __hash__(self):
-        # return hash(tuple(sorted(self)))
+    def __hash__(self) -> int:  # type: ignore[override]
+        """Override hash to ensure hashability of ClashingElementSet."""
         return hash(frozenset(self))
 
 
@@ -350,7 +351,7 @@ class Arrangement(ClashingElementSet):
         neighbours = ClashingElementSet({
             neighbour
             for el in self
-            for neighbour in el.data.neighbours
+            for neighbour in (el.data.neighbours or [])
         })
 
         return self.select_candidates_from(neighbours)

@@ -1,8 +1,6 @@
-from dataclasses import dataclass
 from typing import override
 
-from grammar2d.Pattern2d import Pattern2d, PatternRegistry
-from grammar2d.PatternComponent import PatternComponent
+from vstuxls.grammar2d.Pattern2d import Pattern2d, PatternRegistry
 
 
 # @dataclass(kw_only=True)

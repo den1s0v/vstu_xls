@@ -1,7 +1,7 @@
 from collections import namedtuple
 from typing import Self
 
-from geom2d.manhattan_distance import ManhattanDistance
+from vstuxls.geom2d.manhattan_distance import ManhattanDistance
 
 
 class Point(namedtuple('Point', ['x', 'y'])):

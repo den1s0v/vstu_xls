@@ -5,7 +5,7 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from clash import *
+from vstuxls.clash import *
 
 
 class ClashSetsTestCase(unittest.TestCase):

@@ -2,14 +2,13 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 
-import grammar2d.Grammar as ns
-import grammar2d.Match2d as m2
-import grammar2d.PatternComponent as pc
-import grammar2d.PatternMatcher as pm
-from constraints_2d import BoolExprRegistry, SpatialConstraint, SizeConstraint
-from geom2d import Point
-from geom2d import open_range, Box
-from utils import WithCache, WithSafeCreate, sorted_list, safe_adict
+import vstuxls.grammar2d.Grammar as ns
+import vstuxls.grammar2d.Match2d as m2
+import vstuxls.grammar2d.PatternComponent as pc
+import vstuxls.grammar2d.PatternMatcher as pm
+from vstuxls.constraints_2d import BoolExprRegistry, SizeConstraint, SpatialConstraint
+from vstuxls.geom2d import Box, Point, open_range
+from vstuxls.utils import WithCache, WithSafeCreate, safe_adict, sorted_list
 
 
 class OverlapResolutionMode(Enum):
@@ -82,17 +81,17 @@ class OverlapConfig:
 
         criteria: list[OverlapCriterion] = []
         invalid_items: list[str] = []
-        
+
         for item in raw_resolution:
             if not isinstance(item, str):
                 invalid_items.append(f"{item!r} (not a string)")
                 continue
-            
+
             parts = item.split("-")
             if len(parts) != 2:
                 invalid_items.append(f"{item!r} (expected format 'metric-order', e.g. 'area-max')")
                 continue
-            
+
             metric_str, order_str = parts[0].lower(), parts[1].lower()
             try:
                 metric = OverlapMetricEnum(metric_str)
@@ -102,7 +101,7 @@ class OverlapConfig:
                     f"expected one of: {', '.join(e.value for e in OverlapMetricEnum)})"
                 )
                 continue
-            
+
             try:
                 order = OverlapOrderEnum(order_str)
             except ValueError:
@@ -111,7 +110,7 @@ class OverlapConfig:
                     f"expected one of: {', '.join(e.value for e in OverlapOrderEnum)})"
                 )
                 continue
-            
+
             criteria.append(OverlapCriterion(metric=metric, order=order))
 
         if invalid_items:
@@ -363,11 +362,11 @@ class Pattern2d(WithCache, WithSafeCreate):
              let all extensions match before this one can be used.
         """
         # make a set & convert to list
-        return list(sorted({
+        return sorted({
             dep
             for extending in self.get_extending_patterns(recursive)
             for dep in extending.dependencies(recursive)
-        }))
+        })
 
     def extends_patterns(self, recursive=False) -> list['Pattern2d']:
         """ Instances of Pattern2d redefined by this one. """
@@ -549,8 +548,7 @@ def read_pattern_component(
 
     # read constraints for component
     constraints = extract_pattern_constraints(data, component_name, )
-    if 'role' in data:
-        del data['role']
+    data.pop('role', None)
 
     # collect info about keys could not be read...
     keys_ignored = set(data.keys())

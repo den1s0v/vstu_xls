@@ -1,14 +1,14 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import override
 
-from geom2d import open_range, Point, Box
-import grammar2d.Grammar as ns
-import grammar2d.Match2d as m2
-from grammar2d.MatchRelation import MatchRelation, lt, ne
-from grammar2d.NonTerminal import NonTerminal
-from grammar2d.Pattern2d import Pattern2d, PatternRegistry
-from grammar2d.PatternComponent import PatternComponent
-from utils import sorted_list
+import vstuxls.grammar2d.Grammar as ns
+import vstuxls.grammar2d.Match2d as m2
+from vstuxls.geom2d import Box, Point
+from vstuxls.grammar2d.MatchRelation import MatchRelation, lt, ne
+from vstuxls.grammar2d.NonTerminal import NonTerminal
+from vstuxls.grammar2d.Pattern2d import Pattern2d, PatternRegistry
+from vstuxls.grammar2d.PatternComponent import PatternComponent
+from vstuxls.utils import sorted_list
 
 
 @PatternRegistry.register
@@ -56,7 +56,7 @@ class AreaPattern(NonTerminal):
             assert self not in dependency_set, \
                 'Grammar pattern `{self.name}` has circular dependency on itself (via component `{comp.name}`) !'
             dependency_set |= set(super().dependencies(recursive))
-            self._cache.dependencies = list(sorted(dependency_set))
+            self._cache.dependencies = sorted(dependency_set)
         return self._cache.dependencies
 
     @override

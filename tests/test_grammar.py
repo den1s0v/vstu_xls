@@ -1,21 +1,20 @@
 import unittest
 
-from constraints_2d import SizeConstraint
 from tests_bootstrapper import init_testing_environment
+
+from vstuxls.constraints_2d import SizeConstraint
 
 init_testing_environment()
 
 from pathlib import Path
 
-from utils import find_file_under_path
-from grammar2d import read_grammar
-
-from grammar2d.PatternComponent import PatternComponent
-from constraints_2d.LocationConstraint import LocationConstraint
-from geom2d import Box, RangedBox, LEFT, UP, DOWN
-from geom2d import open_range, RangedSegment
-from grammar2d.Match2d import Match2d
-from grammar2d.ArrayPatternMatcher import counts_for_splitting
+from vstuxls.constraints_2d.LocationConstraint import LocationConstraint
+from vstuxls.geom2d import DOWN, LEFT, UP, Box, RangedBox, RangedSegment, open_range
+from vstuxls.grammar2d import read_grammar
+from vstuxls.grammar2d.ArrayPatternMatcher import counts_for_splitting
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.PatternComponent import PatternComponent
+from vstuxls.utils import find_file_under_path
 
 
 class UtilsTestCase(unittest.TestCase):

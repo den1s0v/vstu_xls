@@ -2,9 +2,9 @@
 from functools import reduce
 from typing import Self
 
-from geom2d.ranged_segment import RangedSegment
-from geom2d.open_range import open_range
-from geom2d.box import Box
+from vstuxls.geom2d.box import Box
+from vstuxls.geom2d.open_range import open_range
+from vstuxls.geom2d.ranged_segment import RangedSegment
 
 
 class RangedBox:

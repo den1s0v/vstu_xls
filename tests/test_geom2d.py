@@ -1,13 +1,23 @@
 import unittest
 
-from geom1d import LinearSegment
 from tests_bootstrapper import init_testing_environment
+
+from vstuxls.geom1d import LinearSegment
 
 init_testing_environment()
 
-from geom2d import Box, ManhattanDistance, Point, VariBox, PartialBox, RangedBox
-from geom2d import parse_range, parse_size_range
-from geom2d import open_range, RangedSegment
+from vstuxls.geom2d import (
+    Box,
+    ManhattanDistance,
+    PartialBox,
+    Point,
+    RangedBox,
+    RangedSegment,
+    VariBox,
+    open_range,
+    parse_range,
+    parse_size_range,
+)
 
 
 class BoxTestCase(unittest.TestCase):

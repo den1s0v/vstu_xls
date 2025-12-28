@@ -1,7 +1,8 @@
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Iterable, Self, Generator
+from typing import Self
 
 from adict import adict
 
@@ -84,7 +85,7 @@ def global_var(**kwargs):
         yield
     finally:
         # cleanup: restore previous values or delete used variables.
-        for name in kwargs.keys():
+        for name in kwargs:
             if name in prev_values:
                 glob[name] = prev_values[name]
             elif name in glob:  # if it was not deleted within wrapped code

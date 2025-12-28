@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-import grammar2d as pt
-import grammar2d.GrammarMatcher as ns
-from geom2d import Box
-from grammar2d.Match2d import Match2d
+import vstuxls.grammar2d as pt
+import vstuxls.grammar2d.GrammarMatcher as ns
+from vstuxls.geom2d import Box
+from vstuxls.grammar2d.Match2d import Match2d
 
 
 @dataclass

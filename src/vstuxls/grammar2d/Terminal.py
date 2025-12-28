@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from typing import override
 
 # from grammar2d import GRAMMAR
-import grammar2d.Match2d as m2
-from grammar2d.Pattern2d import Pattern2d, PatternRegistry
-import grammar2d.Grammar as ns
-from string_matching import CellType
+import vstuxls.grammar2d.Match2d as m2
+from vstuxls.grammar2d.Pattern2d import Pattern2d, PatternRegistry
+from vstuxls.string_matching import CellType
 
 
 @PatternRegistry.register

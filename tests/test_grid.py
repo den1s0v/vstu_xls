@@ -5,11 +5,11 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from converters.text import TxtGrid
-from converters.xlsx import ExcelGrid
-from geom2d.box import Box
-from geom2d.direction import LEFT, RIGHT, UP, Direction
-from utils.path import current_rootpath
+from vstuxls.converters.text import TxtGrid
+from vstuxls.converters.xlsx import ExcelGrid
+from vstuxls.geom2d.box import Box
+from vstuxls.geom2d.direction import LEFT, RIGHT, UP, Direction
+from vstuxls.utils.path import current_rootpath
 
 testdata_path = current_rootpath() / "tests" / "test_data"
 

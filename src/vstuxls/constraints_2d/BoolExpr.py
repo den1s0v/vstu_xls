@@ -1,4 +1,4 @@
-from constraints_2d.CoordVar import CoordVar
+from vstuxls.constraints_2d.CoordVar import CoordVar
 
 
 class BoolExpr:

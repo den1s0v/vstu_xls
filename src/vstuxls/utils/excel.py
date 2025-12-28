@@ -9,10 +9,9 @@ from contextlib import suppress
 from openpyxl import load_workbook
 from openpyxl.comments import Comment
 from openpyxl.styles import PatternFill
-from string_matching.CellClassifier import CellClassifier
-from string_matching.StringMatch import StringMatch
 
-from utils import Checkpointer
+from vstuxls.string_matching.CellClassifier import CellClassifier
+from vstuxls.string_matching.StringMatch import StringMatch
 
 
 def unique_values_of_whole_sheet(sheet) -> list[str]:
@@ -85,22 +84,3 @@ def mark_recognized_values_in_sheet(filename_xlsx_in, filename_txt_out=None):
     filename_out = filename_txt_out or filename_xlsx_in.replace('.xlsx', ' - cells-annotated.xlsx')
     wb.save(filename_out)
     print('Saved file with cells annotated as', filename_out)
-
-
-def main():
-    paths = (
-        r'c:\Users\Student\Downloads\ОН_ФТПП_3 курс.xlsx',
-    )
-
-    ch = Checkpointer()
-    for filename in paths:
-        # extract_unique_values_to_txt(filename)
-        mark_recognized_values_in_sheet(filename)
-
-        ch.hit('one file processed')
-
-    ch.since_start('all files processed in')
-
-
-if __name__ == '__main__':
-    main()

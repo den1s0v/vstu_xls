@@ -1,21 +1,19 @@
-from __future__ import annotations
-
 import json
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
 
 import openpyxl
 from openpyxl.comments import Comment
-from openpyxl.styles import PatternFill, Border, Side
+from openpyxl.styles import Border, PatternFill, Side
 
-from geom2d import Box
-from grammar2d.Match2d import Match2d
-from grid import Grid
+from vstuxls.geom2d import Box
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grid import Grid
 
 try:
-    from converters.xlsx import ExcelGrid
+    from vstuxls.converters.xlsx import ExcelGrid
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     ExcelGrid = None  # type: ignore[assignment]
 
@@ -73,14 +71,14 @@ class WaveDebugExporter:
     # region JSON -----------------------------------------------------------------------
     def _export_json(self, wave_index: int, pattern_names: Sequence[str], matches: list[Match2d]) -> None:
         target_path = self.output_dir / f"wave_{wave_index:02d}.json"
-        
+
         # Подсчитываем количество совпадений для каждого паттерна
-        pattern_counts: dict[str, int] = {name: 0 for name in pattern_names}
+        pattern_counts: dict[str, int] = dict.fromkeys(pattern_names, 0)
         for match in matches:
             pattern_name = match.pattern.name
             if pattern_name in pattern_counts:
                 pattern_counts[pattern_name] += 1
-        
+
         data = {
             "wave_index": wave_index,
             "patterns": pattern_counts,
@@ -121,10 +119,10 @@ class WaveDebugExporter:
         """Объединяет отдельные символы в целые строки."""
         if not text_items:
             return []
-        
+
         result = []
         current_string = ""
-        
+
         for item in text_items:
             if not isinstance(item, str):
                 # Если накопилась строка, добавляем её
@@ -142,11 +140,11 @@ class WaveDebugExporter:
                     current_string = ""
                 # Добавляем целую строку
                 result.append(item)
-        
+
         # Добавляем оставшуюся накопленную строку
         if current_string:
             result.append(current_string)
-        
+
         return result
 
     @staticmethod
@@ -198,7 +196,7 @@ class WaveDebugExporter:
         """
         if not self.enable_excel:
             return
-        
+
         if not self._grid_supports_excel(grid):
             return
 
@@ -206,7 +204,7 @@ class WaveDebugExporter:
         all_matches: list[Match2d] = []
         for matches in unused_by_pattern.values():
             all_matches.extend(matches)
-        
+
         if not all_matches:
             return  # Нет неиспользованных матчей для экспорта
 
@@ -308,30 +306,30 @@ class WaveDebugExporter:
         return Border(left=side, right=side, top=side, bottom=side)
 
     def _highlight_cells_by_best_match(
-        self, 
-        worksheet, 
-        matches: list[Match2d], 
-        pattern_colors: Mapping[str, str], 
+        self,
+        worksheet,
+        matches: list[Match2d],
+        pattern_colors: Mapping[str, str],
         border: Border
     ) -> None:
         """Подсвечивает ячейки, выбирая для каждой ячейки паттерн с максимальной точностью."""
         # Словарь: (row, col) -> (match, precision)
         cell_to_best_match: dict[tuple[int, int], tuple[Match2d, float]] = {}
-        
+
         # Проходим по всем совпадениям и для каждой ячейки выбираем лучшее
         for match in matches:
             if not match.box:
                 continue
-            
+
             precision = match.precision if match.precision is not None else match.calc_precision()
             if precision is None:
                 precision = 0.0
-            
+
             # Проходим по всем ячейкам, покрытым этим совпадением
             for row in range(match.box.top, match.box.bottom):
                 for col in range(match.box.left, match.box.right):
                     cell_key = (row, col)
-                    
+
                     # Если для этой ячейки ещё нет совпадения или текущее лучше
                     if cell_key not in cell_to_best_match:
                         cell_to_best_match[cell_key] = (match, precision)
@@ -339,7 +337,7 @@ class WaveDebugExporter:
                         _, best_precision = cell_to_best_match[cell_key]
                         if precision > best_precision:
                             cell_to_best_match[cell_key] = (match, precision)
-        
+
         # Подсвечиваем ячейки цветом лучшего паттерна
         for (row, col), (best_match, _) in cell_to_best_match.items():
             fill = PatternFill(

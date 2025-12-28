@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
-from grammar2d.Pattern2d import Pattern2d
-from grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.Match2d import Match2d
 
 
 @dataclass

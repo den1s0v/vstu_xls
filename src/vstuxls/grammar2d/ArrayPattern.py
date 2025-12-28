@@ -3,11 +3,11 @@ from typing import override
 
 from loguru import logger
 
-from utils import sorted_list
-from geom2d import open_range, Point
-import grammar2d.Match2d as m2
-from grammar2d.NonTerminal import NonTerminal
-from grammar2d.Pattern2d import Pattern2d, PatternRegistry
+import vstuxls.grammar2d.Match2d as m2
+from vstuxls.geom2d import Point, open_range
+from vstuxls.grammar2d.NonTerminal import NonTerminal
+from vstuxls.grammar2d.Pattern2d import Pattern2d, PatternRegistry
+from vstuxls.utils import sorted_list
 
 VALID_ARRAY_DIRECTIONS = ('row', 'column', 'auto', 'fill')
 DISTANCE_KINDS = ('corner', 'side')

@@ -3,10 +3,10 @@ from dataclasses import dataclass
 
 from loguru import logger
 
-import geom2d as g2
-from constraints_2d.BoolExpr import BoolExprRegistry
-from constraints_2d.CoordVar import CoordVar
-from constraints_2d.SpatialConstraint import SpatialConstraint
+import vstuxls.geom2d as g2
+from vstuxls.constraints_2d.BoolExpr import BoolExprRegistry
+from vstuxls.constraints_2d.CoordVar import CoordVar
+from vstuxls.constraints_2d.SpatialConstraint import SpatialConstraint
 
 SIDE_ROLES = ("padding", "margin",)
 
@@ -188,7 +188,7 @@ class LocationConstraint(SpatialConstraint):
                 # the default if not set explicitly:
                 inner = inside
 
-            value = side_to_gap.get(key, None)
+            value = side_to_gap.get(key)
             if value is None:
                 # side is not set
                 value = default_padding if inner else default_margin
@@ -224,7 +224,7 @@ class LocationConstraint(SpatialConstraint):
                 if len(margins) >= 3 or (
                         len(margins) == 2 and
                         # both are horizontal or vertical
-                        len(set(d.is_horizontal for d in margins.keys())) == 1
+                        len(set(d.is_horizontal for d in margins)) == 1
                 ):
                     logger.warning('Outer location margins are likely excessive '
                                    f'or contradict each other: {margins!r}.')
@@ -263,7 +263,7 @@ class LocationConstraint(SpatialConstraint):
         # repair & validate data
         result = {}
         for key in desired_keys:
-            value = side_to_gap.get(key, None)
+            value = side_to_gap.get(key)
             if value is None:
                 # side is not set
                 value = default_range
@@ -296,7 +296,7 @@ class LocationConstraint(SpatialConstraint):
                 if len(result) >= 3 or (
                         len(result) == 2 and
                         # both are horizontal or vertical
-                        len(set(d.is_horizontal for d in result.keys())) == 1
+                        len(set(d.is_horizontal for d in result)) == 1
                 ):
                     print(f':WARN: outer location constraints are likely excessive or contradict each other: {result!r}.')
                 else:

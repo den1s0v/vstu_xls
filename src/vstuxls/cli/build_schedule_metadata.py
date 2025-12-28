@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
 
 from loguru import logger
 
-from export.vstu import build_schedule_metadata
+from vstuxls.export.vstu import build_schedule_metadata
 
 
 def collect_metadata_from_dir(imports_dir: Path) -> list[dict]:

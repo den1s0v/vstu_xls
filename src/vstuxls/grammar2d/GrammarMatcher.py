@@ -1,15 +1,16 @@
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterable, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from loguru import logger
 
-from geom2d import Point, Box, RangedBox
-from grammar2d import Grammar
-import grammar2d.Pattern2d as pt
-from grammar2d.Match2d import Match2d
-from grid import GridView, CellView, Grid
-from string_matching import CellClassifier
+import vstuxls.grammar2d.Pattern2d as pt
+from vstuxls.geom2d import Box, Point, RangedBox
+from vstuxls.grammar2d import Grammar
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grid import CellView, Grid, GridView
+from vstuxls.string_matching import CellClassifier
 
 if TYPE_CHECKING:
     from grammar2d.Pattern2d import Pattern2d
@@ -55,7 +56,7 @@ class GrammarMatcher:
             overlap_resolution: 'pt.OverlapResolutionMode | None' = None) -> list[Match2d]:
         """ Get all currently known matches of given pattern.
         If region specified, return only matches that are within the region.
-        
+
         Args:
             pattern: Pattern to get matches for
             region: Optional region to filter matches
@@ -84,7 +85,7 @@ class GrammarMatcher:
             cached = self._filtered_matches_cache.get(cache_key)
             if cached is not None:
                 return cached
-        
+
         if pattern.independently_matchable():
             matches = self.matches_by_element[pattern] or []
 
@@ -175,10 +176,10 @@ class GrammarMatcher:
                     return -1
                 elif value1 < value2:
                     return 1
-        
+
         # Если все критерии равны
         return 0
-    
+
     @staticmethod
     def _get_match_metric_value(match: Match2d, metric: 'pt.OverlapMetricEnum') -> float | None:
         """Получить значение метрики для матча.
@@ -204,7 +205,7 @@ class GrammarMatcher:
             return float(match.box.h)
         elif metric == pt.OverlapMetricEnum.PRECISION:
             return GrammarMatcher._get_match_precision(match)
-        
+
         return None
 
     @staticmethod
@@ -216,40 +217,40 @@ class GrammarMatcher:
         """
         if not matches:
             return matches
-        
+
         # Получаем критерии из конфигурации паттерна
         criteria = pattern.get_overlap_criteria()
         criteria_str = ', '.join(f'{c.metric.value}-{c.order.value}' for c in criteria)
-        
+
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
         resolved_overlaps = []  # Для отладочной печати
-        
+
         for i in range(len(matches)):
             if i in to_remove:
                 continue
-            
+
             match1 = matches[i]
             if not match1.box:
                 continue
-            
+
             for j in range(i + 1, len(matches)):
                 if j in to_remove:
                     continue
-                
+
                 match2 = matches[j]
                 if not match2.box:
                     continue
-                
+
                 # Проверяем соответствие позиций
                 if match1.box.position != match2.box.position:
                     continue
-                
+
                 # Проверяем полное наложение
                 if match1.box in match2.box or match2.box in match1.box:
                     # Сравниваем матчи по критериям из конфигурации
                     comparison = GrammarMatcher._compare_matches_by_criteria(match1, match2, criteria)
-                    
+
                     if comparison < 0:
                         # match1 проигрывает, удаляем его
                         to_remove.add(i)
@@ -290,7 +291,7 @@ class GrammarMatcher:
                                 'criteria': criteria_str
                             })
                     # Если равны, оставляем оба (не добавляем в to_remove)
-        
+
         # Отладочная печать разрешённых накладок
         if DEBUG_OVERLAP_RESOLUTION and resolved_overlaps:
             logger.debug(f"Resolved {len(resolved_overlaps)} FULL overlap(s) for pattern '{pattern.name}':")
@@ -302,7 +303,7 @@ class GrammarMatcher:
                     f"(precision={overlap['kept']['precision']:.3f}), "
                     f"criteria: {overlap['criteria']}"
                 )
-        
+
         # Возвращаем матчи, которые не были помечены для удаления
         return [match for idx, match in enumerate(matches) if idx not in to_remove]
 
@@ -315,47 +316,47 @@ class GrammarMatcher:
         """
         if not matches:
             return matches
-        
+
         # Шаг 1: Сначала исчерпывающе разрешаем все полные перекрытия
         matches = GrammarMatcher._filter_full_overlaps(matches, pattern)
-        
+
         if not matches:
             return matches
-        
+
         # Шаг 2: Теперь обрабатываем частичные перекрытия среди оставшихся матчей
         # Получаем критерии из конфигурации паттерна
         criteria = pattern.get_overlap_criteria()
         criteria_str = ', '.join(f'{c.metric.value}-{c.order.value}' for c in criteria) if DEBUG_OVERLAP_RESOLUTION else None
-        
+
         # Создаём список индексов для отслеживания, какие матчи нужно удалить
         to_remove = set()
         resolved_overlaps = [] if DEBUG_OVERLAP_RESOLUTION else None  # Для отладочной печати
-        
+
         for i in range(len(matches)):
             if i in to_remove:
                 continue
-            
+
             match1 = matches[i]
             if not match1.box:
                 continue
-            
+
             for j in range(i + 1, len(matches)):
                 if j in to_remove:
                     continue
-                
+
                 match2 = matches[j]
                 if not match2.box:
                     continue
-                
+
                 # Проверяем частичное перекрытие (но не полное, так как полные уже обработаны)
                 if match1.box.manhattan_distance_to_overlap(match2.box) == 0:
                     # Убеждаемся, что это именно частичное, а не полное наложение
                     if match1.box in match2.box or match2.box in match1.box:
                         continue  # Полные наложения уже обработаны на шаге 1
-                    
+
                     # Сравниваем матчи по критериям из конфигурации
                     comparison = GrammarMatcher._compare_matches_by_criteria(match1, match2, criteria)
-                    
+
                     if comparison < 0:
                         # match1 проигрывает, удаляем его
                         to_remove.add(i)
@@ -396,7 +397,7 @@ class GrammarMatcher:
                                 'criteria': criteria_str
                             })
                     # Если равны, оставляем оба (не добавляем в to_remove)
-        
+
         # Отладочная печать разрешённых частичных накладок
         if DEBUG_OVERLAP_RESOLUTION and resolved_overlaps:
             logger.debug(f"Resolved {len(resolved_overlaps)} PARTIAL overlap(s) for pattern '{pattern.name}':")
@@ -408,7 +409,7 @@ class GrammarMatcher:
                     f"(precision={overlap['kept']['precision']:.3f}), "
                     f"criteria: {overlap['criteria']}"
                 )
-        
+
         # Возвращаем матчи, которые не были помечены для удаления
         return [match for idx, match in enumerate(matches) if idx not in to_remove]
 
@@ -445,7 +446,7 @@ class GrammarMatcher:
         if not isinstance(patterns, (list, tuple, set)):
             patterns = [patterns]
 
-        resolved: list['Pattern2d'] = []
+        resolved: list[Pattern2d] = []
         for item in patterns:
             if isinstance(item, pt.Pattern2d):
                 resolved.append(item)
@@ -502,7 +503,7 @@ class GrammarMatcher:
                 logger.debug('WAVE:')
                 logger.debug(pattern_names)
 
-            processed_patterns: list['Pattern2d'] = []
+            processed_patterns: list[Pattern2d] = []
 
             if self.grammar.target_mode == 'root' and self.grammar.root in wave:
                 self._find_matches_of_pattern(self.grammar.root)
@@ -550,8 +551,8 @@ class GrammarMatcher:
             match_limit: int = None) -> list[Match2d]:
         """Try finding matches of element within the specified grid region"""
         if (match_limit is None
-                or pattern.count_in_document.stop is not None
-                and match_limit > pattern.count_in_document.stop):
+                or (pattern.count_in_document.stop is not None
+                and match_limit > pattern.count_in_document.stop)):
             match_limit = pattern.count_in_document.stop
 
         # Проверить наличие в кэше

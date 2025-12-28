@@ -5,12 +5,11 @@ from pathlib import Path
 import yaml
 from loguru import logger
 
-from grammar2d.Pattern2d import Pattern2d, read_pattern
-from grammar2d.NonTerminal import NonTerminal
-import grammar2d.PatternComponent as pc
-from grammar2d.Terminal import Terminal
-from string_matching import CellType, read_cell_types
-from utils import WithCache, find_file_under_path
+import vstuxls.grammar2d.PatternComponent as pc
+from vstuxls.grammar2d.Pattern2d import Pattern2d, read_pattern
+from vstuxls.grammar2d.Terminal import Terminal
+from vstuxls.string_matching import CellType, read_cell_types
+from vstuxls.utils import WithCache, find_file_under_path
 
 TARGET_MODES = ('root', 'all')
 
@@ -22,12 +21,12 @@ class Grammar(WithCache):
     cell_types: dict[str, CellType]
     # can be initialized with list but normally is dict
     patterns: dict[str, Pattern2d] | list[Pattern2d]
-    root_name: str = None
+    root_name: str | None = None
 
     # root: оптимизировать процесс для корневого, all: искать все подряд
     target_mode: str = 'root'  # или 'all'
 
-    _root: Pattern2d = None
+    _root: Pattern2d  | None = None
 
     def __post_init__(self):
         if self.target_mode not in TARGET_MODES:
@@ -122,7 +121,7 @@ class Grammar(WithCache):
                 if not current_wave:
                     raise ValueError(
                         "Grammar defined improperly: some patterns cannot be matched due to circular dependencies:\n - "
-                        f"{'\n - '.join(sorted(map(str, 
+                        f"{'\n - '.join(sorted(map(str,
                             unmatched_patterns)))}. \n"
                         "Elements could be matched correctly: \n - "
                         f"{'\n - '.join(sorted(map(str, matched_patterns)))}.")
@@ -224,8 +223,8 @@ def read_grammar_data(
 
 
 def read_grammar(
-        config_file: 'str | Path' = '../cnf/grammar_root.yml',
-        data: dict = None,
+        config_file: str | Path,
+        data: dict | None = None,
         require_cell_types: bool = True,
   ) -> Grammar | None:
 

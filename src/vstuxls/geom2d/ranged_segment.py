@@ -1,8 +1,8 @@
 # ranged_segment.py
 from typing import Self
 
-from geom1d import LinearSegment
-from geom2d.open_range import open_range
+from vstuxls.geom1d import LinearSegment
+from vstuxls.geom2d.open_range import open_range
 
 
 class RangedSegment:

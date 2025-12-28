@@ -1,7 +1,7 @@
-from geom2d import Box
-from grammar2d import NonTerminal
-from grammar2d.Match2d import Match2d
-from grammar2d.PatternMatcher import PatternMatcher
+from vstuxls.geom2d import Box
+from vstuxls.grammar2d import NonTerminal
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.PatternMatcher import PatternMatcher
 
 
 class NonTerminalMatcher(PatternMatcher):

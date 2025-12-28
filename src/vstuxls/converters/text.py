@@ -1,6 +1,6 @@
-from converters.abstract import AbstractGridBuilder
-from geom2d.point import Point
-from grid import Cell, Grid
+from vstuxls.converters.abstract import AbstractGridBuilder
+from vstuxls.geom2d.point import Point
+from vstuxls.grid import Cell, Grid
 
 
 class TxtGrid(Grid, AbstractGridBuilder):

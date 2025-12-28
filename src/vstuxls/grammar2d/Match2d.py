@@ -3,10 +3,9 @@ from typing import Self
 
 from adict import adict
 
-from utils import sorted_list, safe_adict
-from geom2d import Box
-from geom2d import Point
-import grammar2d.Pattern2d as pt
+import vstuxls.grammar2d.Pattern2d as pt
+from vstuxls.geom2d import Box, Point
+from vstuxls.utils import safe_adict
 
 
 @dataclass()

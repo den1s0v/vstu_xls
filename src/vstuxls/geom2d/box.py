@@ -1,13 +1,13 @@
-from typing import Union, Optional, Self
+from typing import Self, Union
 
 from adict import adict
 
-from geom1d import LinearRelation, LinearSegment
-from geom2d.point import Point
-from geom2d.size import Size
-from geom2d.manhattan_distance import ManhattanDistance
-from geom2d.direction import RIGHT, DOWN, Direction
-from utils import reverse_if
+from vstuxls.geom1d import LinearRelation, LinearSegment
+from vstuxls.geom2d.direction import DOWN, RIGHT, Direction
+from vstuxls.geom2d.manhattan_distance import ManhattanDistance
+from vstuxls.geom2d.point import Point
+from vstuxls.geom2d.size import Size
+from vstuxls.utils import reverse_if
 
 
 class Box:
@@ -150,17 +150,17 @@ class Box:
         return f'[({self.x},{self.y})→{self.w}x{self.h}]'
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}{str(self)}'
+        return f'{self.__class__.__name__}{self!s}'
 
     def __contains__(self, other: Self | Point):
-        if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
+        if isinstance(other, Box) or (len(other) == 4 and (other := Box(*other))):
             return (
                     self.x <= other.x and
                     self.y <= other.y and
                     self.right >= other.right and
                     self.bottom >= other.bottom
             )
-        if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
+        if isinstance(other, Point) or (len(other) == 2 and (other := Point(*other))):
             return (
                     self.x <= other.x < self.right and
                     self.y <= other.y < self.bottom
@@ -169,12 +169,12 @@ class Box:
 
     def overlaps(self, other: Self | Point) -> bool:
         """ True, если перекрываются. Касание тоже считается! """
-        if isinstance(other, Box) or len(other) == 4 and (other := Box(*other)):
+        if isinstance(other, Box) or (len(other) == 4 and (other := Box(*other))):
             return any(p in self for p in other.iterate_corners()) or \
                 other in self or \
                 self in other
 
-        if isinstance(other, Point) or len(other) == 2 and (other := Point(*other)):
+        if isinstance(other, Point) or (len(other) == 2 and (other := Point(*other))):
             return other in self
         return False
 
@@ -205,7 +205,7 @@ class Box:
             )
         raise TypeError(other)
 
-    def manhattan_distance_to_overlap(self, other: Union[Point, Self], per_axis=False) -> int | ManhattanDistance:
+    def manhattan_distance_to_overlap(self, other: Point | Self, per_axis=False) -> int | ManhattanDistance:
         """ Целочисленное расстояние до максимального перекрытия:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала внутрь прямоугольника.
             Для прямоугольника: 0, если один из прямоугольников полностью вкладывается в другой, иначе минимальное количество единичных перемещений, чтобы совместить один из углов этих прямоугольников (таким образом, один оказывается внутри другого). В случае, если прямоугольники не могут быть перекрыты полностью из-за несовместимых размеров, эта метрика покажет расстояние до ближайшего максимально возможного перекрытия.
@@ -224,7 +224,7 @@ class Box:
             )
         raise TypeError(other)
 
-    def manhattan_distance_to_touch(self, other: Union[Point, Self], per_axis=False) -> int | ManhattanDistance:
+    def manhattan_distance_to_touch(self, other: Point | Self, per_axis=False) -> int | ManhattanDistance:
         """ Целочисленное расстояние до ближайшего касания:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу прямоугольника.
             Для прямоугольника: 0, если прямоугольники касаются или перекрываются, иначе минимальное количество единичных перемещений, чтобы они стали касаться сторонами или углами.
@@ -249,7 +249,7 @@ class Box:
             return ManhattanDistance(dx, dy) if per_axis else dx + dy
         raise TypeError(other)
 
-    def manhattan_distance_to_contact(self, other: Union[Point, Self], per_axis=False) -> int | ManhattanDistance:
+    def manhattan_distance_to_contact(self, other: Point | Self, per_axis=False) -> int | ManhattanDistance:
         """ Целочисленное расстояние до ближайшего совмещения пары сторон, т.е. касания не углами, а целыми сторонами:
             Для точки: 0, если точка находится внутри прямоугольника, иначе минимальное количество единичных перемещений, чтобы точка попала на границу прямоугольника.
             Для прямоугольника: 0, если:
@@ -369,7 +369,7 @@ class Box:
             # vertical
             return LinearSegment(self.y, length=self.h)
 
-    def intersect(self, other: Self) -> Optional[Self]:
+    def intersect(self, other: Self) -> Self | None:
         """ Returns intersection of this and other box,
             or None if no intersection exists. """
         if (h := self.project('h').intersect(other.project('h'))) and \

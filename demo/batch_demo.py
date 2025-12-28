@@ -1,21 +1,21 @@
-from __future__ import annotations
-
 import argparse
+from importlib.resources import files
 from pathlib import Path
 
 from loguru import logger
 
-from converters.xlsx import ExcelGrid
-from export.vstu import export_schedule_document_as_json
-from grammar2d import read_grammar
-from services import DocumentParsingService, WaveDebugExporter
-from utils.convert import convert_all_in_dir
-from utils import Checkpointer
+from vstuxls.converters.xlsx import ExcelGrid
+from vstuxls.export.vstu import export_schedule_document_as_json
+from vstuxls.grammar2d import read_grammar
+from vstuxls.services import DocumentParsingService, WaveDebugExporter
+from vstuxls.utils import Checkpointer
+from vstuxls.utils.convert import convert_all_in_dir
 
 
 def parse_args() -> argparse.Namespace:
+    lib_dir = files("vstuxls")
     root_dir = Path(__file__).resolve().parent.parent
-    default_grammar = root_dir / "cnf" / "grammar_root.yml"
+    default_grammar = lib_dir / "cnf" / "grammar_root.yml"
     # default_input_dir = root_dir / "tests" / "test_data"
     default_input_dir = root_dir / "materials/2025-12/магистратура"
     default_output_base = root_dir / "data" / "batch_debug"

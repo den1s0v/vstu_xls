@@ -1,10 +1,10 @@
-from constraints_2d.BoolExpr import BoolExpr
-from constraints_2d.CoordVar import CoordVar
+from vstuxls.constraints_2d.BoolExpr import BoolExpr
+from vstuxls.constraints_2d.CoordVar import CoordVar
 
 
 class ArbitraryBoolExprBase(BoolExpr):
     """ Abstract wrapper around an instance of symbolic-math expression """
-    __slots__ = ('expr_string', '_expr')
+    __slots__ = ('_expr', 'expr_string')
 
     expr_string: str
     _expr: object

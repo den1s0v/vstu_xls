@@ -1,6 +1,6 @@
 # entry point & experiments
 
-from export.vstu import xls_to_json
+from vstuxls.export.vstu import xls_to_json
 
 if __name__ == '__main__':
     print('Hi!')

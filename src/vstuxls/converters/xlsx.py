@@ -1,24 +1,23 @@
 from pathlib import Path
-from typing import Optional, Self
+from typing import Self
 
 import openpyxl
 from openpyxl import Workbook
+from openpyxl.styles import Color
+from openpyxl.styles.colors import COLOR_INDEX
 from openpyxl.worksheet.worksheet import Worksheet
 
-from converters.abstract import AbstractGridBuilder
-from openpyxl.styles.colors import COLOR_INDEX
-from openpyxl.styles import Color
-from geom2d.point import Point
-from geom2d.size import Size
-from grid import Cell, CellStyle, Grid
-from utils.openpyxl_colorconvert import theme_and_tint_to_rgb, get_theme_colors
-
+from vstuxls.converters.abstract import AbstractGridBuilder
+from vstuxls.geom2d.point import Point
+from vstuxls.geom2d.size import Size
+from vstuxls.grid import Cell, CellStyle, Grid
+from vstuxls.utils.openpyxl_colorconvert import theme_and_tint_to_rgb
 
 COORD_PAD = 1  # Use to turn Excel's 1-based coordinates to 0-based indices.
 # COORD_PAD = 0  # Use to keep coordinates as-is.
 
 
-def get_rgb(color: Color, wb: Workbook) -> Optional[str]:
+def get_rgb(color: Color, wb: Workbook) -> str | None:
     """
     Получить RGB цвет из объекта Color openpyxl.
 

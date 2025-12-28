@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from operator import ne, lt, gt
+from operator import lt, ne
 
-from grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.Match2d import Match2d
 
 
 @dataclass

@@ -1,12 +1,11 @@
 # constraints_2d
 
-from constraints_2d.AlgebraicExpr import AlgebraicExpr
-from constraints_2d.BoolExpr import BoolExprRegistry
-from constraints_2d.LocationConstraint import LocationConstraint
-from constraints_2d.SizeConstraint import SizeConstraint
-from constraints_2d.SpatialConstraint import SpatialConstraint
-
-from constraints_2d.utils.sympy_expr import SympyExpr, register_sympy_as_expr_backend
+from vstuxls.constraints_2d.AlgebraicExpr import AlgebraicExpr
+from vstuxls.constraints_2d.BoolExpr import BoolExprRegistry
+from vstuxls.constraints_2d.LocationConstraint import LocationConstraint
+from vstuxls.constraints_2d.SizeConstraint import SizeConstraint
+from vstuxls.constraints_2d.SpatialConstraint import SpatialConstraint
+from vstuxls.constraints_2d.utils.sympy_expr import SympyExpr, register_sympy_as_expr_backend
 
 # Note: global code (runs once all classes have initialized)
 register_sympy_as_expr_backend()  # this registers subclass of AlgebraicExpr

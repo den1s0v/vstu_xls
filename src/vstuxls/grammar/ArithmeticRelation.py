@@ -1,10 +1,9 @@
 # ArithmeticRelation.py
 
 
-from typing import Tuple, Union, Callable, Optional
-
-from operator import sub, eq
 import re
+from collections.abc import Callable
+from operator import eq, sub
 
 # def eq(x: int, y: int):
 #     return 0 if x == y else 1  # flips normal 'eq' semantics (?!!)
@@ -33,8 +32,8 @@ class ArithmeticRelation:
     """
 
     def __init__(self,
-                 op: Union[str, Callable] = lt,
-                 limits: Tuple[Optional[int], Optional[int]] = (0, 0),
+                 op: str | Callable = lt,
+                 limits: tuple[int | None, int | None] = (0, 0),
                  a=None, b=None):
         assert hasattr(op, '__call__'), 'callable expected'
         self.op = op
@@ -50,7 +49,7 @@ class ArithmeticRelation:
                (low is None or diff <= top)
 
 
-def parse_relation_and_limits(s: str) -> Tuple[Callable, Tuple[Optional[int], Optional[int]]]:
+def parse_relation_and_limits(s: str) -> tuple[Callable, tuple[int | None, int | None]]:
     s = s.strip()
     if s in ('<', '<='):
         return lt, (0, None)

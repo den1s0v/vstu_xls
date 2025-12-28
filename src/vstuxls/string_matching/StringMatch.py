@@ -1,9 +1,8 @@
 import re
 from dataclasses import dataclass
 
-
 # Circular import workaround: https://stackoverflow.com/a/17229804/12824563
-import string_matching.StringPattern as ns
+import vstuxls.string_matching.StringPattern as ns
 
 
 @dataclass
@@ -47,7 +46,7 @@ class StringMatch:
     __getitem__ = group
 
     def __str__(self) -> str:
-        return f"<StringMatch groupdict: {self.groupdict()} on text={repr(self.text)}>"
+        return f"<StringMatch groupdict: {self.groupdict()} on text={self.text!r}>"
 
     __repr__ = __str__
 

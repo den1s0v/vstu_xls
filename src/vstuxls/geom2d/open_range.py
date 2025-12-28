@@ -1,6 +1,6 @@
 from typing import Self
 
-import geom2d.ranges as ns
+import vstuxls.geom2d.ranges as ns
 
 
 class open_range:
@@ -81,12 +81,12 @@ class open_range:
 
     def __iter__(self):
         if self.start is None or self.stop is None:
-            raise ValueError(f'Cannot iterate infinite open_range')
+            raise ValueError('Cannot iterate infinite open_range')
         return iter(range(self.start, self.stop + 1))
 
     def __len__(self) -> int:
         if self.start is None or self.stop is None:
-            raise ValueError(f'Cannot get length of infinite open_range')
+            raise ValueError('Cannot get length of infinite open_range')
         return self.stop - self.start + 1
 
     def __bool__(self) -> bool:
@@ -272,16 +272,12 @@ class open_range:
         for r in others:
             # Update new_start
             if r.start is not None:
-                if new_start is None:
-                    new_start = r.start
-                elif r.start > new_start:
+                if new_start is None or r.start > new_start:
                     new_start = r.start
 
             # Update new_stop
             if r.stop is not None:
-                if new_stop is None:
-                    new_stop = r.stop
-                elif r.stop < new_stop:
+                if new_stop is None or r.stop < new_stop:
                     new_stop = r.stop
 
         # Final check for empty intersection

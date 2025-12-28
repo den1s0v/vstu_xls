@@ -5,13 +5,12 @@ from typing import Self
 
 from loguru import logger
 
-import grammar2d.Grammar as ns
-import grammar2d.Pattern2d as pt
-from constraints_2d import LocationConstraint
-from constraints_2d import SpatialConstraint, SizeConstraint
-from geom2d import open_range, Box, RangedBox, aggregate_flexibility_estimations
-from utils import WithCache, WithSafeCreate
-from .Match2d import Match2d
+import vstuxls.grammar2d.Grammar as ns
+import vstuxls.grammar2d.Pattern2d as pt
+from vstuxls.constraints_2d import LocationConstraint, SizeConstraint, SpatialConstraint
+from vstuxls.geom2d import Box, RangedBox, aggregate_flexibility_estimations, open_range
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.utils import WithCache, WithSafeCreate
 
 
 @dataclass

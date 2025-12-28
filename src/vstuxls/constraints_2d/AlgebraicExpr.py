@@ -1,5 +1,5 @@
-from constraints_2d.ArbitraryBoolExprBase import ArbitraryBoolExprBase
-from constraints_2d.SpatialConstraint import SpatialConstraint
+from vstuxls.constraints_2d.ArbitraryBoolExprBase import ArbitraryBoolExprBase
+from vstuxls.constraints_2d.SpatialConstraint import SpatialConstraint
 
 # Helpers for redefining a class >>
 AlgebraicExpr_factory_class = None  # global var, can be modified from other module via function below.

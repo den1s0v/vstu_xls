@@ -6,18 +6,15 @@ from loguru import logger
 # # Профилирование ↓
 # # pip install profilehooks
 # from profilehooks import profile
-
-import grammar2d.GrammarMatcher as ns
-from clash import find_combinations_of_compatible_elements
-from constraints_2d import SizeConstraint
-from geom2d import Box, RangedBox
-from grammar2d.AreaPattern import AreaPattern
-from grammar2d.Match2d import Match2d
-from grammar2d.MatchRelation import MatchRelation
-from grammar2d.Pattern2d import Pattern2d
-from grammar2d.PatternComponent import PatternComponent
-from grammar2d.PatternMatcher import PatternMatcher
-from utils import time_report
+import vstuxls.grammar2d.GrammarMatcher as ns
+from vstuxls.clash import find_combinations_of_compatible_elements
+from vstuxls.geom2d import Box, RangedBox
+from vstuxls.grammar2d.AreaPattern import AreaPattern
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.MatchRelation import MatchRelation
+from vstuxls.grammar2d.Pattern2d import Pattern2d
+from vstuxls.grammar2d.PatternComponent import PatternComponent
+from vstuxls.grammar2d.PatternMatcher import PatternMatcher
 
 
 @dataclass(slots=True)
@@ -160,7 +157,7 @@ class AreaPatternMatcher(PatternMatcher):
                 logger.info(f'''NO MATCH: pattern `{self.pattern.name
                 }` cannot have any matches since its required component `{pattern_component.name}` has no matches.''')
                 return []
-            
+
             # Для зависимых паттернов (не independently_matchable) пустой список occurrences - это нормально,
             # они будут искаться позже в _best_matches в контексте родителя
 

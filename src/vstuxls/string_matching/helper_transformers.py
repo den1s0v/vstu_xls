@@ -1,8 +1,7 @@
 import math
 import re
 
-from string_matching.StringTransformer import StringTransformer
-
+from vstuxls.string_matching.StringTransformer import StringTransformer
 
 _RE_SEVERAL_SPACES = re.compile(r'\s{2,}')
 _RE_SPACES = re.compile(r'\s+')
@@ -52,7 +51,7 @@ class Decode_re_spaces_Transformer(StringTransformer):
 
 def shrink_extra_inner_spaces(string: str):
     return _RE_SEVERAL_SPACES.sub(" ", string)
-    
+
 
 # Подкласс для преобразования строк
 @StringTransformer.register

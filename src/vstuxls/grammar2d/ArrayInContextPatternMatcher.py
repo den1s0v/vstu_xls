@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
-from geom2d import Box, RangedBox
-from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
-from grammar2d.Match2d import Match2d
+from geom2d import RangedBox
+
+from vstuxls.grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
+from vstuxls.grammar2d.Match2d import Match2d
 
 
 @dataclass

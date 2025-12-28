@@ -1,6 +1,4 @@
 # geom1d.py
-
-
 from typing import Optional
 
 
@@ -16,7 +14,7 @@ class LinearSegment:
             assert length is not None, 'LinearSegment(a, [b] [,length]) ' \
                                        'cannot be created without b or length specified.'
             b = a + length
-        assert a <= b, 'Segment [{},{}] has negative length, but this is not allowed!'.format(a, b)
+        assert a <= b, f'Segment [{a},{b}] has negative length, but this is not allowed!'
         self.a = a
         self.b = b
         # super().__init__()
@@ -254,7 +252,7 @@ class LinearRelation:
 
         self.description = self.kind.description
 
-    def intersection(self) -> Optional[LinearSegment]:
+    def intersection(self) -> LinearSegment | None:
         if issubclass(self.kind, (Overlaps, Touches)):
             # get two middle points
             a, b = sorted((self.s1.a, self.s1.b, self.s2.a, self.s2.b))[1:3]

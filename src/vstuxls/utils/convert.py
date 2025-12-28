@@ -6,15 +6,11 @@
  - посредством установленного на компьютер Excel, который запускается посредством COM-объекта
  - (если предыдущий вариант недоступен) при помощи библиотеки [xls2xlsx](https://pypi.org/project/xls2xlsx/)
 """
-
-
-from typing import Optional
 from pathlib import Path
 
 from xls2xlsx import XLS2XLSX
 
 from . import Checkpointer
-
 
 MS_EXCEL_AVAILABLE = False  # True: yes, False: no, None: not checked yet.
 
@@ -25,7 +21,7 @@ except ImportError:
     MS_EXCEL_AVAILABLE = False
 
 
-def convert_xls_to_xlsx(filename_in, filename_out=None) -> Optional[str]:
+def convert_xls_to_xlsx(filename_in, filename_out=None) -> str | None:
     """ Convert xls file to xlsx using either MS Excel if possible otherwise xls2xlsx as fallback
     (xls2xlsx is usually slower and may change content a little but is environment-independent).
     """
@@ -36,13 +32,13 @@ def convert_xls_to_xlsx(filename_in, filename_out=None) -> Optional[str]:
     return run_xls2xlsx(filename_in, filename_out)
 
 
-def run_excel(filename_in, filename_out=None) -> Optional[str]:
+def run_excel(filename_in, filename_out=None) -> str | None:
     global MS_EXCEL_AVAILABLE
     # print(filename_in)
     print('Running MS Excel ...')
     ch = Checkpointer()
     try:
-        excel = win32.gencache.EnsureDispatch('Excel.Application')
+        excel = win32.gencache.EnsureDispatch('Excel.Application') # type: ignore
         ch.hit('Excel invoked')
         wb = excel.Workbooks.Open(filename_in)
         ch.hit('workbook opened')
@@ -59,12 +55,12 @@ def run_excel(filename_in, filename_out=None) -> Optional[str]:
     except Exception as e:  # todo: check out specific exception classes
         MS_EXCEL_AVAILABLE = False
         print(f'Exception in {__name__}.run_Excel() with args: {(filename_in, filename_out)} :')
-        print(f'{type(e)}: {str(e)}')
+        print(f'{type(e)}: {e!s}')
         return None
     return filename_out
 
 
-def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
+def run_xls2xlsx(filename_in, filename_out=None) -> str | None:
     print('Running xls2xlsx ...')
     try:
         ch = Checkpointer()
@@ -77,7 +73,7 @@ def run_xls2xlsx(filename_in, filename_out=None) -> Optional[str]:
         ch.since_start('conversion took')
     except Exception as e:  # todo: check out specific exception classes
         print(f'Exception in {__name__}.run_xls2xlsx() with args: {(filename_in, filename_out)} :')
-        print(f'{type(e)}: {str(e)}')
+        print(f'{type(e)}: {e!s}')
         return None
     return filename_out
 
@@ -91,7 +87,7 @@ def convert_many(paths: list[str | Path]):
     ch.hit(f'COMPLETE! files converted: {len(paths)}')
 
 
-def convert_all_in_dir(folder_path='.') -> None:
+def convert_all_in_dir(folder_path: str | Path = '.') -> None:
     """Найти все `.xls` и сконвертировать только те, у которых рядом нет `.xlsx`."""
     root = Path(folder_path)
     xls_paths = list(root.rglob('*.xls'))
@@ -110,19 +106,3 @@ def convert_all_in_dir(folder_path='.') -> None:
         return
 
     convert_many(to_convert)
-
-def main():
-    # paths = (
-    #     r'c:\Users\Lenovo\Downloads\ОН_ФЭУ_3 курс.xls',
-    #     # r'c:\Users\Student\Downloads\ОН_ФТПП_4 курс.xls',
-    # )
-    # convert_many(paths)
-    folders = [
-        '.',  # TODO set your paths
-        ]
-    for folder in folders:
-        convert_all_in_dir(folder)
-
-    # ! USE util_main.py !
-# if __name__ == '__main__':
-#     main()

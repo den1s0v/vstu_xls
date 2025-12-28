@@ -7,7 +7,7 @@ class Direction:
     Non-right angles not supported.
     """
 
-    __slots__ = ('rotation', 'dx', 'dy', 'prop_name', )
+    __slots__ = ('dx', 'dy', 'prop_name', 'rotation')
 
     rotation: int
     dx: int

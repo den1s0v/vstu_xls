@@ -1,7 +1,7 @@
 import re
 from functools import lru_cache
 
-import geom2d.open_range as ns
+import vstuxls.geom2d.open_range as ns
 
 
 @lru_cache()

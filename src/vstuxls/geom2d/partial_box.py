@@ -1,6 +1,6 @@
-from geom2d.box import Box
-from geom2d.point import Point
-from geom2d.size import Size
+from vstuxls.geom2d.box import Box
+from vstuxls.geom2d.point import Point
+from vstuxls.geom2d.size import Size
 
 
 # deprecated
@@ -50,7 +50,7 @@ class PartialBox(Box):
         if self._tuple[key] is not None:
             if self._tuple[key] != value:
                 raise ValueError(
-                    f'Attempt to change not-None element `{key}` to `{value}` within write-once {repr(self)} !')
+                    f'Attempt to change not-None element `{key}` to `{value}` within write-once {self!r} !')
             # Ignore the case of setting the same value.
         else:
             self._tuple[key] = value

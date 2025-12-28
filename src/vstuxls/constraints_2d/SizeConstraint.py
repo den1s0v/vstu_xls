@@ -1,7 +1,7 @@
-from constraints_2d.BoolExpr import BoolExprRegistry
-from constraints_2d.CoordVar import CoordVar
-from constraints_2d.SpatialConstraint import SpatialConstraint
-from geom2d import parse_size_range, open_range, aggregate_flexibility_estimations
+from vstuxls.constraints_2d.BoolExpr import BoolExprRegistry
+from vstuxls.constraints_2d.CoordVar import CoordVar
+from vstuxls.constraints_2d.SpatialConstraint import SpatialConstraint
+from vstuxls.geom2d import aggregate_flexibility_estimations, open_range, parse_size_range
 
 
 class SizeConstraint(SpatialConstraint):

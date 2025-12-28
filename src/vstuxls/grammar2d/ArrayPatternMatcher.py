@@ -1,14 +1,14 @@
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from itertools import product
 
 from loguru import logger
 
-from clash import find_combinations_of_compatible_elements, trivial_components_getter
-from geom2d import Box, Direction, RIGHT, DOWN, RangedBox, open_range, Point, VariBox
-from grammar2d import ArrayPattern
-from grammar2d.PatternMatcher import PatternMatcher
-from grammar2d.Match2d import Match2d
+from vstuxls.clash import find_combinations_of_compatible_elements, trivial_components_getter
+from vstuxls.geom2d import DOWN, RIGHT, Box, Direction, Point, RangedBox, VariBox, open_range
+from vstuxls.grammar2d import ArrayPattern
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.PatternMatcher import PatternMatcher
 
 
 @dataclass
@@ -71,7 +71,7 @@ class ArrayPatternMatcher(PatternMatcher):
             precision = match.precision if match.precision is not None else match.calc_precision()
             if precision is not None and precision >= self.pattern.precision_threshold:
                 filtered_matches.append(match)
-        
+
         return filtered_matches
 
     def _find_element_candidates(self):
@@ -855,7 +855,7 @@ class ArrayPatternMatcher(PatternMatcher):
             # Учтём, если удалось найти меньше желаемого (плюсуется и минусуется соответственно)
             uncovered_elements += (desired_count - len(spot))
             if len(spot) >= min_count:
-                subclusters.append(list(sorted(spot)))
+                subclusters.append(sorted(spot))
 
                 if len(outer_neighbours) > 1:
                     # Выберем начало следующего пятна из неиспользованных соседей текущего

@@ -1,8 +1,9 @@
 from collections import defaultdict
 
-from constraints_2d.BoolExpr import BoolExpr
-# from constraints_2d.CoordVar import CoordVar
-from geom2d import Box
+from vstuxls.constraints_2d.BoolExpr import BoolExpr
+
+# from vstuxls.constraints_2d.CoordVar import CoordVar
+from vstuxls.geom2d import Box
 
 
 class SpatialConstraint(BoolExpr):

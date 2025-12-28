@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Sequence
+from typing import Any
 
-from grammar2d import Grammar, GrammarMatcher
-from grammar2d.Match2d import Match2d
-
-from services.debugging import WaveDebugExporter
-
+from vstuxls.grammar2d import Grammar, GrammarMatcher
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.services.debugging import WaveDebugExporter
 
 # Список паттернов для анализа неиспользованных совпадений
 DEFAULT_UNUSED_PATTERNS_TO_ANALYZE = [

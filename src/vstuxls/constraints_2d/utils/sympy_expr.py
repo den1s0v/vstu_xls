@@ -1,10 +1,12 @@
-from sympy import Eq, Symbol, lambdify, Expr as SympyOp
+from sympy import Eq, Symbol, lambdify
+from sympy import Expr as SympyOp
 
-from constraints_2d.ArbitraryBoolExprBase import ArbitraryBoolExprBase
-from constraints_2d.BoolExpr import BoolExpr
-from constraints_2d.CoordVar import CoordVar
-from constraints_2d.AlgebraicExpr import AlgebraicExpr, register_AlgebraicExpr_default_subclass
-from constraints_2d.utils.ast_to_sympy import parse_expression
+from vstuxls.constraints_2d.AlgebraicExpr import (
+    AlgebraicExpr,
+    register_AlgebraicExpr_default_subclass,
+)
+from vstuxls.constraints_2d.CoordVar import CoordVar
+from vstuxls.constraints_2d.utils.ast_to_sympy import parse_expression
 
 
 class SympyExpr(AlgebraicExpr):
@@ -12,7 +14,7 @@ class SympyExpr(AlgebraicExpr):
 
     _expr: SympyOp
 
-    def __init__(self, expr_string: str = None, expr: object = None):
+    def __init__(self, expr_string: str | None = None, expr: object = None):
         sympy_expr = (expr or parse_expression(expr_string)).simplify()
         expr_string = (expr_string or str(sympy_expr))
         super().__init__(expr_string, sympy_expr)
@@ -131,6 +133,3 @@ def extract_var_values_from_sympy_expr(expr) -> dict[str, int]:
                 var2val[var] = val
     return var2val
 
-
-if __name__ == "__main__":
-    register_sympy_as_expr_backend()

@@ -1,18 +1,18 @@
 import json
+import re
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Mapping
-import re
 
 from adict import adict
 
-from converters.xlsx import ExcelGrid
-from grammar2d import Grammar, GrammarMatcher, read_grammar
-from grammar2d.Match2d import Match2d
-from grid import Grid
-from services import DocumentParsingService
-from services.debugging.wave_exporter import WaveDebugExporter
-from utils import Checkpointer, time_report
+from vstuxls.converters.xlsx import ExcelGrid
+from vstuxls.grammar2d import Grammar, GrammarMatcher, read_grammar
+from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grid import Grid
+from vstuxls.services import DocumentParsingService
+from vstuxls.services.debugging.wave_exporter import WaveDebugExporter
+from vstuxls.utils import Checkpointer
 
 
 def xls_to_json(xlsx_path: str):
@@ -94,12 +94,12 @@ def save_raw_document_data(matched_document: Match2d, output_dir: Path = Path('.
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     output_path = output_dir / f'raw_document_{timestamp}.json'
-    
+
     # Полный формат: рекурсивная сериализация Match2d
     def serialize_match_recursive(match: Match2d) -> dict:
         """Рекурсивно сериализует Match2d со всеми компонентами."""
         component_entries = []
-        
+
         if match.component2match:
             for name, child in match.component2match.items():
                 component_entries.append({
@@ -108,11 +108,11 @@ def save_raw_document_data(matched_document: Match2d, output_dir: Path = Path('.
                     "box": _box_dict(child.box),
                     "match": serialize_match_recursive(child)  # Рекурсивно сериализуем дочерние элементы
                 })
-        
+
         precision = match.precision if match.precision is not None else match.calc_precision()
         text_items = match.get_text()
         text_content = WaveDebugExporter._normalize_text_content(text_items)
-        
+
         return {
             "pattern": match.pattern.name,
             "precision": precision,
@@ -121,20 +121,20 @@ def save_raw_document_data(matched_document: Match2d, output_dir: Path = Path('.
             "component_count": len(component_entries),
             "components": component_entries,
         }
-    
+
     # Компактный формат: get_content()
     compact_content = matched_document.get_content(include_position=False)
-    
+
     # Сохраняем оба формата
     data = {
         "timestamp": timestamp,
         "full_format": serialize_match_recursive(matched_document),
         "compact_format": compact_content,
     }
-    
+
     with open(output_path, 'w', encoding='utf8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    
+
     print(f"Raw document data saved to: {output_path}")
     return output_path
 
@@ -417,11 +417,11 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
     Работает с новой структурой, где занятия представлены как frame_based_lesson.
     """
     group_names: list[str] = matched_document["table"]["groups"].get_content()["groups"]
-    
+
     def resolve_groups(discipline_match: Match2d) -> list[str]:
         """Извлекает список групп из discipline_with_groups."""
         discipline_content = discipline_match.get_content()
-        
+
         if isinstance(discipline_content, dict):
             if 'group' in discipline_content:
                 name = discipline_content['group']['group']
@@ -433,7 +433,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
             # Попытка извлечь группы из структуры discipline_with_groups
             if 'groups' in discipline_content:
                 return discipline_content['groups']
-        
+
         raise ValueError(f"Cannot extract groups: unknown discipline format {discipline_content!r}")
 
     def extract_teachers(lesson_match: Match2d) -> list[str]:
@@ -442,7 +442,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         if 'teacher' in lesson_match:
             teacher_match = lesson_match['teacher']
             teacher_content = teacher_match.get_content()
-            
+
             # teacher_burst может быть массивом строк
             if isinstance(teacher_content, list):
                 for item in teacher_content:
@@ -465,7 +465,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
             elif isinstance(teacher_content, str):
                 if teacher_content.strip():
                     teachers.append(teacher_content.strip())
-        
+
         # Также проверяем frame.teacher (может быть строка)
         if not teachers and 'frame' in lesson_match:
             frame_match = lesson_match['frame']
@@ -474,7 +474,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                 teacher_str = frame_content['teacher']
                 if isinstance(teacher_str, str) and teacher_str.strip():
                     teachers.append(teacher_str.strip())
-        
+
         return teachers if teachers else []
 
     def extract_rooms(lesson_match: Match2d) -> list[str]:
@@ -483,7 +483,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         if 'room' in lesson_match:
             room_match = lesson_match['room']
             room_content = room_match.get_content()
-            
+
             # room_burst может быть массивом строк
             if isinstance(room_content, list):
                 for item in room_content:
@@ -506,7 +506,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
             elif isinstance(room_content, str):
                 if room_content.strip():
                     rooms.append(room_content.strip())
-        
+
         # Также проверяем frame.room (может быть строка)
         if not rooms and 'frame' in lesson_match:
             frame_match = lesson_match['frame']
@@ -585,7 +585,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
     def extract_hours(lesson_match: Match2d) -> list[str]:
         """Извлекает часы занятия."""
         hours = []
-        
+
         # Проверяем explicit_hours (переопределённые часы)
         if 'explicit_hours' in lesson_match:
             explicit_hours_match = lesson_match['explicit_hours']
@@ -594,12 +594,12 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                 hours.append(plain(explicit_hours_content['hour_range']))
             elif isinstance(explicit_hours_content, str):
                 hours.append(explicit_hours_content)
-        
+
         # Если explicit_hours нет, извлекаем из frame
         if not hours and 'frame' in lesson_match:
             frame_match = lesson_match['frame']
             frame_content = frame_match.get_content()
-            
+
             if isinstance(frame_content, dict):
                 # Проверяем hour_begin в frame (может быть один час или начало диапазона)
                 if 'hour_begin' in frame_content:
@@ -608,7 +608,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                         hours.append(plain(hour_begin['hour_range']))
                     elif isinstance(hour_begin, str):
                         hours.append(hour_begin)
-                
+
                 # Проверяем hour_end (для занятий длиной в несколько пар)
                 if 'hour_end' in frame_content:
                     hour_end = frame_content['hour_end']
@@ -616,7 +616,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                         hours.append(plain(hour_end['hour_range']))
                     elif isinstance(hour_end, str):
                         hours.append(hour_end)
-                
+
                 # Проверяем hour_1 (для занятий длиной в 1 пару) - альтернативный вариант
                 if not hours and 'hour_1' in frame_content:
                     hour_1_content = frame_content['hour_1']
@@ -624,7 +624,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                         hours.append(plain(hour_1_content['hour_range']))
                     elif isinstance(hour_1_content, str):
                         hours.append(hour_1_content)
-                
+
                 # Также проверяем в frame.discipline.hour_begin
                 if not hours and 'discipline' in frame_content:
                     discipline_content = frame_content['discipline']
@@ -634,10 +634,10 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                             hours.append(plain(hour_begin['hour_range']))
                         elif isinstance(hour_begin, str):
                             hours.append(hour_begin)
-        
+
         if not hours:
-            raise ValueError(f"Cannot extract hours: unknown lesson format")
-        
+            raise ValueError("Cannot extract hours: unknown lesson format")
+
         return hours
 
     def normalize_hour_ranges(hours: list[str]) -> list[str]:
@@ -702,14 +702,14 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         """Извлекает название дисциплины и группы из frame->discipline."""
         if 'frame' not in lesson_match:
             raise ValueError("Lesson frame not found")
-        
+
         frame_match = lesson_match['frame']
         if 'discipline' not in frame_match:
             raise ValueError("Discipline not found in frame")
-        
+
         discipline_match = frame_match['discipline']
         discipline_content = discipline_match.get_content()
-        
+
         # Извлекаем название дисциплины
         subject = ""
         if isinstance(discipline_content, dict):
@@ -749,10 +749,10 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                 # Словарь без ожидаемых ключей discipline / discipline_name:
                 # пример: {'m2': {...}, 'm1': {...}}. Не пытаемся превращать в строку.
                 raise ValueError(f"Unknown discipline content structure: {discipline_content!r}")
-        
+
         # Извлекаем группы
         groups = resolve_groups(discipline_match)
-        
+
         return subject, groups
 
     def extract_week_info(lesson_match: Match2d, grid_match: Match2d, datetime_match: Match2d) -> tuple[int, str]:
@@ -763,12 +763,12 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         """
         week_day_index = 0
         week = "first_week"
-        
+
         # Извлекаем день недели из frame.hour_begin.week_day или frame.discipline.hour_begin.week_day
         if 'frame' in lesson_match:
             frame_match = lesson_match['frame']
             frame_content = frame_match.get_content()
-            
+
             if isinstance(frame_content, dict):
                 # Проверяем frame.hour_begin.week_day
                 if 'hour_begin' in frame_content:
@@ -779,7 +779,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                             week_day_index = LOOKUP.index_of_weekday(week_day_str)
                         except (ValueError, AssertionError):
                             pass
-                
+
                 # Также проверяем frame.discipline.hour_begin.week_day
                 if week_day_index == 0 and 'discipline' in frame_content:
                     discipline_content = frame_content['discipline']
@@ -791,20 +791,20 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                                 week_day_index = LOOKUP.index_of_weekday(week_day_str)
                             except (ValueError, AssertionError):
                                 pass
-        
+
         # Определяем неделю по позиции урока относительно структуры datetime
         if datetime_match and lesson_match.box:
             # Получаем структуру weeks из datetime
             if 'weeks' in datetime_match:
                 weeks_match = datetime_match['weeks']
                 week_children = weeks_match.get_children()
-                
+
                 if len(week_children) >= 2:
                     # Сравниваем позицию урока с позициями недель
                     lesson_top = lesson_match.box.top
                     week1_match = week_children[0]
                     week2_match = week_children[1] if len(week_children) > 1 else None
-                    
+
                     if week1_match.box and week2_match and week2_match.box:
                         # Определяем, к какой неделе относится урок по вертикальной позиции
                         week1_bottom = week1_match.box.bottom
@@ -826,7 +826,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                         if isinstance(week_content, dict) and '@index_in_array' in week_content:
                             week_index = week_content['@index_in_array']
                             week = LOOKUP.name_of_week(week_index) or "first_week"
-        
+
         return week_day_index, week
 
     def extract_explicit_dates(lesson_match: Match2d) -> list[str]:
@@ -835,7 +835,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         if 'explicit_dates' in lesson_match:
             explicit_dates_match = lesson_match['explicit_dates']
             explicit_dates_content = explicit_dates_match.get_content()
-            
+
             if isinstance(explicit_dates_content, list):
                 for item in explicit_dates_content:
                     if isinstance(item, str):
@@ -863,7 +863,7 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                             date_clean = date.strip()
                             if date_clean:
                                 dates.append(date_clean)
-        
+
         return dates
 
     def normalize_explicit_dates(dates: list[str], years_hint: str | None) -> list[str]:
@@ -943,32 +943,32 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
     out_lessons = []
     grid_match = matched_document['table']['grid']
     datetime_match = matched_document['table']['datetime']
-    
+
     # В новой структуре grid - это массив Match2d объектов (уроков)
     lesson_matches = grid_match.get_children()
-    
+
     for lesson_match in lesson_matches:
         try:
             # Извлекаем дисциплину и группы
             subject, groups = extract_discipline(lesson_match)
-            
+
             # Извлекаем преподавателей
             teachers = extract_teachers(lesson_match)
-            
+
             # Извлекаем аудитории
             rooms = extract_rooms(lesson_match)
-            
+
             # Извлекаем часы
             hours_raw = extract_hours(lesson_match)
             hours = normalize_hour_ranges(hours_raw)
-            
+
             # Извлекаем информацию о неделе и дне недели
             week_day_index, week = extract_week_info(lesson_match, grid_match, datetime_match)
-            
+
             # Извлекаем переопределённые даты
             explicit_dates_raw = extract_explicit_dates(lesson_match)
             explicit_dates = normalize_explicit_dates(explicit_dates_raw, years_hint=years)
-            
+
             out_lessons.append({
                 "subject": subject,
                 "kind": extract_kind(lesson_match, hours),
