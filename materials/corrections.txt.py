@@ -63,13 +63,16 @@ class Item:
     score: Optional[float] = 1
     approved: bool = False
     manual: bool = False
+    scope_id: int = 0
+    updated_at: datetime = now()  # дата последнего изменения / кеширования resolved_to
 
 
 class Occurrence(Item):
     """Вхождение — входной объект из слоя входных данных (необработанные данные).
         Может иметь несколько Resolution (один-ко-многим).
     """
-    status: Optional[int] = None
+    ### status: Optional[int] = None
+    resolved_to: Optional[CorrectObject] = None  # кеш, пересчитывается после любого изменения с любыми CorrectObject в БД.
 
 
 class CorrectObject(Item):
@@ -143,10 +146,15 @@ def apply_correction(occurrence: Occurrence, scope_id: int = 0) -> CorrectObject
     """Возвращает CorrectObject для заданного Occurrence.
     
     Алгоритм:
-    1. Найти существующее Resolution для Occurrence (APPROVED → вернуть, PENDING → вернуть, только INVALID → пересоздать заново если не создано, иначе ничего не вернуть)
-    2. Если не найдено - найти подходящий CorrectObject (проверка required_context_elements с учетом absence_allowed)
-    3. Если найден - создать/использовать Resolution для пары (Occurrence, CorrectObject)
-    4. Если не найден - создать новый CorrectObject (на основе important элементов контекста) и Resolution
-    5. Вернуть CorrectObject
+    1. Найти существующее Resolution для Occurrence:
+    	есть APPROVED → вернуть её,
+    	иначе выполнить анализ и закешировать его итоги:
+    	 - найти все подходящие объекты (сделать их PENDING), учитывая и не изменяя существующие INVALID → вернуть лучшую по score,
+    	если ничего так и не привязано / не создано, то ничего не вернуть.
+
+    # 2. Если не найдено - найти подходящий CorrectObject (проверка required_context_elements с учетом absence_allowed)
+    # 3. Если найден - создать/использовать Resolution для пары (Occurrence, CorrectObject)
+    # 4. Если не найден - создать новый CorrectObject (на основе important элементов контекста) и Resolution
+    # 5. Вернуть CorrectObject
     """
     pass
