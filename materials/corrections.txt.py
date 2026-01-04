@@ -30,6 +30,78 @@
     - Resolution: по паре (Occurrence, CorrectObject).
 
 
+    СТРУКТУРА БАЗЫ ДАННЫХ:
+
+    Три основные таблицы:
+
+    1. Таблица `occurrences` (входные объекты):
+       - id (PRIMARY KEY, автоинкремент)
+       - value (TEXT, NOT NULL) - текстовое значение вхождения
+       - context (JSON/TEXT, NOT NULL) - массив элементов контекста [{"key": str, "value": str, "important": bool, "score": float, "absence_allowed": bool}]
+       - score (FLOAT, DEFAULT 1)
+       - approved (BOOLEAN, DEFAULT FALSE)
+       - manual (BOOLEAN, DEFAULT FALSE)
+       - scope_id (INTEGER, DEFAULT 0, NOT NULL)
+       - updated_at (TIMESTAMP, NOT NULL) - дата последнего изменения / кеширования resolved_to
+       - resolved_to_id (INTEGER, FOREIGN KEY -> correct_objects.id, NULLABLE) - кеш, ссылка на CorrectObject
+
+       Индексы:
+       - UNIQUE(value, context) - для проверки покрытия контекста
+       - INDEX(value) - для быстрого поиска по значению
+       - INDEX(scope_id) - для фильтрации по области действия
+       - INDEX(resolved_to_id) - для быстрого доступа к кешированному результату
+
+    2. Таблица `correct_objects` (корректные объекты):
+       - id (PRIMARY KEY, автоинкремент)
+       - external_id (TEXT, NULLABLE, UNIQUE) - ID из внешнего справочника
+       - value (TEXT, NOT NULL) - текстовое значение корректного объекта
+       - required_context_elements (JSON/TEXT, NOT NULL) - массив обязательных элементов контекста [{"key": str, "value": str, "important": bool, "score": float, "absence_allowed": bool}]
+       - context (JSON/TEXT, NOT NULL) - массив элементов контекста (для совместимости с Item)
+       - score (FLOAT, DEFAULT 1)
+       - approved (BOOLEAN, DEFAULT FALSE)
+       - manual (BOOLEAN, DEFAULT FALSE)
+       - scope_id (INTEGER, DEFAULT 0, NOT NULL)
+       - updated_at (TIMESTAMP, NOT NULL)
+       - name (TEXT, NULLABLE) - название объекта из справочника
+       - description (TEXT, NULLABLE) - описание объекта из справочника
+
+       Индексы:
+       - UNIQUE(external_id) WHERE external_id IS NOT NULL - уникальность по внешнему ID
+       - UNIQUE(value, required_context_elements) WHERE external_id IS NULL - уникальность по value + required_context_elements
+       - INDEX(value) - для быстрого поиска по значению
+       - INDEX(scope_id) - для фильтрации по области действия
+       - INDEX(external_id) - для поиска по внешнему ID
+
+    3. Таблица `resolutions` (преобразования/разрешения):
+       - id (PRIMARY KEY, автоинкремент)
+       - occurrence_id (INTEGER, FOREIGN KEY -> occurrences.id, NOT NULL)
+       - correct_object_id (INTEGER, FOREIGN KEY -> correct_objects.id, NOT NULL)
+       - manual (BOOLEAN, DEFAULT FALSE) - создано/обновлено вручную или автоматически
+       - status (INTEGER, DEFAULT 0, NOT NULL) - 0=PENDING, 1=APPROVED, 9=INVALID
+       - score (FLOAT, DEFAULT 0) - оценка качества разрешения
+       - created_at (TIMESTAMP, NOT NULL)
+       - updated_at (TIMESTAMP, NOT NULL)
+       - scope_id (INTEGER, DEFAULT 0, NOT NULL)
+
+       Индексы:
+       - UNIQUE(occurrence_id, correct_object_id) - уникальность пары (Occurrence, CorrectObject)
+       - INDEX(occurrence_id) - для быстрого поиска всех Resolution для Occurrence
+       - INDEX(correct_object_id) - для быстрого поиска всех Resolution для CorrectObject
+       - INDEX(occurrence_id, status) - для поиска Resolution по Occurrence и статусу (особенно APPROVED)
+       - INDEX(scope_id) - для фильтрации по области действия
+       - INDEX(status) WHERE status != 9 - для поиска активных Resolution (не INVALID)
+
+    Дополнительные ограничения:
+    - CASCADE DELETE: при удалении Occurrence удаляются связанные Resolution
+    - CASCADE DELETE: при удалении CorrectObject удаляются связанные Resolution
+    - CHECK: для каждого occurrence_id максимум один Resolution со status=1 (APPROVED)
+    - CHECK: status IN (0, 1, 9)
+
+    Альтернативный вариант хранения контекста (если JSON не поддерживается):
+    - Отдельная таблица `context_elements` с полями: id, parent_type (occurrence/correct_object), parent_id, key, value, important, score, absence_allowed
+    - Индексы: INDEX(parent_type, parent_id) для быстрого доступа к элементам контекста объекта
+
+
     ВИЗУАЛЬНАЯ ЧАСТЬ:
     
     Таблица Resolution, колонки:
@@ -71,7 +143,6 @@ class Occurrence(Item):
     """Вхождение — входной объект из слоя входных данных (необработанные данные).
         Может иметь несколько Resolution (один-ко-многим).
     """
-    ### status: Optional[int] = None
     resolved_to: Optional[CorrectObject] = None  # кеш, пересчитывается после любого изменения с любыми CorrectObject в БД.
 
 
@@ -146,15 +217,25 @@ def apply_correction(occurrence: Occurrence, scope_id: int = 0) -> CorrectObject
     """Возвращает CorrectObject для заданного Occurrence.
     
     Алгоритм:
+    0. Для поданного Occurrence: найти в БД или добавить в БД, если существующие не покрывают:
+    	- отобрать все существуюшие Occurrence с совпадающим value,
+    	- из найденных отобрать те, чьи элементы контекста покрывают переданные: все значения присутствуют, и значения равны,
+		- если таковых нет, то добавить в БД как новый (и дальше работать с ним);
+    	- при обнаружении нескольких брать тот, у которого меньше отличий по составу контекста, или иначе любой (и дальше работать с ним).
+
     1. Найти существующее Resolution для Occurrence:
     	есть APPROVED → вернуть её,
-    	иначе выполнить анализ и закешировать его итоги:
-    	 - найти все подходящие объекты (сделать их PENDING), учитывая и не изменяя существующие INVALID → вернуть лучшую по score,
-    	если ничего так и не привязано / не создано, то ничего не вернуть.
+    	иначе проверить, есть ли в resolved_to закишированный и актуальный по дате результат: если есть, то вернуть его.
 
-    # 2. Если не найдено - найти подходящий CorrectObject (проверка required_context_elements с учетом absence_allowed)
-    # 3. Если найден - создать/использовать Resolution для пары (Occurrence, CorrectObject)
-    # 4. Если не найден - создать новый CorrectObject (на основе important элементов контекста) и Resolution
-    # 5. Вернуть CorrectObject
+    # 2. Если не найдено - выполнить анализ и:
+    	- найти подходящие CorrectObject (проверка required_context_elements с учетом absence_allowed) учитывая и не изменяя существующие INVALID,
+    	- создать для несуществующих новые Resolution со статусом PENDING, сохранить их,
+    	- удалить из БД возможные старые Resolution для этого Occurrence, которые больше не корректны, т.е. не отражают допустимый способ разрешения входящего объекта.
+
+    # 3. Найти лучшую по score Resolution (из тех, что не INVALID) для этого Occurrence, закешировать результат в resolved_to и задать дату обновления и вернуть её CorrectObject, если найдено.
+
+    # 4. Если не найдено - создать новый CorrectObject (на основе Occurrence и всех его элементов контекста в статусе important) и соответствующий Resolution (если только уже нет явно заданного INVALID для прямого Resolution, т.е. такое преобразоавние явно запрещено администратором).
+
+    # 5. Вернуть CorrectObject или ничего, если не удалось ничего создать и связать в статусе не-INVALID.
     """
     pass
