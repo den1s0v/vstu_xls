@@ -12,27 +12,53 @@
     
     МЕХАНИЗМ РАЗРЕШЕНИЯ:
     
-    CorrectObject хранит required_context_elements (обязательные элементы контекста). Resolution создается автоматически со статусом PENDING и только при совпадении элементов контекста:
+    CorrectObject хранит required_context_elements (обязательные элементы контекста). Resolution создается автоматически со статусом PENDING при совпадении элементов контекста:
+    
+    Проверка соответствия элемента контекста:
     - Элемент присутствует в Occurrence и значения совпадают → СООТВЕТСТВУЕТ
-    - Элемент отсутствует в Occurrence, проверяем absence_allowed элемента контекста:
-      * absence_allowed=True → СООТВЕТСТВУЕТ (тип может быть неизвестен заранее)
-      * absence_allowed=False → НЕ СООТВЕТСТВУЕТ (тип должен быть известен заранее)
-
+    - Элемент отсутствует в Occurrence:
+      * absence_allowed=True → СООТВЕТСТВУЕТ (тип может быть неизвестен заранее), но score Resolution будет меньше
+      * absence_allowed=False → НЕ СООТВЕТСТВУЕТ (тип должен быть известен заранее) - Resolution не создается
+    - Элемент присутствует, но значения различаются:
+      * important=True → НЕ СООТВЕТСТВУЕТ - Resolution не создается
+      * important=False → СООТВЕТСТВУЕТ, но score Resolution будет меньше
+    
     "Разрешение" может быть переопределено вручную для любой пары (в т.ч. создано без оглядки на контекст, или переназначено, или удалено).
     APPROVED может быть назначено для каждого Occurrence максимум 1 раз и имеет приоритет над остальными статусами.
-    Если APPROVED не задан, то выбирается CorrectObject со статусом PENDING; при наличии нескольких соответствий возникает ситуация неоднозначности; до её разрешения человеком вычисляется score для каждого resolution как 10*(оценка нечёткой близости по value) + взвешенная сумма совпавших элементов контекста, и выбирается наилучшее; при совпадении оценок выбирается первое по списку.
+    
+    Вычисление score для Resolution (при неоднозначности):
+    score = 10 * (оценка близости по value) + взвешенная сумма совпавших элементов контекста
+    - Оценка близости по value: простое равенство (=1), затем Jaro-Winkler для неполного совпадения
+    - Веса элементов контекста: используются weight из ContextElement
+    - Нормализация score не требуется
+    - При совпадении оценок выбирается первое по списку
+    
     Явный INVALID не участвует в выборе корректного объекта.
     При отсутствии подходящего корректного объекта для Occurrence создается новый CorrectObject без изменения содержимого.
     
+    КЕШИРОВАНИЕ resolved_to:
+    - Источник эталона: набор всех CorrectObject в рамках текущего scope_id
+    - Инвалидация: любое изменение любого CorrectObject с этим scope_id приводит к инвалидации кешей и пересчету всех Resolution с этим scope_id
+    - Проверка актуальности: сравнение даты кеширования resolved_to с scope.updated_at (из таблицы scopes)
+    - Если resolved_to.updated_at < scope.updated_at → требуется пересчет, иначе можно использовать кешированное значение
+    
     УНИКАЛЬНОСТЬ:
-    - Occurrence: по value и перечню required_context_elements: новый не добавляется, если уже существует такой, набор элементов контекста которого полностью покрывает элементы контекста кандидата.
-    - CorrectObject: по ID (если указан) или по value + required_context_elements.
+    - Occurrence: по value и контексту. Новый не добавляется, если уже существует такой, набор элементов контекста которого полностью покрывает элементы контекста кандидата (все элементы кандидата присутствуют в существующем с теми же значениями). Признаки important и absence_allowed не учитываются при проверке покрытия для Occurrence.
+    - CorrectObject: по external_id (если указан) или по value + required_context_elements.
     - Resolution: по паре (Occurrence, CorrectObject).
 
 
     СТРУКТУРА БАЗЫ ДАННЫХ:
 
-    Три основные таблицы:
+    Четыре основные таблицы:
+
+    0. Таблица `scopes` (области действия):
+       - id (PRIMARY KEY, автоинкремент)
+       - description (TEXT, NULLABLE) - описание области действия
+       - updated_at (TIMESTAMP, NOT NULL) - дата последнего изменения любого CorrectObject в этом scope
+       
+       Индексы:
+       - INDEX(updated_at) - для проверки актуальности кеша
 
     1. Таблица `occurrences` (входные объекты):
        - id (PRIMARY KEY, автоинкремент)
@@ -41,7 +67,7 @@
        - score (FLOAT, DEFAULT 1)
        - approved (BOOLEAN, DEFAULT FALSE)
        - manual (BOOLEAN, DEFAULT FALSE)
-       - scope_id (INTEGER, DEFAULT 0, NOT NULL)
+       - scope_id (INTEGER, FOREIGN KEY -> scopes.id, NOT NULL, DEFAULT 0)
        - updated_at (TIMESTAMP, NOT NULL) - дата последнего изменения / кеширования resolved_to
        - resolved_to_id (INTEGER, FOREIGN KEY -> correct_objects.id, NULLABLE) - кеш, ссылка на CorrectObject
 
@@ -55,12 +81,12 @@
        - id (PRIMARY KEY, автоинкремент)
        - external_id (TEXT, NULLABLE, UNIQUE) - ID из внешнего справочника
        - value (TEXT, NOT NULL) - текстовое значение корректного объекта
-       - required_context_elements (JSON/TEXT, NOT NULL) - массив обязательных элементов контекста [{"key": str, "value": str, "important": bool, "score": float, "absence_allowed": bool}]
+       - required_context_elements (JSON/TEXT, NOT NULL) - массив обязательных элементов контекста [{"key": str, "value": str, "important": bool, "weight": float, "absence_allowed": bool}]
        - context (JSON/TEXT, NOT NULL) - массив элементов контекста (для совместимости с Item)
        - score (FLOAT, DEFAULT 1)
        - approved (BOOLEAN, DEFAULT FALSE)
        - manual (BOOLEAN, DEFAULT FALSE)
-       - scope_id (INTEGER, DEFAULT 0, NOT NULL)
+       - scope_id (INTEGER, FOREIGN KEY -> scopes.id, NOT NULL, DEFAULT 0)
        - updated_at (TIMESTAMP, NOT NULL)
        - name (TEXT, NULLABLE) - название объекта из справочника
        - description (TEXT, NULLABLE) - описание объекта из справочника
@@ -71,6 +97,9 @@
        - INDEX(value) - для быстрого поиска по значению
        - INDEX(scope_id) - для фильтрации по области действия
        - INDEX(external_id) - для поиска по внешнему ID
+       
+       Триггеры/События:
+       - При изменении (INSERT/UPDATE/DELETE) любого CorrectObject обновлять scopes.updated_at для соответствующего scope_id
 
     3. Таблица `resolutions` (преобразования/разрешения):
        - id (PRIMARY KEY, автоинкремент)
@@ -78,10 +107,10 @@
        - correct_object_id (INTEGER, FOREIGN KEY -> correct_objects.id, NOT NULL)
        - manual (BOOLEAN, DEFAULT FALSE) - создано/обновлено вручную или автоматически
        - status (INTEGER, DEFAULT 0, NOT NULL) - 0=PENDING, 1=APPROVED, 9=INVALID
-       - score (FLOAT, DEFAULT 0) - оценка качества разрешения
+       - score (FLOAT, DEFAULT 0) - оценка качества разрешения (10*близость_value + сумма weight совпавших элементов)
        - created_at (TIMESTAMP, NOT NULL)
        - updated_at (TIMESTAMP, NOT NULL)
-       - scope_id (INTEGER, DEFAULT 0, NOT NULL)
+       - scope_id (INTEGER, FOREIGN KEY -> scopes.id, NOT NULL, DEFAULT 0)
 
        Индексы:
        - UNIQUE(occurrence_id, correct_object_id) - уникальность пары (Occurrence, CorrectObject)
@@ -90,15 +119,21 @@
        - INDEX(occurrence_id, status) - для поиска Resolution по Occurrence и статусу (особенно APPROVED)
        - INDEX(scope_id) - для фильтрации по области действия
        - INDEX(status) WHERE status != 9 - для поиска активных Resolution (не INVALID)
+       - INDEX(occurrence_id, score) WHERE status != 9 - для поиска лучшего Resolution по score
 
     Дополнительные ограничения:
     - CASCADE DELETE: при удалении Occurrence удаляются связанные Resolution
     - CASCADE DELETE: при удалении CorrectObject удаляются связанные Resolution
+    - CASCADE DELETE: при удалении Scope удаляются связанные Occurrence, CorrectObject, Resolution (или RESTRICT, в зависимости от бизнес-логики)
     - CHECK: для каждого occurrence_id максимум один Resolution со status=1 (APPROVED)
     - CHECK: status IN (0, 1, 9)
 
+    Триггеры/События:
+    - При изменении любого CorrectObject в scope обновлять scopes.updated_at для этого scope_id
+    - При изменении scopes.updated_at инвалидировать кеши resolved_to для всех Occurrence в этом scope (помечать как требующие пересчета)
+
     Альтернативный вариант хранения контекста (если JSON не поддерживается):
-    - Отдельная таблица `context_elements` с полями: id, parent_type (occurrence/correct_object), parent_id, key, value, important, score, absence_allowed
+    - Отдельная таблица `context_elements` с полями: id, parent_type (occurrence/correct_object), parent_id, key, value, important, weight, absence_allowed
     - Индексы: INDEX(parent_type, parent_id) для быстрого доступа к элементам контекста объекта
 
 
@@ -122,22 +157,7 @@
 
     ВОПРОСЫ ДЛЯ УТОЧНЕНИЯ ПРИ РЕАЛИЗАЦИИ:
 
-    1. АЛГОРИТМЫ И ВЫЧИСЛЕНИЯ:
-       - Формула вычисления score для Resolution: "10*(оценка нечёткой близости по value) + взвешенная сумма совпавших элементов контекста"
-         * Как именно вычисляется "нечёткая близость по value"? (Levenshtein, Jaro-Winkler, другие метрики?) -- простое равенство (=1), затем Jaro-Winkler
-         * Какие веса для элементов контекста? - использовать weight из ContextElement.
-         * Нормализация значений score - не требуется.
-
-       - Логика "покрытия контекста" для Occurrence:
-         * "набор элементов контекста которого полностью покрывает элементы контекста кандидата" -
-           да, это означает, что все элементы кандидата должны присутствовать в существующем с теми же значениями.
-         * Совпадение по "важным" элементам контекста (признаки important и absence_allowed) не учитывается при проверке наличия существующих Occurrence, но должна учитываться при сопоставлении с CorrectObject.
-         * Как обрабатывать отсутствующие элементы (с учетом absence_allowed)? -- При сопоставлении с CorrectObject совпадения нет, если в Occurrence отсутствует элемент контекста, у которого в CorrectObject указано absence_allowed==False. Иначе (элемент контекста необязательный) совпадение возможно, просто score у Resoltion будет меньше.
-         При сопоставлении с CorrectObject совпадения нет, если в Occurrence элемент контекста, у которого в CorrectObject указано important==True, имеет отличающееся значение value. Иначе (элемент контекста несущественный/неважный) совпадение возможно, просто score у Resoltion будет меньше.
-
-       - Обновление кеша resolved_to:
-         * Когда именно пересчитывается? (при каждом изменении Resolution, CorrectObject, или по расписанию?) -- источником эталона является набор всех CorrectObject в рамках текущего scope_id; поэтому любое изменение любого CorrectObject с этим scope_id должна приводить к инвалидации кэшей и последующему пересчету всех соответствий Resolution с этим scope_id.
-         * Что означает "актуальный по дате"? (какой период актуальности?) -- Судя по всему, нам придется добавить еще дополнительную таблицу для scope, которая будет хранить id этого scope, описание secription и дату-время updated_at последнего изменения корректных объектов в нем. Если дата кеширования resolved_to раньше, чем scope.updated_at, то нужно пересчитать resolved_to, иначе можно использовать кэшированное значение.
+    1. АЛГОРИТМЫ И ВЫЧИСЛЕНИЯ: [ОТВЕТЫ ДАНЫ, ИНФОРМАЦИЯ ПЕРЕНЕСЕНА В ОСНОВНОЙ ТЕКСТ]
 
 
     2. БИЗНЕС-ЛОГИКА:
@@ -235,14 +255,14 @@ class Item:
     approved: bool = False
     manual: bool = False
     scope_id: int = 0
-    updated_at: datetime = now()  # дата последнего изменения / кеширования resolved_to
+    updated_at: datetime  # дата последнего изменения / кеширования resolved_to
 
 
 class Occurrence(Item):
     """Вхождение — входной объект из слоя входных данных (необработанные данные).
         Может иметь несколько Resolution (один-ко-многим).
     """
-    resolved_to: Optional[CorrectObject] = None  # кеш, пересчитывается после любого изменения с любыми CorrectObject в БД.
+    resolved_to: Optional['CorrectObject'] = None  # кеш, пересчитывается после любого изменения с любыми CorrectObject в БД.
 
 
 class CorrectObject(Item):
@@ -253,20 +273,21 @@ class CorrectObject(Item):
         Resolution → CorrectObject: многие-к-одному.
     """
     id: Optional[str] = None
-    required_context_elements: list[ContextElement]
+    required_context_elements: list['ContextElement']
     name: Optional[str] = None
     description: Optional[str] = None
 
 
 class ContextElement:
     """Элемент контекста (ключ-значение).
-        important: важность для определения гипотезы.
-        absence_allowed: разрешено ли отсутствие при проверке соответствия (True - может быть неизвестен, False - должен быть известен).
+        important: если True - при несовпадении значений Resolution не создается; если False - создается, но score меньше.
+        weight: вес элемента для вычисления score Resolution (используется в формуле: сумма weight совпавших элементов).
+        absence_allowed: если True - отсутствие элемента допускается (score меньше); если False - отсутствие запрещает создание Resolution.
     """
     key: str
     value: str
     important: bool = False
-    weight: Optional[float] = 1
+    weight: Optional[float] = 1  # Вес для вычисления score Resolution
     absence_allowed: bool = False
 
 
