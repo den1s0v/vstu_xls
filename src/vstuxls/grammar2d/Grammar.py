@@ -182,12 +182,13 @@ class Grammar(WithCache):
 
 
 def read_grammar_data(
-        config_file: 'str | Path' = '../src/vstuxls/cnf/grammar_root.yml',
+        config_file: 'str | Path' = '../cnf/grammar_root.yml',
         data: dict = None,
         require_cell_types: bool = True,
   ) -> tuple[dict[str, CellType], list[Pattern2d]]:
     if not data:
         assert config_file
+        config_file = find_file_under_path(config_file)
         with open(config_file, encoding='utf-8') as f:
             data = yaml.safe_load(f)
 
@@ -224,7 +225,7 @@ def read_grammar_data(
 
 
 def read_grammar(
-        config_file: str | Path = Path(str(files('vstuxls').joinpath('cnf', 'grammar_root.yml'))),
+        config_file: str | Path = Path('../cnf/grammar_root.yml'),
         data: dict | None = None,
         require_cell_types: bool = True,
   ) -> Grammar | None:

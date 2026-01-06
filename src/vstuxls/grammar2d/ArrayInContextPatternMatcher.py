@@ -17,8 +17,8 @@ class ArrayInContextPatternMatcher(ArrayPatternMatcher):
         if isinstance(region, RangedBox) and not region.is_deterministic():
             # Дополнить информацией о нахождении каждого элемента в однозначной или вероятной зоне родителя
             key1 = 'touches_probable_zone_map'
-            max_box: RangedBox = None  # late init: see below
-            min_box: RangedBox = None
+            max_box: RangedBox | None = None  # late init: see below
+            min_box: RangedBox | None = None
 
             for m in item_occurrences:
                 if key1 not in m.data:

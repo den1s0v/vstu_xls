@@ -29,7 +29,7 @@ from vstuxls.utils import find_file_under_path
 
 
 def read_cell_types(
-    config_file: str = "../src/vstuxls/cnf/cell_types.yml",
+    config_file: str = "../cnf/cell_types.yml",
     data: dict | None=None,
     raise_on_error=True,
     base_dir: 'str | Path | None' = None,

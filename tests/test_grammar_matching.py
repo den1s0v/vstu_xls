@@ -38,7 +38,7 @@ class GrammarMatchingTestCase(unittest.TestCase):
         cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lessons.xlsx'))
         cls.grid_vstu_fevt4_labs = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 labs.xlsx'))
 
-        cls.vstu_grammar = read_grammar('../src/vstuxls/cnf/grammar_root.yml')
+        cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
 
         cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
         cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')

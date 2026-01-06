@@ -22,7 +22,7 @@ def xls_to_json(xlsx_path: str):
     grid = read_schedule_xls(xlsx_path)
     ch.hit('Excel grid loaded')
 
-    vstu_grammar = read_grammar('../src/vstuxls/cnf/grammar_root.yml')
+    vstu_grammar = read_grammar('../cnf/grammar_root.yml')
     ch.hit('VSTU grammar loaded')
 
     doc, service = extract_schedule_data(grid, vstu_grammar, inspect=True)
