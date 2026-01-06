@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Union
 
 import vstuxls.string_matching.CellType as ns
+import vstuxls.string_matching.StringMatch as sm
 from vstuxls.string_matching.StringTransformer import StringTransformer
 
 if TYPE_CHECKING:
@@ -117,11 +118,11 @@ class StringPattern:
         if self.pattern_syntax == 'plain':
             if string == self.pattern:
                 re_match_imitation = [string]  # list has `0` index
-                return StringMatch(re_match_imitation, self, string)
+                return sm.StringMatch(re_match_imitation, self, string)
         else:
             m = self._re_match_method(string)
             if m:
-                return StringMatch(m, self, string)
+                return sm.StringMatch(m, self, string)
         return None
 
     def prepare_pattern(self):

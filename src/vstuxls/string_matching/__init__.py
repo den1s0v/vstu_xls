@@ -16,6 +16,8 @@
      (уровень уверенности, равный нулю, не имеет смысла).
 """
 
+from pathlib import Path
+
 import yaml
 
 from vstuxls.string_matching.CellClassifier import CellClassifier
@@ -27,13 +29,14 @@ from vstuxls.utils import find_file_under_path
 
 
 def read_cell_types(
-    config_file: str = "../cnf/cell_types.yml",
-    data=None,
+    config_file: str = "../src/vstuxls/cnf/cell_types.yml",
+    data: dict | None=None,
     raise_on_error=True,
+    base_dir: 'str | Path | None' = None,
 ) -> dict[str, CellType] | None:
     if not data:
         assert config_file
-        config_file = find_file_under_path(config_file)
+        config_file = find_file_under_path(config_file, base_dir or '.')
         with open(config_file, encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
@@ -46,7 +49,7 @@ def read_cell_types(
         # look for data in specified file
         filepath = data["cell_types_filepath"]
         # Note: uncontrolled recursion
-        return read_cell_types(filepath)
+        return read_cell_types(filepath, base_dir=base_dir)
     elif raise_on_error:
         raise ValueError(
             f"Format error: `cell_types` or `cell_types_filepath` key expected in given file: `{config_file}`."

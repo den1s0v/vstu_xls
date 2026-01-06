@@ -37,5 +37,5 @@ class NonTerminal(Pattern2d):
 
     def get_matcher(self, grammar_matcher):
         # raise NotImplementedError(type(self))
-        from grammar2d.NonTerminalMatcher import NonTerminalMatcher
+        from vstuxls.grammar2d.NonTerminalMatcher import NonTerminalMatcher
         return NonTerminalMatcher(self, grammar_matcher)

@@ -27,5 +27,5 @@ class ArrayInContextPattern(ArrayPattern):
         return False
 
     def get_matcher(self, grammar_matcher):
-        from grammar2d.ArrayInContextPatternMatcher import ArrayInContextPatternMatcher
+        from vstuxls.grammar2d.ArrayInContextPatternMatcher import ArrayInContextPatternMatcher
         return ArrayInContextPatternMatcher(self, grammar_matcher)

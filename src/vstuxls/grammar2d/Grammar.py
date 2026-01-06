@@ -182,7 +182,7 @@ class Grammar(WithCache):
 
 
 def read_grammar_data(
-        config_file: 'str | Path' = '../cnf/grammar_root.yml',
+        config_file: 'str | Path' = '../src/vstuxls/cnf/grammar_root.yml',
         data: dict = None,
         require_cell_types: bool = True,
   ) -> tuple[dict[str, CellType], list[Pattern2d]]:
@@ -193,7 +193,7 @@ def read_grammar_data(
 
     assert isinstance(data, dict), data
 
-    cell_types = read_cell_types(data=data, raise_on_error=require_cell_types)
+    cell_types = read_cell_types(data=data, raise_on_error=require_cell_types, base_dir=config_file or '.')
 
     parsed_patterns = []
 
@@ -212,7 +212,7 @@ def read_grammar_data(
         # Add cell_types & patterns from referenced grammar (with overwrite for cell_types)
         for sub_path in data['include_grammars']:
             # TODO add guard: ignore grammars already loaded to avoid potential duplication & uncontrolled recursion.
-            sub_cell_types, sub_parsed_patterns = read_grammar_data(config_file=find_file_under_path(sub_path), require_cell_types=False)
+            sub_cell_types, sub_parsed_patterns = read_grammar_data(config_file=find_file_under_path(sub_path, config_file or '.'), require_cell_types=False)
             cell_types |= sub_cell_types or {}
             parsed_patterns += sub_parsed_patterns or ()
 

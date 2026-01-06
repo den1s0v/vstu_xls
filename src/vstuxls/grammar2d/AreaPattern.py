@@ -183,7 +183,7 @@ class AreaPattern(NonTerminal):
         return relation_triples
 
     def get_matcher(self, grammar_matcher):
-        from grammar2d.AreaPatternMatcher import AreaPatternMatcher
+        from vstuxls.grammar2d.AreaPatternMatcher import AreaPatternMatcher
         return AreaPatternMatcher(self, grammar_matcher)
 
     # def __str__(self) -> str:

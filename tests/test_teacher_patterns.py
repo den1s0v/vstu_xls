@@ -17,7 +17,7 @@ def test_teacher_patterns():
     """Тестирование паттернов типа 'teacher'"""
 
     # Загружаем типы ячеек
-    cell_types = read_cell_types(config_file='../cnf/cell_types.yml')
+    cell_types = read_cell_types(config_file='../src/vstuxls/cnf/cell_types.yml')
     teacher_type = cell_types.get('teacher')
 
     if not teacher_type:

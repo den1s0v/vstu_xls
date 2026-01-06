@@ -151,5 +151,5 @@ class ArrayPattern(NonTerminal):
         return mean_components_score * len_coeff
 
     def get_matcher(self, grammar_matcher):
-        from grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
+        from vstuxls.grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
         return ArrayPatternMatcher(self, grammar_matcher)

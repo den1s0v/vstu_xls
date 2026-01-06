@@ -59,7 +59,7 @@ class Terminal(Pattern2d):
         return self._merge_static_data_into_content(match, content)
 
     def get_matcher(self, grammar_matcher):
-        from grammar2d.TerminalMatcher import TerminalMatcher
+        from vstuxls.grammar2d.TerminalMatcher import TerminalMatcher
         return TerminalMatcher(self, grammar_matcher)
 
     def __str__(self) -> str:

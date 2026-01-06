@@ -151,7 +151,7 @@ class WithSafeCreate:
         return obj
 
 
-def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=3) -> Path | None:
+def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=5) -> Path | None:
     if not directories:
         # use current dir
         directories = (Path('.'), )
