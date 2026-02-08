@@ -15,10 +15,11 @@ from vstuxls.utils.convert import convert_all_in_dir
 def parse_args() -> argparse.Namespace:
     lib_dir = files("vstuxls")
     root_dir = Path(__file__).resolve().parent.parent
-    default_grammar = Path(str(lib_dir / "cnf" / "grammar_root.yml"))
+    default_grammar = Path(str(root_dir / "cnf" / "grammar_root.yml"))
     # default_input_dir = root_dir / "tests" / "test_data"
-    default_input_dir = root_dir / "materials/2025-12/магистратура"
-    default_output_base = root_dir / "data" / "batch_debug"
+    default_input_dir = root_dir / "materials/2026-02"
+    default_output_base = root_dir / "data" / "output"
+    default_report_base = root_dir / "data" / "reports"
 
     parser = argparse.ArgumentParser(
         description="Batch process XLSX files with grammar matching and debug exports.",
@@ -39,7 +40,13 @@ def parse_args() -> argparse.Namespace:
         "--output-base",
         type=Path,
         default=default_output_base,
-        help=f"Base directory for debug exports (default: {default_output_base})",
+        help=f"Base directory for JSON export (default: {default_output_base})",
+    )
+    parser.add_argument(
+        "--report-base",
+        type=Path,
+        default=default_report_base,
+        help=f"Base directory for debug reports export (default: {default_report_base})",
     )
     parser.add_argument(
         "--waves-json",
@@ -71,7 +78,8 @@ def parse_args() -> argparse.Namespace:
 def process_single_file(
     input_path: Path,
     grammar_path: Path,
-    output_base: Path,
+    json_output_dir: Path,
+    reports_output_base: Path,
     enable_json: bool = True,
     enable_excel: bool = True,
 ) -> bool:
@@ -81,7 +89,7 @@ def process_single_file(
 
         # Генерируем уникальное имя для подпапки (на основе имени исходного файла, без подпути)
         file_stem = input_path.stem
-        output_dir = output_base / file_stem
+        output_dir = reports_output_base / file_stem
         # Убеждаемся, что директория для отчётов существует, прежде чем экспортировать unused_patterns.*
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -118,8 +126,9 @@ def process_single_file(
             logger.info("  Saved reports to {}", output_dir.resolve())
 
             # Экспортируем JSON-расписание в общую папку импорта
-            root_dir = Path(__file__).resolve().parent.parent
-            json_output_dir = root_dir / "data" / "imports"
+            if not json_output_dir:
+                root_dir = Path(__file__).resolve().parent.parent
+                json_output_dir = root_dir / "data" / "imports"
             json_output_dir.mkdir(parents=True, exist_ok=True)
             json_path = json_output_dir / f"{file_stem}.json"
 
@@ -137,13 +146,32 @@ def process_single_file(
         return False
 
 
-def process_many(paths: list[Path], grammar_path: Path, output_base: Path, enable_json: bool, enable_excel: bool) -> None:
-    """Обрабатывает несколько XLSX файлов."""
+def process_many(
+        paths: list[Path], grammar_path: Path,
+        output_base: Path, report_base: Path,
+        enable_json: bool,
+        enable_excel: bool,
+        input_path_base: Path | None = None,
+) -> None:
+    """Обрабатывает несколько XLSX файлов.
+    input_path_base: если задано, то в целевой папке будет воссоздана такая же структура подкаталогов, как и в источнике относительно заданного пути. Должно быть подпутём всх путей из paths или None (без подкаталогов).
+    """
     ch = Checkpointer()
     success_count = 0
 
     for path in paths:
-        if process_single_file(path, grammar_path, output_base, enable_json, enable_excel):
+        # prepare paths
+        target_dir = report_base
+        json_output_dir = output_base
+        if input_path_base:
+            # cut input_path_base from path
+            if path.is_relative_to(input_path_base):
+                subpath = path.parent.relative_to(input_path_base)
+                target_dir = report_base / subpath
+                json_output_dir = output_base / subpath
+
+        # run extracting info from sheet under path
+        if process_single_file(path, grammar_path, json_output_dir, target_dir, enable_json, enable_excel):
             success_count += 1
 
     ch.hit(f'Completed: {success_count}/{len(paths)} files processed')
@@ -153,6 +181,7 @@ def process_all_in_dir(
     folder_path: Path,
     grammar_path: Path,
     output_base: Path,
+    report_base: Path,
     enable_json: bool = True,
     enable_excel: bool = True,
 ) -> None:
@@ -167,7 +196,7 @@ def process_all_in_dir(
     # Теперь собираем все `.xlsx` для основной обработки
     paths = list(folder_path.rglob('*.xlsx'))
     logger.info("Found {} XLSX files in {}", len(paths), folder_path)
-    process_many(paths, grammar_path, output_base, enable_json, enable_excel)
+    process_many(paths, grammar_path, output_base, report_base, enable_json, enable_excel, folder_path)
 
 
 def main() -> None:
@@ -182,6 +211,7 @@ def main() -> None:
         folder_path=args.input_dir,
         grammar_path=args.grammar,
         output_base=args.output_base,
+        report_base=args.report_base,
         enable_json=args.waves_json,
         enable_excel=args.waves_excel,
     )
