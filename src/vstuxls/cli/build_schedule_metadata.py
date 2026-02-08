@@ -24,7 +24,7 @@ def collect_metadata_from_dir(imports_dir: Path) -> list[dict]:
         logger.error("Imports directory does not exist: {}", imports_dir)
         return entries
 
-    for path in sorted(imports_dir.glob("*.json")):
+    for path in sorted(imports_dir.rglob("*.json")):
         try:
             with path.open("r", encoding="utf8") as f:
                 data = json.load(f)
@@ -53,8 +53,8 @@ def write_metadata_file(entries: list[dict], dst_path: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    root_dir = Path(__file__).resolve().parent.parent.parent
-    default_imports_dir = root_dir / "data" / "imports"
+    root_dir = Path(__file__).resolve().parent.parent.parent.parent
+    default_imports_dir = root_dir / "data" / "output"
     default_output = root_dir / "data" / "schedule_metadata.json"
 
     parser = argparse.ArgumentParser(
