@@ -170,9 +170,9 @@ def build_schedule_metadata(source_path: Path | None, original_title: str | None
     """
     # Хардкоды по заданию
     years = "2025-2026"
-    semester = "1"
-    start_date = "01.09.2025"
-    end_date = "01.02.2026"
+    semester = "2"
+    start_date = "09.02.2026"
+    end_date = "30.06.2026"
 
     # Безопасно нормализуем путь
     path = source_path.resolve() if isinstance(source_path, Path) else None
@@ -904,6 +904,18 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
                 return None
             # как в make_calendar: месяцы > 6 относятся к левому году
             return left_year if month > 6 else right_year
+
+        # проверить ситуацию с форматом одной точки в качестве разделителя (16.04.17.05 -> 16.04, 17.05)
+        re_four_parts = r'^(\d{1,2}.\d{2}).(\d{1,2}.\d{2})$'
+        # цикл с разбиением отдельных элементов
+        # (пронумеруем элементы и переберём их в обратном порядке; итерируемся по копии списка)
+        for i, raw in reversed(list(enumerate(dates))):
+            if m := re.match(re_four_parts, raw):
+                date1, date2 = m[1], m[2]
+                print(f"[normalize_explicit_dates] Split terse dates: {raw!r} -> {[date1, date2]!r} (years_hint={years_hint!r})")
+                # вставляем пару вместо одного
+                dates[i: i+1] = [date1, date2]
+
 
         normalized: list[str] = []
         for raw in dates:
