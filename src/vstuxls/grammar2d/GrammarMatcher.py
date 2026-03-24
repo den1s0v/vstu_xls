@@ -414,6 +414,13 @@ class GrammarMatcher:
         return [match for idx, match in enumerate(matches) if idx not in to_remove]
 
     def run_match(self, grid: Grid) -> list[Match2d]:
+        """
+        Run matching of all patterns in the grammar on the given grid.
+        Returns list of matches for the root pattern.
+        "Центральный метод" всего парсера.
+        :param grid: Grid to match on
+        :return: List of matches for the root pattern
+        """
         self.matches_by_element.clear()
         # сбрасываем кэш отфильтрованных матчей
         self._filtered_matches_cache = {}

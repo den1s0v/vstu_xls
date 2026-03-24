@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     root_dir = Path(__file__).resolve().parent.parent
     default_grammar = Path(str(root_dir / "cnf" / "grammar_root.yml"))
     # default_input_dir = root_dir / "tests" / "test_data"
-    default_input_dir = root_dir / "materials/2026-03-05"
+    default_input_dir = root_dir / "materials/2026-03-20"
     default_output_base = root_dir / "data" / "output"
     default_report_base = root_dir / "data" / "reports"
 
