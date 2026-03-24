@@ -5,6 +5,10 @@ Main application of the configurable project is to deal with [VSTU's timetable f
 # Status / Статус
 Only an idea, first experiments. / Формируется идея, первые пробы инструментов.
 
+## Документация (wiki)
+
+Краткие материалы на русском — в каталоге **[docs/](docs/index.md)** (обзор проекта, базовое использование парсера, диагностика).
+
 ### Частичная структура проекта (наброски)
 ![Структура проекта](https://github.com/den1s0v/vstu_xls/blob/main/materials/О%20парсинге%20xls.png?raw=true)
 
