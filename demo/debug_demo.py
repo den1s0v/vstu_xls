@@ -67,6 +67,11 @@ def parse_args() -> argparse.Namespace:
         waves_json=True,
         waves_excel=True,
     )
+    parser.add_argument(
+        "--no-diagnostics",
+        action="store_true",
+        help="Не сохранять parsing_diagnostics.json в каталог --output.",
+    )
     return parser.parse_args()
 
 
@@ -89,6 +94,9 @@ def main() -> None:
     service = DocumentParsingService(
         grammar=grammar,
         wave_exporter=exporter,
+        diagnostics_output_dir=None if args.no_diagnostics else args.output,
+        document_source_path=args.input,
+        grammar_source_path=args.grammar,
     )
 
     logger.info("Running grammar matcher…")
@@ -102,6 +110,8 @@ def main() -> None:
         service.export_final_report(document_match=matches[0])
 
     logger.info("Wave artifacts are saved under {}", args.output.resolve())
+    if not args.no_diagnostics:
+        logger.info("Parsing diagnostics: {}", (args.output / "parsing_diagnostics.json").resolve())
 
 
 if __name__ == "__main__":

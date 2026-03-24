@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from vstuxls.grammar2d import Grammar, GrammarMatcher
 from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.services.debugging import WaveDebugExporter
+from vstuxls.services.diagnostics import DiagnosticsCollector, export_parsing_diagnostics_json
 
 # Список паттернов для анализа неиспользованных совпадений
 DEFAULT_UNUSED_PATTERNS_TO_ANALYZE = [
@@ -26,6 +28,12 @@ class ParsingDebugHooks:
         """Вызывается после завершения волны."""
 
 
+def _path_to_str(p: str | Path | None) -> str | None:
+    if p is None:
+        return None
+    return str(Path(p))
+
+
 @dataclass
 class DocumentParsingService:
     """Высокоуровневый сервис для работы с грамматикой документов."""
@@ -33,10 +41,15 @@ class DocumentParsingService:
     grammar: Grammar
     debug_hooks: ParsingDebugHooks = field(default_factory=ParsingDebugHooks)
     wave_exporter: WaveDebugExporter | None = None
+    # Если задано, после parse_document пишется parsing_diagnostics.json в эту папку.
+    diagnostics_output_dir: Path | None = None
+    document_source_path: str | Path | None = None
+    grammar_source_path: str | Path | None = None
 
     _matcher: GrammarMatcher = field(init=False)
     _last_grid: Any = field(default=None, init=False)
     _wave_patterns: dict[int, list[str]] = field(default_factory=dict, init=False)
+    _diagnostics_collector: DiagnosticsCollector | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._matcher = GrammarMatcher(self.grammar, wave_observer=self)
@@ -45,10 +58,41 @@ class DocumentParsingService:
         """Основная точка входа: запускает распознавание документа."""
         self._last_grid = grid
         self._wave_patterns.clear()
-        return self._matcher.run_match(grid)
+        matches: list[Match2d] = []
+
+        if self.diagnostics_output_dir is not None:
+            self._diagnostics_collector = DiagnosticsCollector(
+                source_path=_path_to_str(self.document_source_path),
+                grammar_path=_path_to_str(self.grammar_source_path),
+            )
+            self._diagnostics_collector.mark_started()
+            self._matcher.diagnostic_sink = self._diagnostics_collector
+        else:
+            self._diagnostics_collector = None
+            self._matcher.diagnostic_sink = None
+
+        try:
+            matches = self._matcher.run_match(grid)
+            if self._diagnostics_collector is not None:
+                self._diagnostics_collector.set_root_matches_count(len(matches))
+        except BaseException as exc:
+            if self._diagnostics_collector is not None:
+                self._diagnostics_collector.record_parse_exception(exc)
+            raise
+        finally:
+            if self._diagnostics_collector is not None:
+                self._diagnostics_collector.mark_finished()
+                doc_diag = self._diagnostics_collector.build_document_diagnostics()
+                export_parsing_diagnostics_json(doc_diag, Path(self.diagnostics_output_dir))
+            self._matcher.diagnostic_sink = None
+            self._diagnostics_collector = None
+
+        return matches
 
     def notify_wave_started(self, wave_index: int, patterns: Iterable[str]) -> None:
         """Вспомогательный метод: уведомляет хуки о запуске волны."""
+        if self._diagnostics_collector is not None:
+            self._diagnostics_collector.set_wave_index(wave_index)
         pattern_list = list(patterns)
         self._wave_patterns[wave_index] = pattern_list
         self._handle_wave_started(wave_index, pattern_list)
@@ -135,7 +179,7 @@ class DocumentParsingService:
             pattern_names: Sequence[str] | None = None,
     ) -> None:
         """Экспортирует финальный отчёт о распознавании, включая неиспользованные паттерны.
-        
+
         По умолчанию анализируются паттерны из DEFAULT_UNUSED_PATTERNS_TO_ANALYZE.
         """
         if not self.wave_exporter:

@@ -8,6 +8,7 @@ from loguru import logger
 import vstuxls.grammar2d.Pattern2d as pt
 from vstuxls.geom2d import Box, Point, RangedBox
 from vstuxls.grammar2d import Grammar
+from vstuxls.grammar2d.diagnostic_sink import ParsingDiagnosticSink
 from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.grid import CellView, Grid, GridView
 from vstuxls.string_matching import CellClassifier
@@ -32,6 +33,8 @@ class _WaveObserver(Protocol):
 class GrammarMatcher:
     grammar: Grammar
     wave_observer: '_WaveObserver | None' = None
+    # Опциональный приёмник структурированной диагностики (например DiagnosticsCollector).
+    diagnostic_sink: ParsingDiagnosticSink | None = None
 
     # projection of processed grid
     _grid_view: GridView = None
@@ -126,6 +129,10 @@ class GrammarMatcher:
                 f"Unexpected overlap_resolution mode: {overlap_resolution} for pattern {pattern.name}, "
                 f"returning matches without filtering"
             )
+            if self.diagnostic_sink:
+                self.diagnostic_sink.record_unexpected_overlap_mode(
+                    pattern.name, repr(overlap_resolution)
+                )
             return matches
 
     @staticmethod
@@ -532,12 +539,20 @@ class GrammarMatcher:
         if len(matches) not in pattern.count_in_document:
             logger.warning(f'Found {len(matches)} match(es) of pattern `{pattern.name
                 }` but expected {pattern.count_in_document}.')
+            if self.diagnostic_sink:
+                self.diagnostic_sink.record_pattern_count_mismatch(
+                    pattern.name, len(matches), str(pattern.count_in_document)
+                )
 
             if pattern.count_in_document.stop is not None and len(matches) > pattern.count_in_document.stop:
                 limit = pattern.count_in_document.stop
                 # Drop unexpected matches.
                 matches = matches[:limit]
                 logger.warning(f' ... limited result to {limit} match(es) of this pattern.')
+                if self.diagnostic_sink:
+                    self.diagnostic_sink.record_match_limit_applied(
+                        pattern.name, limit, source='GrammarMatcher._find_matches_of_pattern'
+                    )
 
         for m in matches or ():
             # register Match globally
@@ -612,6 +627,10 @@ class GrammarMatcher:
             # Drop unexpected matches.
             matches = matches[:match_limit]
             logger.warning(f' ... limited result to {match_limit} match(es) of this pattern.')
+            if self.diagnostic_sink:
+                self.diagnostic_sink.record_match_limit_applied(
+                    pattern.name, match_limit, source='GrammarMatcher._find_matches_of_dependent_pattern'
+                )
 
         for m in matches:
             # 1)

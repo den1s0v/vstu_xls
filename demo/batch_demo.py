@@ -72,6 +72,11 @@ def parse_args() -> argparse.Namespace:
         action="store_false",
         help=argparse.SUPPRESS,
     )
+    parser.add_argument(
+        "--no-diagnostics",
+        action="store_true",
+        help="Не сохранять parsing_diagnostics.json в папку отчёта по каждому файлу.",
+    )
     return parser.parse_args()
 
 
@@ -82,6 +87,7 @@ def process_single_file(
     reports_output_base: Path,
     enable_json: bool = True,
     enable_excel: bool = True,
+    enable_diagnostics: bool = True,
 ) -> bool:
     """Обрабатывает один XLSX файл и сохраняет отчёты в подпапку с уникальным именем."""
     try:
@@ -111,12 +117,17 @@ def process_single_file(
         service = DocumentParsingService(
             grammar=grammar,
             wave_exporter=exporter,
+            diagnostics_output_dir=output_dir if enable_diagnostics else None,
+            document_source_path=input_path,
+            grammar_source_path=grammar_path,
         )
 
         # Распознаём документ
         matches = service.parse_document(grid)
 
         logger.info("  Found {} root matches", len(matches))
+        if enable_diagnostics:
+            logger.info("  Diagnostics: {}", (output_dir / "parsing_diagnostics.json").resolve())
 
         # Экспортируем финальный отчёт о неиспользованных паттернах
         if matches:
@@ -152,6 +163,7 @@ def process_many(
         enable_json: bool,
         enable_excel: bool,
         input_path_base: Path | None = None,
+        enable_diagnostics: bool = True,
 ) -> None:
     """Обрабатывает несколько XLSX файлов.
     input_path_base: если задано, то в целевой папке будет воссоздана такая же структура подкаталогов, как и в источнике относительно заданного пути. Должно быть подпутём всх путей из paths или None (без подкаталогов).
@@ -171,7 +183,10 @@ def process_many(
                 json_output_dir = output_base / subpath
 
         # run extracting info from sheet under path
-        if process_single_file(path, grammar_path, json_output_dir, target_dir, enable_json, enable_excel):
+        if process_single_file(
+            path, grammar_path, json_output_dir, target_dir,
+            enable_json, enable_excel, enable_diagnostics,
+        ):
             success_count += 1
 
     ch.hit(f'Completed: {success_count}/{len(paths)} files processed')
@@ -184,6 +199,7 @@ def process_all_in_dir(
     report_base: Path,
     enable_json: bool = True,
     enable_excel: bool = True,
+    enable_diagnostics: bool = True,
 ) -> None:
     """Обрабатывает все XLSX файлы в указанной папке (рекурсивно).
 
@@ -196,7 +212,10 @@ def process_all_in_dir(
     # Теперь собираем все `.xlsx` для основной обработки
     paths = list(folder_path.rglob('*.xlsx'))
     logger.info("Found {} XLSX files in {}", len(paths), folder_path)
-    process_many(paths, grammar_path, output_base, report_base, enable_json, enable_excel, folder_path)
+    process_many(
+        paths, grammar_path, output_base, report_base,
+        enable_json, enable_excel, folder_path, enable_diagnostics,
+    )
 
 
 def main() -> None:
@@ -214,6 +233,7 @@ def main() -> None:
         report_base=args.report_base,
         enable_json=args.waves_json,
         enable_excel=args.waves_excel,
+        enable_diagnostics=not args.no_diagnostics,
     )
 
     logger.info("Batch processing completed.")

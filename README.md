@@ -9,6 +9,12 @@ Only an idea, first experiments. / Формируется идея, первые
 
 Краткие материалы на русском — в каталоге **[docs/](docs/index.md)** (обзор проекта, базовое использование парсера, диагностика).
 
+## Диагностика разбора
+
+При использовании `DocumentParsingService` с заданным `diagnostics_output_dir` после каждого `parse_document` сохраняется **`parsing_diagnostics.json`**: структурированные предупреждения и ошибки (см. [docs/parser_diagnostics.md](docs/parser_diagnostics.md)).
+
+Демо-скрипты `demo/batch_demo.py` и `demo/debug_demo.py` по умолчанию пишут этот файл в каталог отчёта; отключение: флаг **`--no-diagnostics`**.
+
 ### Частичная структура проекта (наброски)
 ![Структура проекта](https://github.com/den1s0v/vstu_xls/blob/main/materials/О%20парсинге%20xls.png?raw=true)
 
