@@ -1,7 +1,5 @@
 """Запись отчёта parsing_diagnostics.json на диск."""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 

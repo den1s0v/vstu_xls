@@ -1,10 +1,7 @@
 """Сборщик диагностических сообщений за один прогон парсинга документа."""
 
-from __future__ import annotations
-
 import time
 import traceback
-from typing import TYPE_CHECKING
 
 from vstuxls.services.diagnostics.schema import (
     MATCH_LIMIT_APPLIED,
@@ -16,9 +13,6 @@ from vstuxls.services.diagnostics.schema import (
     ParsingIssue,
     _utc_now_iso,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 class DiagnosticsCollector:

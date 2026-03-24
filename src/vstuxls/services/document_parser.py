@@ -72,7 +72,9 @@ class DocumentParsingService:
             self._matcher.diagnostic_sink = None
 
         try:
+            # MAIN call:
             matches = self._matcher.run_match(grid)
+            # MAIN call.
             if self._diagnostics_collector is not None:
                 self._diagnostics_collector.set_root_matches_count(len(matches))
         except BaseException as exc:
