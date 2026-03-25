@@ -1,13 +1,18 @@
 import unittest
 
 from tests_bootstrapper import init_testing_environment
+
 init_testing_environment()
 
-from geom2d import Box, open_range
-
-from constraints_2d import AlgebraicExpr, SizeConstraint, LocationConstraint
-from constraints_2d import SympyExpr
-from constraints_2d import constraints_for_box_inside_container, trivial_constraints_for_box
+from vstuxls.constraints_2d import (
+    AlgebraicExpr,
+    LocationConstraint,
+    SizeConstraint,
+    SympyExpr,
+    constraints_for_box_inside_container,
+    trivial_constraints_for_box,
+)
+from vstuxls.geom2d import Box, open_range
 
 
 class sumpy_expr_TestCase(unittest.TestCase):
@@ -526,7 +531,7 @@ class LocationConstraintTestCase(unittest.TestCase):
             # 'right': '3',
             # 'bottom': '3'
         }, inside=False)
-        
+
         self.assertDictEqual({
             'margin-left': open_range(4, 4),
             'padding-top': open_range(4, 4),

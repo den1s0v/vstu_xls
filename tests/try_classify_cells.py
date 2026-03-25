@@ -4,9 +4,10 @@
     it's just an entry point to test classifying method on a lot of strings. """
 
 from tests_bootstrapper import init_testing_environment
+
 init_testing_environment()
 
-from string_matching import read_cell_types
+from vstuxls.string_matching import read_cell_types
 
 
 def run_matching(tokens, only=()):
@@ -104,7 +105,7 @@ def try_content_from_real_sheets():
     #     'mark_elective_discipline',
     #     'mark_foreign_language',
     # ))
-    
+
     run_classification(sorted(values), show_bad_only=False)
 
 

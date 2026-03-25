@@ -1,0 +1,19 @@
+[project]
+name = "vstu-xls"
+version = "0.1.0-beta.1"
+description = "2D-grammar parser developed primarily for VSTU schedules in spreadsheet format"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "adict>=0.1.7",
+    "loguru>=0.7.3",
+    "lxml>=6.0.2",
+    "openpyxl>=3.1.5",
+    "pywin32>=311 ; sys_platform == 'win32'",
+    "pyyaml>=6.0.3",
+    "sympy>=1.14.0",
+    "xls2xlsx>=0.2.0",
+]
+
+[project.scripts]
+vstuxls = "vstuxls.cli.build_schedule_metadata:main"

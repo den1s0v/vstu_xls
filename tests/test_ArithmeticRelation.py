@@ -4,8 +4,14 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from grammar.ArithmeticRelation import ArithmeticRelation, eq, lt, gt, distance
-from grammar.ArithmeticRelation import parse_relation_and_limits
+from vstuxls.grammar.ArithmeticRelation import (
+    ArithmeticRelation,
+    distance,
+    eq,
+    gt,
+    lt,
+    parse_relation_and_limits,
+)
 
 
 class ArithmeticRelationTestCase(unittest.TestCase):

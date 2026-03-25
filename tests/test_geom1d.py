@@ -5,7 +5,7 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from geom1d import LinearSegment, LinearRelation
+from vstuxls.geom1d import LinearRelation, LinearSegment
 
 
 def get_relation(segment1, segment2) -> LinearRelation:

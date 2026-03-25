@@ -1,0 +1,75 @@
+from dataclasses import dataclass
+from typing import override
+
+# from grammar2d import GRAMMAR
+import vstuxls.grammar2d.Match2d as m2
+from vstuxls.grammar2d.Pattern2d import Pattern2d, PatternRegistry
+from vstuxls.string_matching import CellType
+
+
+@PatternRegistry.register
+@dataclass(kw_only=True, repr=True)
+class Terminal(Pattern2d):
+    """Просто ячейка"""
+    content_type: str = '<unknown cell_type!>'
+    _cell_type: CellType = None
+
+    @classmethod
+    @override
+    def get_kind(cls):
+        return "cell"
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    @property
+    def cell_type(self) -> CellType:
+        if not self._cell_type:
+            self._cell_type = self._grammar.cell_types[self.content_type]
+        return self._cell_type
+
+    # @override
+    # def dependencies(self, recursive=False) -> list['Pattern2d']:
+    #     return super().dependencies(recursive)
+
+    @override
+    def max_score(self) -> float:
+        return 1
+
+    def score_of_match(self, match: m2.Match2d) -> float:
+        """ Get score as precision for given match,
+            since if was initialized by TerminalMatcher.
+        """
+        return match.precision
+
+    def get_text_of_match(self, match: 'm2.Match2d') -> list[str]:
+        """ Просто всё содержимое всех ячеек.
+        """
+        return [match.data.text]
+
+    def get_content_of_match(self, match: 'm2.Match2d', include_position=False) -> dict | list | str:
+        """ Компактные данные для экспорта в JSON. """
+        if not include_position:
+            content = match.data.text
+        else:
+            content = {
+                '@box': match.box,
+                'content': match.data.text
+            }
+        return self._merge_static_data_into_content(match, content)
+
+    def get_matcher(self, grammar_matcher):
+        from vstuxls.grammar2d.TerminalMatcher import TerminalMatcher
+        return TerminalMatcher(self, grammar_matcher)
+
+    def __str__(self) -> str:
+        return "%s(%s)" % (type(self).__name__, repr(self.__dict__()))
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __dict__(self) -> dict:
+        return dict(
+            name=self.name,
+            description=self.description,
+        )

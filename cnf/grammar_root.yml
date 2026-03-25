@@ -3,6 +3,10 @@
 
 cell_types_filepath: 'cnf/cell_types.yml'
 
+include_grammars:
+  # Файлы c дополнительными паттернами
+  - 'cnf/specific_patterns.yml'
+  - 'cnf/lesson_frames.yml'
 
 patterns:
   # На этом уровне перечисляются все элементы грамматики.
@@ -61,7 +65,6 @@ patterns:
 
       grid:
         pattern: timetable_grid  # TODO ...
-        location: right, bottom
 
 
 
@@ -69,7 +72,7 @@ patterns:
     description: заголовок с группами
     kind: area
 
-    count_in_document: 1+   # минимум один на документ; если не найдено, то должна быть ошибка.
+    count_in_document: 1..2   # минимум один на документ; если не найдено, то должна быть ошибка.
     size: 4+ x 1..2  # размер в ячейках Excel
     style:
       borders: all  #  должны быть все границы с линиями
@@ -85,19 +88,44 @@ patterns:
         pattern_definition:
           kind: array  # массив или ряд элементов, выровненных друг относительно друга
           direction: row  #  по горизонтали (если не указать, то в любом направлении)
-          description: учебная группа в заголовке
-          item_pattern: group_in_header
+          description: ряд учебных групп в заголовке
+          item_pattern: group
           item_count: 1+
         location: left, right, top, bottom   # можно ввести синоним для полного равенства - coinside
 
 
 
-  group_in_header:
-    description: группа в заголовке
+  group:
+    description: учебная группа
     kind: cell  # cell: одна (возможно объединённая) ячейка
-    size: 4+ x 1..2
+    size: 4+ x 1..4
     content_type: group  # тип контента ячейки из файла cell_types.yml
 
+
+  # group_list:
+  #   description: несколько учебных групп через запятую
+  #   kind: cell  # cell: одна (возможно объединённая) ячейка
+  #   size: 4+ x 1..4
+  #   content_type: group_list  # тип контента ячейки из файла cell_types.yml
+
+
+
+  group_in_header:
+    description: группа в заголовке
+    kind: area
+    inner:
+      group:
+        pattern: group
+        location: left, right, top, bottom  # полностью совпадает
+
+    outer:
+      _groups_header:
+        pattern: groups_header
+        location:
+          left-padding: 0-
+          right-padding: 0-
+          top-padding: 0
+          bottom-padding: 0
 
 
   # datetime_header:
@@ -126,8 +154,9 @@ patterns:
           kind: array  # массив (ряд) элементов,
           direction: column  #  выровненных по вертикали
           item_pattern: week_datetime  # ... TODO
-          item_count: 2
+          item_count: 1..2
           gap: 1  # 1 ячейка между неделями
+          index_items: true  # Нужно ли индексировать элементы массива явно
         location: left, right,  bottom
 
 
@@ -149,7 +178,7 @@ patterns:
       borders: all
 
     inner:  # содержимое
-      days:
+      _days:
         pattern_definition:
           kind: array  # массив (ряд)
           direction: column
@@ -223,7 +252,7 @@ patterns:
           gap: 5-
 
     outer:  # ограничения на контекст (!!)
-      week_day:
+      _week_day:
         pattern: week_day
         location:
           right: '*'  # справа находится день недели
@@ -263,73 +292,363 @@ patterns:
     description: преподаватель
     kind: cell
     content_type: teacher
+    extends:
+      - teacher_general
 
   room:
     description: аудитория
     kind: cell
     content_type: room
+    extends:
+      - room_general
 
   discipline:
     description: дисциплина
     kind: cell
     content_type: discipline
 
-
-
-  lesson:
-    description: занятие
+  discipline_below_group:
+    description: дисциплина, не пересекающаяся с именем группы из заголовка
     kind: area
+    extends: discipline_for_lesson
 
     inner:  # содержимое
       discipline:
         pattern: discipline
+        precision_threshold: 0.5
         location:
-          - top  # упаковано сверху и по бокам
+          - top  # упаковано целиком
           - left
           - right
-
-      teacher:
-        pattern: teacher
-        location:
-          top: 1+
-          left: 0..4
-          bottom: 0..1
-
-      room:
-        pattern: room
-        location:
-          top: 1+
-          right: 0..3
-          bottom: 0..2
-
+          - bottom
     outer:
-      group:  # для занятий только для одной группы
+      _group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # строго ниже группы
+
+  discipline_stack:
+    description: дисциплина, написанная на нескольких строках
+    kind: array
+    direction: column
+    item_pattern: discipline_below_group
+    item_count: 1..3
+    extends: discipline_for_lesson
+
+  discipline_for_lesson:
+    description: дисциплина из одной или нескольких строк
+    kind: general
+    overlap:
+      mode: full
+      resolution: ['height-max', 'precision-max']
+
+  discipline_with_groups:
+    description: дисциплина, сопоставленная с группой(-ами)
+    kind: general
+    overlap:
+      mode: full
+      resolution: ['height-max', 'precision-max']
+
+
+  discipline_with_several_groups:
+    description: дисциплина, сопоставленная с 2+ группами
+    kind: area
+    extends: discipline_with_groups  # string or list is supported.
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      first_group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и слева
+          - padding-left: 0
+          - padding-right: 0+
+      last_group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и справа
+          - padding-left: 0+
+          - padding-right: 0
+
+      hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+  discipline_with_single_group:
+    description: дисциплина, сопоставленная с 1 группой
+    kind: area
+    allows_overlapping: true   # отключаем пост-фильтрацию найденного (она съедает часть совпадений!!?)
+    extends: discipline_with_groups
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
+        location:
+          - top: 0..1  # упаковано целиком, но может отстоять от верха на 1
+          - left
+          - right
+          - bottom
+    outer:
+      group:
         pattern: group_in_header
         location:
           - margin-top: 0+  # упаковано сверху и по бокам
           - padding-left: 0
           - padding-right: 0
 
-      week_day:
-        pattern: week_day
-        location: { left: '0+' }  # день недели указан слева
-
-      hour_1:  # для занятий длиной в 1 пару
+      hour_begin:  # проверка на выровненность с началом академ. часа
         pattern: hour_range
         location:
-          margin-left: 0+  # академ. часы указаны слева
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+          padding-bottom: 1-  # возможнен выступ области дисциплины максимум на 1 ниже первого часа
+
+
+  discipline_with_groups_lab_left:
+    description: дисциплина, сопоставленная с левой "половиной" группы
+    kind: area
+    extends: discipline_with_groups
+    confidence: 0.90
+    static_data:
+      subgroup: left
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и слева
+          - padding-left: 0
+          - padding-right: -4..-1
+
+      hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+  discipline_with_groups_horizontal_layout:
+    description: '"ИН." "ЯЗ." по левой стороне, с пропуском в середине'
+    kind: area
+    allows_overlapping: true
+    extends: discipline_with_groups_lab_left
+    # static_data:
+    #   subgroup: left
+
+    inner:  # содержимое
+      discipline:
+        pattern_definition:
+          kind: array
+          size: '1 x 3'
+          item_pattern: discipline_below_group
+          gap: 1
+          direction: column
+          item_count: 2
+          confidence: +1.40
+          # kind: area
+          # size: '1 x 3'
+          # inner:
+          #   m3:
+          #     pattern: discipline_below_group
+          #     precision_threshold: 0.5
+          #     location: {
+          #       top: 2, bottom: 0,
+          #       left: 0, right: 0 }
+          #   m1:
+          #     pattern: discipline_below_group
+          #     precision_threshold: 0.5
+          #     location: {
+          #       top: 0, bottom: 2,
+          #       left: 0, right: 0 }
+
+        precision_threshold: 0.9
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и слева
+          - padding-left: 0
+          - padding-right: -4..-1
+
+      hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
           padding-top: 0
           padding-bottom: 0
 
-      # hour_begin:
-      #   pattern: hour_range
-      #   location:
-      #     left: 0+  # академ. часы указаны слева
-      #     top: 0
-      #     bottom: 0-
-      # hour_end:
-      #   pattern: hour_range
-      #   location:
-      #     left: 0+  # академ. часы указаны слева
-      #     top: 0-
-      #     bottom: 0
+  discipline_with_groups_lab_right:
+    description: дисциплина, сопоставленная с правой "половиной" группы
+    kind: area
+    extends: discipline_with_groups
+    static_data:
+      subgroup: right
+
+    inner:  # содержимое
+      discipline:
+        pattern: discipline_for_lesson
+        precision_threshold: 0.5
+        location:
+          - top  # упаковано целиком
+          - left
+          - right
+          - bottom
+    outer:
+      group:
+        pattern: group_in_header
+        location:
+          - margin-top: 0+  # упаковано сверху и справа
+          - padding-left: -4..-1
+          - padding-right: 0
+
+      hour_begin:  # проверка на выровненность с началом академ. часа
+        pattern: hour_range
+        location:
+          left: 0+  # академ. часы указаны слева
+          padding-top: 0
+
+
+
+
+  # lesson_lab:
+  #   description: занятие-лабораторная (4ч)
+  #   kind: area
+  #   extends: lesson
+  #   size: '2+ x 3..9'
+
+  #   inner:  # содержимое
+  #     discipline:
+  #       pattern: discipline_with_groups
+  #       location:
+  #         - top  # упаковано сверху и по бокам
+  #         - left
+  #         - right
+
+  #     teacher:
+  #       pattern: teacher_general
+  #       location:
+  #         top: 1+
+  #         left: 0..7
+  #         right: 0+
+  #         bottom: 0..1
+
+  #     room:
+  #       pattern: room_general
+  #       location:
+  #         top: 1+
+  #         right: 0..8
+  #         left: 0+
+  #         bottom: 0..3
+
+  #   outer:
+  #     week_day:
+  #       pattern: week_day
+  #       location: { left: '0+' }  # день недели указан слева
+  #     week:
+  #       pattern: week_datetime
+  #       location: { left: '0+' }  # неделя указана слева
+
+  #     hour_begin:
+  #       pattern: hour_range
+  #       location:
+  #         left: 0+  # академ. часы указаны слева
+  #         padding-top: 0
+  #         padding-bottom: 1+
+  #     hour_end:
+  #       pattern: hour_range
+  #       location:
+  #         left: 0+  # академ. часы указаны слева
+  #         padding-top: 1+
+  #         padding-bottom: 0
+
+
+
+  # занятие во всём его многообразии
+  lesson:
+    description: занятие во всём его многообразии
+    kind: general
+    overlap:
+      mode: partial
+      resolution: ['height-min', 'width-max', 'precision-max']
+
+  # # обычная пара-лекция на 1 группу
+  # lesson:
+  #   description: занятие
+  #   kind: area
+  #   size: '2+ x 2..4'  # обычно высота = 3
+
+  #   inner:  # содержимое
+  #     discipline:
+  #       pattern: discipline_with_groups
+  #       location:
+  #         - top  # упаковано сверху и по бокам
+  #         - left
+  #         - right
+
+  #     teacher:
+  #       pattern: teacher_general
+  #       location:
+  #         top: 1+
+  #         left: 0..6
+  #         right: 0+
+  #         bottom: 0..1
+
+  #     room:
+  #       pattern: room_general
+  #       location:
+  #         top: 1+
+  #         right: 0..7
+  #         left: 0+
+  #         bottom: 0..2
+
+  #   outer:
+  #     week_day:
+  #       pattern: week_day
+  #       location: { left: '0+' }  # день недели указан слева
+  #     week:
+  #       pattern: week_datetime
+  #       location: { left: '0+' }  # неделя указана слева
+
+  #     hour_1:  # для занятий длиной в 1 пару
+  #       pattern: hour_range
+  #       location:
+  #         margin-left: 0+  # академ. часы указаны слева
+  #         padding-top: 0
+  #         padding-bottom: 0
+
+  #     # hour_begin:
+  #     #   pattern: hour_range
+  #     #   location:
+  #     #     left: 0+  # академ. часы указаны слева
+  #     #     top: 0
+  #     #     bottom: 0-
+  #     # hour_end:
+  #     #   pattern: hour_range
+  #     #   location:
+  #     #     left: 0+  # академ. часы указаны слева
+  #     #     top: 0-
+  #     #     bottom: 0

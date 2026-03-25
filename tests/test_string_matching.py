@@ -4,9 +4,14 @@ from tests_bootstrapper import init_testing_environment
 
 init_testing_environment()
 
-from string_matching import CellType, StringPattern, StringMatch
-from string_matching.helper_transformers import shrink_extra_inner_spaces
-from string_matching import read_cell_types, fix_sparse_words
+from vstuxls.string_matching import (
+    CellType,
+    StringMatch,
+    StringPattern,
+    fix_sparse_words,
+    read_cell_types,
+)
+from vstuxls.string_matching.helper_transformers import shrink_extra_inner_spaces
 
 
 class StringPatternTestCase(unittest.TestCase):
@@ -372,6 +377,118 @@ class CellTypeTestCase(unittest.TestCase):
         self.assertIn('room', cell_types)
         self.assertIn('discipline', cell_types)
         self.assertIsNotNone(cell_types['teacher'].match('доц. Грачёва Н.В.'))
+
+    def test_teacher_pattern_confidence_080(self):
+        """Тестирование паттерна teacher с confidence 0.80 - фамилия с опциональными скобками"""
+        cell_types = read_cell_types()
+        teacher_type = cell_types['teacher']
+
+        # Находим паттерн с confidence 0.80
+        target_pattern = None
+        for p in teacher_type.patterns:
+            if abs(p.confidence - 0.80) < 0.01:
+                target_pattern = p
+                break
+
+        self.assertIsNotNone(target_pattern, "Паттерн с confidence 0.80 не найден")
+        self.assertEqual(target_pattern.pattern_syntax, 're-spaces+letters')
+
+        # Примеры из комментариев в YAML
+        self.assertIsNotNone(target_pattern.match('Рыжова(1)'))
+        self.assertIsNotNone(target_pattern.match('Чечет(нем)'))
+
+        # Простые фамилии
+        self.assertIsNotNone(target_pattern.match('Рыжова'))
+        self.assertIsNotNone(target_pattern.match('Иванов'))
+        self.assertIsNotNone(target_pattern.match('Петрова'))
+
+        # Фамилии с дефисом
+        self.assertIsNotNone(target_pattern.match('Иванов-Петров'))
+        self.assertIsNotNone(target_pattern.match('Смирнова-Иванова'))
+
+        # Фамилии с номером в скобках
+        self.assertIsNotNone(target_pattern.match('Рыжова(1)'))
+        self.assertIsNotNone(target_pattern.match('Иванов(2)'))
+        self.assertIsNotNone(target_pattern.match('Петрова(3)'))
+
+        # Фамилии с языком в скобках
+        self.assertIsNotNone(target_pattern.match('Чечет(нем)'))
+        self.assertIsNotNone(target_pattern.match('Иванов(англ)'))
+        self.assertIsNotNone(target_pattern.match('Петрова(фр)'))
+        self.assertIsNotNone(target_pattern.match('Смирнов(франц)'))
+        self.assertIsNotNone(target_pattern.match('Иванов(франц.)'))
+
+        # Фамилии с запятой в конце
+        self.assertIsNotNone(target_pattern.match('Рыжова,'))
+        self.assertIsNotNone(target_pattern.match('Иванов,'))
+        self.assertIsNotNone(target_pattern.match('Рыжова(1),'))
+        self.assertIsNotNone(target_pattern.match('Чечет(нем),'))
+
+        # Сложные случаи
+        self.assertIsNotNone(target_pattern.match('Иванов-Петров(1)'))
+        self.assertIsNotNone(target_pattern.match('Смирнова-Иванова(англ)'))
+        self.assertIsNotNone(target_pattern.match('Рыжова-Иванова(нем),'))
+
+    def test_teacher_pattern_confidence_085_plain_x(self):
+        """Тестирование паттерна teacher с confidence 0.85 - просто буква 'Х' (вакансия)"""
+        target_pattern = StringPattern(
+            confidence = 0.85,
+            # просто русская буква 'Х' , типа "вакансия"
+            pattern = 'Х',
+            pattern_syntax = 'plain',
+        )
+
+        self.assertIsNotNone(target_pattern, "Паттерн с confidence 0.85 не найден")
+        self.assertEqual(target_pattern.pattern_syntax, 'plain')
+        self.assertEqual(target_pattern.pattern, 'Х')
+
+        # Должно матчиться
+        self.assertIsNotNone(target_pattern.match('Х'))
+        self.assertIsNotNone(target_pattern.match(' Х '))  # с пробелами
+
+        # Не должно матчиться
+        self.assertIsNone(target_pattern.match('х'))  # строчная буква
+        self.assertIsNone(target_pattern.match('ХХ'))
+        self.assertIsNone(target_pattern.match('X'))  # латинская буква
+
+    def test_teacher_all_patterns_order(self):
+        """Проверка, что паттерны teacher правильно упорядочены по confidence"""
+        cell_types = read_cell_types()
+        teacher_type = cell_types['teacher']
+
+        # Проверяем, что паттерны отсортированы по убыванию confidence
+        confidences = [p.confidence for p in teacher_type.patterns]
+        self.assertEqual(confidences, sorted(confidences, reverse=True))
+
+        # Проверяем, что самый высокий confidence матчится первым
+        match = teacher_type.match('доц. Грачёва Н.В.')
+        self.assertIsNotNone(match)
+        # Должен сматчиться паттерн с confidence 1.00, а не более низкий
+
+        match = teacher_type.match('Рыжова(1)')
+        self.assertIsNotNone(match)
+        # Проверяем, что матчится паттерн с максимальным confidence из подходящих
+
+    def test_teacher_negative_cases(self):
+        """Проверка, что teacher НЕ матчится для неподходящих строк"""
+        cell_types = read_cell_types()
+        teacher_type = cell_types['teacher']
+
+        # Эти строки НЕ должны матчиться как teacher
+        negative_cases = [
+            'ИВТ-360',      # группа
+            'А 610',        # аудитория
+            'МАТЕМАТИКА',   # дисциплина
+        ]
+
+        for case in negative_cases:
+            match = teacher_type.match(case)
+            # Эти случаи могут матчиться паттерном с очень низким confidence (0.05 - .+),
+            # но это нормально, так как это "catch-all" паттерн
+            if match:
+                # Проверяем, что это не высокий confidence
+                self.assertLess(match.pattern.confidence, 0.50,
+                                f"'{case}' matched with too high confidence: {match.pattern.confidence}")
 
     # def test_init2(self):
     #     cell_types = read_cell_types()

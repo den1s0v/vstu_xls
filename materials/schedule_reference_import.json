@@ -1,0 +1,32 @@
+[
+    {
+        "course": "4",
+        "schedule_template_metadata_faculty_shortname": "ФЭВТ",
+        "semester": "1",
+        "years": "2024-2025",
+        "start_date": "01.09.2025",
+        "end_date": "01.02.2026",
+        "scope": "бакалавриат",
+        "department_shortname": "ФЭВТ"
+    },
+    {
+        "course": "1",
+        "schedule_template_metadata_faculty_shortname": "ХТФ",
+        "semester": "1",
+        "years": "2024-2025",
+        "start_date": "01.09.2025",
+        "end_date": "01.02.2026",
+        "scope": "  магистратура ",
+        "department_shortname": "ХТФ"
+    },
+    {
+        "course": "1",
+        "schedule_template_metadata_faculty_shortname": "ФЭВТ",
+        "semester": "1",
+        "years": "2024-2025",
+        "start_date": "01.09.2025",
+        "end_date": "01.02.2026",
+        "scope": "Аспирантура",
+        "department_shortname": "ФЭВТ"
+    }
+]
