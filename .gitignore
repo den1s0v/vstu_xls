@@ -7,6 +7,7 @@ __pycache__/
 *.xls*
 tests/test_data/debug/
 materials/vstu-reference-tables
+data/
 
 # C extensions
 *.so
@@ -164,4 +165,3 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 .vscode/
-data/
