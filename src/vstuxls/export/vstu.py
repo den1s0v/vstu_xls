@@ -199,7 +199,7 @@ def _detect_faculty_shortname(text: str) -> str:
     return ""
 
 
-def _normalize_title(original_title: str, scope_word: str | None, current_semester = CURRENT_SEMESTER) -> str:
+def _normalize_title(original_title: str, scope_word: str | None, current_semester: str = CURRENT_SEMESTER) -> str:
     title = (original_title or "").strip()
     if not title:
         return ""
@@ -217,18 +217,23 @@ def _normalize_title(original_title: str, scope_word: str | None, current_semest
     normalized_scope = (scope_word or "").strip()
     lower_title = title.lower()
 
-    if normalized_scope and any(s in lower_title for s in scopes):
-        if "бакалавриат" in lower_title and "магистратура" in lower_title and normalized_scope.lower() in ("бакалавриат", "магистратура"):
-            # Если в заголовке смешаны scope, оставляем только целевой.
-            cleaned = title
-            for s in scopes:
-                cleaned = re.sub(rf"\b{s}\b", "", cleaned, flags=re.IGNORECASE)
-            cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;")
-            title = f"{cleaned} {normalized_scope}".strip()
-        elif normalized_scope.lower() not in lower_title:
-            title = f"{title} {normalized_scope}".strip()
-    elif normalized_scope and normalized_scope.lower() not in lower_title:
-        title = f"{title} {normalized_scope}".strip()
+    # Одновременно «бакалавриат» и «магистратура» в заголовке: по данным ВолгГТУ приоритет у магистратуры.
+    if "бакалавриат" in lower_title and "магистратура" in lower_title:
+        cleaned = title
+        for s in scopes:
+            cleaned = re.sub(rf"\b{s}\b", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;")
+        title = f"{cleaned} магистратура".strip()
+        lower_title = title.lower()
+
+    if normalized_scope:
+        ns = normalized_scope.lower()
+        if ns not in lower_title:
+            # Заголовок уже явно магистратура — не добавлять из метаданных противоречивый бакалавриат.
+            if ns == "бакалавриат" and "магистратура" in lower_title:
+                pass
+            else:
+                title = f"{title} {normalized_scope}".strip()
 
     return re.sub(r"\s{2,}", " ", title).strip()
 
