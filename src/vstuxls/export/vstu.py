@@ -308,6 +308,39 @@ def _cleanup_teacher_name(name: str) -> str:
     return cleaned.strip(" ;,")
 
 
+def _audience_compare_key(s: str) -> str:
+    """Ключ для сравнения строк аудиторий (пробелы убраны, регистр единый)."""
+    return re.sub(r"\s+", "", (s or "").strip()).upper()
+
+
+def _dedupe_places_preserving_order(places: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for p in places:
+        raw = (p or "").strip()
+        if not raw:
+            continue
+        k = _audience_compare_key(raw)
+        if k not in seen:
+            seen.add(k)
+            out.append(raw)
+    return out
+
+
+def _strip_teachers_duplicating_places(teachers: list[str], places: list[str]) -> list[str]:
+    """Убирает из преподавателей строки, совпадающие с аудиториями (частый артефакт парсинга)."""
+    place_keys = {_audience_compare_key(p) for p in places if p and str(p).strip()}
+    out: list[str] = []
+    for t in teachers:
+        raw = (t or "").strip()
+        if not raw:
+            continue
+        if _audience_compare_key(raw) in place_keys:
+            continue
+        out.append(_cleanup_teacher_name(raw))
+    return out
+
+
 def _extract_dates_from_place(value: str, years_hint: str) -> tuple[list[str], str]:
     text = (value or "").strip()
     if not text:
@@ -353,8 +386,14 @@ def apply_post_fixes(out: adict, metadata: dict | None = None) -> adict:
             extra_dates.extend(found_dates)
             if cleaned_place:
                 new_places.append(cleaned_place)
+        new_places = _dedupe_places_preserving_order(new_places)
         lesson["places"] = new_places
         lesson["holds_on_date"] = _normalize_dates_list(holds_norm + extra_dates, years_hint)
+        participants["teachers"] = _strip_teachers_duplicating_places(
+            participants.get("teachers", []),
+            new_places,
+        )
+        lesson["participants"] = participants
 
     return out
 
