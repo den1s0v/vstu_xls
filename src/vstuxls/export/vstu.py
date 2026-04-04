@@ -14,6 +14,11 @@ from vstuxls.services import DocumentParsingService
 from vstuxls.services.debugging.wave_exporter import WaveDebugExporter
 from vstuxls.utils import Checkpointer
 
+CURRENT_ACADEMIC_YEAR = "2025-2026"
+CURRENT_SEMESTER = "2"
+CURRENT_SEMESTER_START_DATE = "09.02.2026"
+CURRENT_SEMESTER_END_DATE = "30.06.2026"
+
 
 def xls_to_json(xlsx_path: str):
     # with time_report('Whole process') as ch:
@@ -153,6 +158,201 @@ def _box_dict(box) -> Mapping:
     }
 
 
+def _parse_year_bounds(years_text: str | None) -> tuple[int, int]:
+    m = re.search(r"(\d{4})\s*-\s*(\d{4})", years_text or "")
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    m = re.search(r"(\d{4})\s*[—–-]\s*(\d{4})", years_text or "")
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    # fallback на текущий учебный год
+    left, right = CURRENT_ACADEMIC_YEAR.split("-", 1)
+    return int(left), int(right)
+
+
+def _normalize_faculty_spelling(text: str) -> str:
+    s = text
+    # Единообразно используем верхний регистр
+    s = re.sub(r"(?i)фастив", "ФАСТИВ", s)
+    return s
+
+
+def _detect_faculty_shortname(text: str) -> str:
+    if not text:
+        return ""
+    upper_text = _normalize_faculty_spelling(text).upper()
+    aliases: list[tuple[str, str]] = [
+        ("ФЭВТ", "ФЭВТ"),
+        ("ХТФ", "ХТФ"),
+        ("ХФ", "ХТФ"),
+        ("ФЭУ", "ФЭУ"),
+        ("ФТПП", "ФТПП"),
+        ("ФАТ", "ФАТ"),
+        ("ФАСТИВ", "ФАСТИВ"),
+        ("ФТКМ", "ФТКМ"),
+        ("ВМЦЭ", "ВМЦЭ"),
+    ]
+    for token, normalized in aliases:
+        if token in upper_text:
+            return normalized
+    return ""
+
+
+def _normalize_title(original_title: str, scope_word: str | None, current_semester = CURRENT_SEMESTER) -> str:
+    title = (original_title or "").strip()
+    if not title:
+        return ""
+
+    title = title.replace("магистров", "магистратура").replace("Магистров", "магистратура")
+    title = _normalize_faculty_spelling(title)
+
+    # Нормализуем диапазон учебного года в заголовке.
+    title = re.sub(r"\b20\d{2}\s*[—–-]\s*20\d{2}\b", CURRENT_ACADEMIC_YEAR, title)
+    # Встречается "1 семестр" в файлах 2-го семестра: аккуратно приводим к текущему.
+    # Заменяем "1-й семестр", "2й семестр", "2 семестр" -> "<CURRENT> семестр"
+    title = re.sub(r"\b\d\s*[-й]*\s*семестр\b", f"{current_semester} семестр", title, flags=re.IGNORECASE)
+
+    scopes = ("бакалавриат", "магистратура", "аспирантура")
+    normalized_scope = (scope_word or "").strip()
+    lower_title = title.lower()
+
+    if normalized_scope and any(s in lower_title for s in scopes):
+        if "бакалавриат" in lower_title and "магистратура" in lower_title and normalized_scope.lower() in ("бакалавриат", "магистратура"):
+            # Если в заголовке смешаны scope, оставляем только целевой.
+            cleaned = title
+            for s in scopes:
+                cleaned = re.sub(rf"\b{s}\b", "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;")
+            title = f"{cleaned} {normalized_scope}".strip()
+        elif normalized_scope.lower() not in lower_title:
+            title = f"{title} {normalized_scope}".strip()
+    elif normalized_scope and normalized_scope.lower() not in lower_title:
+        title = f"{title} {normalized_scope}".strip()
+
+    return re.sub(r"\s{2,}", " ", title).strip()
+
+
+def _normalize_single_date(raw_value: str, years_hint: str) -> list[str]:
+    raw = (raw_value or "").strip()
+    if not raw:
+        return []
+
+    left_year, right_year = _parse_year_bounds(years_hint)
+
+    def resolve_year(month: int) -> int:
+        return left_year if month > 6 else right_year
+
+    # Склейка вида 16.04.17.05 -> 16.04, 17.05
+    m_glued = re.fullmatch(r"(\d{1,2}\.\d{1,2})\.(\d{1,2}\.\d{1,2})", raw)
+    if m_glued:
+        return _normalize_single_date(m_glued.group(1), years_hint) + _normalize_single_date(m_glued.group(2), years_hint)
+
+    # Формат вида dd.yyyy.mm -> dd.mm.yyyy
+    m_dym = re.fullmatch(r"(\d{1,2})\.(\d{4})\.(\d{1,2})", raw)
+    if m_dym:
+        day, year, month = m_dym.groups()
+        raw = f"{day}.{month}.{year}"
+
+    m_full = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", raw)
+    if m_full:
+        day_i = int(m_full.group(1))
+        month_i = int(m_full.group(2))
+        year_i = int(m_full.group(3))
+        if 1 <= day_i <= 31 and 1 <= month_i <= 12:
+            return [f"{day_i:02d}.{month_i:02d}.{year_i:04d}"]
+        # Частая инверсия month/day: 12.15.2025 -> 15.12.2025
+        if 1 <= day_i <= 12 and 13 <= month_i <= 31:
+            return [f"{month_i:02d}.{day_i:02d}.{year_i:04d}"]
+        return []
+
+    m_partial = re.fullmatch(r"(\d{1,2})\.(\d{1,2})", raw.rstrip("."))
+    if m_partial:
+        day_i = int(m_partial.group(1))
+        month_i = int(m_partial.group(2))
+        if 1 <= day_i <= 31 and 1 <= month_i <= 12:
+            return [f"{day_i:02d}.{month_i:02d}.{resolve_year(month_i):04d}"]
+        return []
+
+    return []
+
+
+def _normalize_dates_list(values: list[str], years_hint: str) -> list[str]:
+    out: list[str] = []
+    for value in values:
+        for token in re.split(r"[;,]|\.\.+|\s+", value or ""):
+            token = token.strip()
+            if not token:
+                continue
+            out.extend(_normalize_single_date(token, years_hint))
+
+    # preserve order + deduplicate
+    seen: set[str] = set()
+    result: list[str] = []
+    for d in out:
+        if d not in seen:
+            seen.add(d)
+            result.append(d)
+    return result
+
+
+def _cleanup_teacher_name(name: str) -> str:
+    cleaned = (name or "").strip()
+    cleaned = re.sub(r"\.{2,}", ".", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    return cleaned.strip(" ;,")
+
+
+def _extract_dates_from_place(value: str, years_hint: str) -> tuple[list[str], str]:
+    text = (value or "").strip()
+    if not text:
+        return [], ""
+    # Ищем явные фрагменты дат и убираем их из places.
+    date_like = re.findall(r"\d{1,2}\.\d{1,2}(?:\.\d{4})?", text)
+    dates = _normalize_dates_list(date_like, years_hint) if date_like else []
+    if dates:
+        cleaned = re.sub(r"\d{1,2}\.\d{1,2}(?:\.\d{4})?", " ", text)
+        cleaned = re.sub(r"[;,.]{2,}", " ", cleaned)
+        cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,;")
+        if re.fullmatch(r"\d+", cleaned or ""):
+            cleaned = ""
+        return dates, cleaned
+    return [], text
+
+
+def apply_post_fixes(out: adict, metadata: dict | None = None) -> adict:
+    years_hint = (metadata or {}).get("years") or CURRENT_ACADEMIC_YEAR
+    scope_word = (metadata or {}).get("scope") if metadata else None
+
+    # Нормализуем title
+    out["title"] = _normalize_title(str(out.get("title", "")), scope_word)
+
+    # Нормализуем lessons
+    grid = out.get("table", {}).get("grid", [])
+    for lesson in grid:
+        participants = lesson.get("participants", {})
+        teachers = participants.get("teachers", [])
+        participants["teachers"] = [_cleanup_teacher_name(t) for t in teachers if str(t).strip()]
+        lesson["participants"] = participants
+
+        holds = lesson.get("holds_on_date", []) or []
+        if isinstance(holds, list):
+            holds_norm = _normalize_dates_list([str(x) for x in holds], years_hint)
+        else:
+            holds_norm = _normalize_dates_list([str(holds)], years_hint)
+
+        new_places: list[str] = []
+        extra_dates: list[str] = []
+        for place in lesson.get("places", []) or []:
+            found_dates, cleaned_place = _extract_dates_from_place(str(place), years_hint)
+            extra_dates.extend(found_dates)
+            if cleaned_place:
+                new_places.append(cleaned_place)
+        lesson["places"] = new_places
+        lesson["holds_on_date"] = _normalize_dates_list(holds_norm + extra_dates, years_hint)
+
+    return out
+
+
 def build_schedule_metadata(source_path: Path | None, original_title: str | None) -> dict:
     """Формирует объект метаданных расписания для поля `title` в JSON.
 
@@ -168,11 +368,11 @@ def build_schedule_metadata(source_path: Path | None, original_title: str | None
             "department_shortname": "ФЭВТ"
         }
     """
-    # Хардкоды по заданию
-    years = "2025-2026"
-    semester = "2"
-    start_date = "09.02.2026"
-    end_date = "30.06.2026"
+    # из констант в начале файла
+    years = CURRENT_ACADEMIC_YEAR
+    semester = CURRENT_SEMESTER
+    start_date = CURRENT_SEMESTER_START_DATE
+    end_date = CURRENT_SEMESTER_END_DATE
 
     # Безопасно нормализуем путь
     path = source_path.resolve() if isinstance(source_path, Path) else None
@@ -197,17 +397,6 @@ def build_schedule_metadata(source_path: Path | None, original_title: str | None
             scope = "Аспирантура"
 
     # 2) Определяем факультет по имени файла
-    faculty_shortnames = [
-        "ФЭВТ",
-        "ХТФ",
-        "ФЭУ",
-        "ФТПП",
-        "ФАТ",
-        "ФАСТИВ",
-        "ФТКМ",
-        "ВМЦЭ",
-    ]
-
     faculty = None
     filename = ""
     if path:
@@ -215,17 +404,11 @@ def build_schedule_metadata(source_path: Path | None, original_title: str | None
     elif original_title:
         filename = original_title
 
-    for short in faculty_shortnames:
-        if short in filename:
-            faculty = short
-            break
+    faculty = _detect_faculty_shortname(filename)
 
     # Если не нашли, можно попытаться взять из title или оставить пустым
-    if faculty is None and original_title:
-        for short in faculty_shortnames:
-            if short in original_title:
-                faculty = short
-                break
+    if not faculty and original_title:
+        faculty = _detect_faculty_shortname(original_title)
 
     if faculty is None:
         faculty = ""
@@ -279,26 +462,14 @@ def export_schedule_document_as_json(
 
     # Для EventImporter ожидается строковый title
     original_title = plain(matched_document['title'].get_text())
-
-    # Нормализуем формулировку степени: "магистров" → "магистратура"
-    normalized_title = original_title.replace("магистров", "магистратура").replace("Магистров", "магистратура")
-
-    # Пытаемся определить scope (бакалавриат / магистратура / Аспирантура / Консультация)
-    scope_word = None
+    metadata = None
     if source_path is not None:
         try:
-            md = build_schedule_metadata(source_path, original_title)
-            scope_word = (md.get("scope") or "").strip()
+            metadata = build_schedule_metadata(source_path, original_title)
         except Exception:
-            scope_word = None
+            metadata = None
 
-    # Если scope известен и ещё не фигурирует в заголовке — добавим его в конец
-    if scope_word:
-        low_title = normalized_title.lower()
-        if scope_word.lower() not in low_title:
-            normalized_title = f"{normalized_title} {scope_word}"
-
-    out.title = normalized_title
+    out.title = _normalize_title(original_title, (metadata or {}).get("scope"))
 
     # Подготовка структуры таблицы
     out.table = adict({
@@ -315,7 +486,8 @@ def export_schedule_document_as_json(
     out.table['datetime'].weeks = weeks
     out.table['datetime'].months = months
 
-    out.table['grid'] = _extract_lessons(matched_document, years=normalized_title)
+    out.table['grid'] = _extract_lessons(matched_document, years=(metadata or {}).get("years", CURRENT_ACADEMIC_YEAR))
+    out = apply_post_fixes(out, metadata=metadata)
 
     # save to disk
     with open(dst_path, 'w', encoding='utf8') as f:
@@ -422,6 +594,39 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         """Извлекает список групп из discipline_with_groups."""
         discipline_content = discipline_match.get_content()
 
+        def _append_group_value(raw_value, into: list[str]) -> None:
+            if isinstance(raw_value, str):
+                if raw_value.strip():
+                    into.append(raw_value.strip())
+            elif isinstance(raw_value, dict):
+                if "group" in raw_value:
+                    _append_group_value(raw_value["group"], into)
+
+        def _collect_groups_from_content(content, into: list[str]) -> None:
+            if isinstance(content, dict):
+                if "group" in content:
+                    _append_group_value(content["group"], into)
+                if "groups" in content and isinstance(content["groups"], list):
+                    for g in content["groups"]:
+                        _append_group_value(g, into)
+                if "first_group" in content and "last_group" in content:
+                    first = content["first_group"]
+                    last = content["last_group"]
+                    if isinstance(first, dict) and isinstance(last, dict) and "group" in first and "group" in last:
+                        try:
+                            i = group_names.index(first["group"])
+                            j = group_names.index(last["group"])
+                            into.extend(group_names[i: j + 1])
+                        except ValueError:
+                            pass
+                # fallback: разворачиваем словари вида m1/m2/...
+                for key, value in content.items():
+                    if re.fullmatch(r"m\d+", str(key)):
+                        _collect_groups_from_content(value, into)
+            elif isinstance(content, list):
+                for item in content:
+                    _collect_groups_from_content(item, into)
+
         if isinstance(discipline_content, dict):
             if 'group' in discipline_content:
                 name = discipline_content['group']['group']
@@ -433,6 +638,17 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
             # Попытка извлечь группы из структуры discipline_with_groups
             if 'groups' in discipline_content:
                 return discipline_content['groups']
+            collected: list[str] = []
+            _collect_groups_from_content(discipline_content, collected)
+            if collected:
+                # preserve order + deduplicate
+                seen: set[str] = set()
+                out: list[str] = []
+                for g in collected:
+                    if g not in seen:
+                        seen.add(g)
+                        out.append(g)
+                return out
 
         raise ValueError(f"Cannot extract groups: unknown discipline format {discipline_content!r}")
 
@@ -710,6 +926,37 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
         discipline_match = frame_match['discipline']
         discipline_content = discipline_match.get_content()
 
+        def _extract_discipline_parts(value) -> list[str]:
+            parts: list[str] = []
+
+            if isinstance(value, str):
+                s = value.strip()
+                if s:
+                    parts.append(s)
+                return parts
+
+            if isinstance(value, list):
+                for item in value:
+                    parts.extend(_extract_discipline_parts(item))
+                return parts
+
+            if isinstance(value, dict):
+                if "discipline" in value:
+                    parts.extend(_extract_discipline_parts(value["discipline"]))
+                elif "discipline_name" in value:
+                    parts.extend(_extract_discipline_parts(value["discipline_name"]))
+                else:
+                    # fallback для структур вида {"m1": {...}, "m2": {...}}
+                    m_keys = [k for k in value.keys() if re.fullmatch(r"m\d+", str(k))]
+                    if m_keys:
+                        m_keys_sorted = sorted(m_keys, key=lambda k: int(str(k)[1:]))
+                        for k in m_keys_sorted:
+                            # recurse into m*
+                            parts.extend(_extract_discipline_parts(value[k]))
+                return parts
+
+            return parts
+
         # Извлекаем название дисциплины
         subject = ""
         if isinstance(discipline_content, dict):
@@ -746,9 +993,19 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
             elif 'discipline_name' in discipline_content:
                 subject = plain(discipline_content['discipline_name'])
             else:
-                # Словарь без ожидаемых ключей discipline / discipline_name:
-                # пример: {'m2': {...}, 'm1': {...}}. Не пытаемся превращать в строку.
-                raise ValueError(f"Unknown discipline content structure: {discipline_content!r}")
+                parts = _extract_discipline_parts(discipline_content)
+                if parts:
+                    subject = " ".join(p.strip() for p in parts if p.strip())
+                else:
+                    raise ValueError(f"Unknown discipline content structure: {discipline_content!r}")
+        elif isinstance(discipline_content, list):
+            parts = _extract_discipline_parts(discipline_content)
+            subject = " ".join(p.strip() for p in parts if p.strip())
+        elif isinstance(discipline_content, str):
+            subject = discipline_content.strip()
+
+        if not subject:
+            raise ValueError(f"Cannot extract discipline subject from: {discipline_content!r}")
 
         # Извлекаем группы
         groups = resolve_groups(discipline_match)
@@ -878,8 +1135,9 @@ def _extract_lessons(matched_document: Match2d, years: str | None = None) -> lis
             return []
 
         # Значения по умолчанию на случай, если ничего не получится определить из years_hint
-        DEFAULT_LEFT_YEAR = 2025
-        DEFAULT_RIGHT_YEAR = 2026
+        current_left, current_right = _parse_year_bounds(CURRENT_ACADEMIC_YEAR)
+        DEFAULT_LEFT_YEAR = current_left
+        DEFAULT_RIGHT_YEAR = current_right
 
         left_year = right_year = None
         if years_hint:
