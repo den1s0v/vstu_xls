@@ -1,11 +1,14 @@
 import argparse
+import json
 from importlib.resources import files
 from pathlib import Path
 
 from loguru import logger
 
 from vstuxls.converters.xlsx import ExcelGrid
+from vstuxls.export.vstu import export_schedule_document_as_json
 from vstuxls.grammar2d import read_grammar
+from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.services import DocumentParsingService, WaveDebugExporter
 
 DEFAULT_XLSX_NAME = 'ОН_ФЭВТ_4 курс 2023.xlsx'
@@ -87,7 +90,7 @@ def main() -> None:
         output_dir=args.output,
         enable_json=args.waves_json,
         enable_excel=args.waves_excel,
-        only_wave_indices=(0, 1, 4,5,6,7,8, )  # for all: omit / pass empty
+        only_wave_indices=(0, 1, 4,5,6,7,8, 9)  # for all: omit / pass empty
     )
 
     service = DocumentParsingService(
@@ -111,6 +114,25 @@ def main() -> None:
     logger.info("Wave artifacts are saved under {}", args.output.resolve())
     if not args.no_diagnostics:
         logger.info("Parsing diagnostics: {}", (args.output / "parsing_diagnostics.json").resolve())
+
+    if 1 and matches:
+        json_path = args.output.resolve() / f"document_match.json"
+        document_match: Match2d = matches[0]
+        # convert to json
+        json_data = document_match.get_content()
+        json_as_string = json.dumps(json_data, indent=2, ensure_ascii=False)
+        json_path.open("w", encoding="utf-8").write(json_as_string)
+
+
+        # Экспортируем JSON-расписание в общую папку импорта
+        json_path = args.output.resolve() / f"schedule-exported.json"
+
+        export_schedule_document_as_json(
+            matches[0],
+            dst_path=str(json_path),
+            source_path=args.input,
+        )
+        logger.info("  Exported JSON schedule to {}", json_path.resolve())
 
 
 if __name__ == "__main__":
