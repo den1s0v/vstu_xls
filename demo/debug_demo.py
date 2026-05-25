@@ -11,7 +11,7 @@ from vstuxls.grammar2d import read_grammar
 from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.services import DocumentParsingService, WaveDebugExporter
 
-DEFAULT_XLSX_NAME = 'ОН_ФЭВТ_4 курс 2023.xlsx'
+DEFAULT_XLSX_NAME = 'ФЭВТ 3 курс 2026 mini.xlsx'
 # DEFAULT_XLSX_NAME = 'ОН_ФЭУ_3 курс_v2.xlsx'
 # DEFAULT_XLSX_NAME = 'Сборник_расписаний_1.xlsx'
 # DEFAULT_XLSX_NAME = 'Сборник_расписаний_2.xlsx'
