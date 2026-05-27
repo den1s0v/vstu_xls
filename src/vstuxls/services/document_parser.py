@@ -7,7 +7,10 @@ from typing import Any
 
 from vstuxls.grammar2d import Grammar, GrammarMatcher
 from vstuxls.grammar2d.Match2d import Match2d
-from vstuxls.grammar2d.matching.trace_sink import InMemoryMatchTraceSink
+from vstuxls.grammar2d.matching.trace_sink import (
+    FilteringLimitingMatchTraceSink,
+    InMemoryMatchTraceSink,
+)
 from vstuxls.services.debugging import WaveDebugExporter
 from vstuxls.services.diagnostics import DiagnosticsCollector, export_parsing_diagnostics_json
 
@@ -53,6 +56,9 @@ class DocumentParsingService:
     _diagnostics_collector: DiagnosticsCollector | None = field(default=None, init=False, repr=False)
     _trace_output_dir: Path | None = field(default=None, init=False, repr=False)
     _trace_events: list[dict[str, Any]] | None = field(default=None, init=False, repr=False)
+    _trace_patterns_allowlist: set[str] | None = field(default=None, init=False, repr=False)
+    _trace_max_events: int | None = field(default=None, init=False, repr=False)
+    _trace_max_events_per_pattern: int | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._matcher = GrammarMatcher(self.grammar, wave_observer=self)
@@ -65,7 +71,13 @@ class DocumentParsingService:
 
         if self._trace_output_dir is not None:
             self._trace_events = []
-            self._matcher.trace_sink = InMemoryMatchTraceSink(self._trace_events)
+            base = InMemoryMatchTraceSink(self._trace_events)
+            self._matcher.trace_sink = FilteringLimitingMatchTraceSink(
+                base,
+                patterns_allowlist=self._trace_patterns_allowlist,
+                max_events=self._trace_max_events,
+                max_events_per_pattern=self._trace_max_events_per_pattern,
+            )
         else:
             self._trace_events = None
             self._matcher.trace_sink = None
@@ -103,9 +115,19 @@ class DocumentParsingService:
 
         return matches
 
-    def set_trace_output_dir(self, path: str | Path | None) -> None:
-        """Enable/disable matcher trace export."""
+    def set_trace_output_dir(
+        self,
+        path: str | Path | None,
+        *,
+        patterns: Sequence[str] | None = None,
+        max_events: int | None = None,
+        max_events_per_pattern: int | None = None,
+    ) -> None:
+        """Enable/disable matcher trace export, optionally filtering patterns and applying caps."""
         self._trace_output_dir = Path(path) if path is not None else None
+        self._trace_patterns_allowlist = set(patterns) if patterns else None
+        self._trace_max_events = max_events
+        self._trace_max_events_per_pattern = max_events_per_pattern
 
     def _export_matcher_trace_json(self) -> None:
         assert self._trace_output_dir is not None

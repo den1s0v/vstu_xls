@@ -100,3 +100,82 @@ def _box_to_json(b: Box | RangedBox | None) -> dict[str, Any] | None:
         "height": b.h,
     }
 
+
+@dataclass(slots=True)
+class FilteringLimitingMatchTraceSink:
+    """A wrapper sink that applies pattern filters and event caps.
+
+    - If `patterns_allowlist` is set, only those patterns are recorded.
+    - If `max_events` is set, stops recording after the cap is reached.
+    - If `max_events_per_pattern` is set, caps each pattern independently.
+    """
+
+    inner: MatchTraceSink
+    patterns_allowlist: set[str] | None = None
+    max_events: int | None = None
+    max_events_per_pattern: int | None = None
+
+    _total: int = 0
+    _per_pattern: dict[str, int] = None  # late init
+
+    def _allowed(self, pattern_name: str) -> bool:
+        if self.patterns_allowlist is not None and pattern_name not in self.patterns_allowlist:
+            return False
+        if self.max_events is not None and self._total >= self.max_events:
+            return False
+        if self.max_events_per_pattern is not None:
+            if self._per_pattern is None:
+                self._per_pattern = {}
+            if self._per_pattern.get(pattern_name, 0) >= self.max_events_per_pattern:
+                return False
+        return True
+
+    def _bump(self, pattern_name: str) -> None:
+        self._total += 1
+        if self.max_events_per_pattern is not None:
+            if self._per_pattern is None:
+                self._per_pattern = {}
+            self._per_pattern[pattern_name] = self._per_pattern.get(pattern_name, 0) + 1
+
+    def reject(
+        self,
+        *,
+        pattern_name: str,
+        phase: str,
+        reason: str,
+        region: Box | RangedBox | None = None,
+        detail: dict[str, Any] | None = None,
+    ) -> None:
+        if not self._allowed(pattern_name):
+            return
+        self._bump(pattern_name)
+        self.inner.reject(
+            pattern_name=pattern_name,
+            phase=phase,
+            reason=reason,
+            region=region,
+            detail=detail,
+        )
+
+    def accept(
+        self,
+        *,
+        pattern_name: str,
+        phase: str,
+        region: Box | RangedBox | None = None,
+        box: Box | None = None,
+        precision: float | None = None,
+        detail: dict[str, Any] | None = None,
+    ) -> None:
+        if not self._allowed(pattern_name):
+            return
+        self._bump(pattern_name)
+        self.inner.accept(
+            pattern_name=pattern_name,
+            phase=phase,
+            region=region,
+            box=box,
+            precision=precision,
+            detail=detail,
+        )
+

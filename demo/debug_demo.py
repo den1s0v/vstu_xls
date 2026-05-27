@@ -74,6 +74,24 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Не сохранять parsing_diagnostics.json в каталог --output.",
     )
+    parser.add_argument(
+        "--trace-pattern",
+        action="append",
+        default=[],
+        help="Паттерн(ы), для которых писать matcher_trace.json. Можно указывать несколько раз.",
+    )
+    parser.add_argument(
+        "--trace-max-events",
+        type=int,
+        default=50_000,
+        help="Ограничение на общее число событий в matcher_trace.json (default: 50000).",
+    )
+    parser.add_argument(
+        "--trace-max-events-per-pattern",
+        type=int,
+        default=10_000,
+        help="Ограничение на число событий на один pattern (default: 10000).",
+    )
     return parser.parse_args()
 
 
@@ -100,7 +118,12 @@ def main() -> None:
         document_source_path=args.input,
         grammar_source_path=args.grammar,
     )
-    service.set_trace_output_dir(args.output)
+    service.set_trace_output_dir(
+        args.output,
+        patterns=args.trace_pattern or None,
+        max_events=args.trace_max_events,
+        max_events_per_pattern=args.trace_max_events_per_pattern,
+    )
 
     logger.info("Running grammar matcher…")
     matches = service.parse_document(grid)
