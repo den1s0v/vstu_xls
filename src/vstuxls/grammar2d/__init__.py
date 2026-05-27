@@ -5,7 +5,7 @@ from vstuxls.grammar2d.AreaPattern import AreaPattern
 from vstuxls.grammar2d.ArrayInContextPattern import ArrayInContextPattern
 from vstuxls.grammar2d.ArrayPattern import ArrayPattern
 from vstuxls.grammar2d.Grammar import Grammar, read_grammar
-from vstuxls.grammar2d.GrammarMatcher import GrammarMatcher
+from vstuxls.grammar2d.matching.GrammarMatcher import GrammarMatcher
 
 # from grammar2d.Match2d import Match2d  # still tries to load module, not class, when importing from grammar2d...
 from vstuxls.grammar2d.NonTerminal import NonTerminal
