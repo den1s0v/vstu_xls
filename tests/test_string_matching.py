@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from tests_bootstrapper import init_testing_environment
 
@@ -372,7 +373,8 @@ class CellTypeTestCase(unittest.TestCase):
         self.assertEqual(1, m.precision)
 
     def test_config(self):
-        cell_types = read_cell_types()
+        root = Path(__file__).parent
+        cell_types = read_cell_types(config_file=root / "test_data/cnf/cell_types.yml")
         self.assertIn('teacher', cell_types)
         self.assertIn('room', cell_types)
         self.assertIn('discipline', cell_types)
@@ -380,7 +382,8 @@ class CellTypeTestCase(unittest.TestCase):
 
     def test_teacher_pattern_confidence_080(self):
         """Тестирование паттерна teacher с confidence 0.80 - фамилия с опциональными скобками"""
-        cell_types = read_cell_types()
+        root = Path(__file__).parent
+        cell_types = read_cell_types(config_file=root / "test_data/cnf/cell_types.yml")
         teacher_type = cell_types['teacher']
 
         # Находим паттерн с confidence 0.80
@@ -453,7 +456,8 @@ class CellTypeTestCase(unittest.TestCase):
 
     def test_teacher_all_patterns_order(self):
         """Проверка, что паттерны teacher правильно упорядочены по confidence"""
-        cell_types = read_cell_types()
+        root = Path(__file__).parent
+        cell_types = read_cell_types(config_file=root / "test_data/cnf/cell_types.yml")
         teacher_type = cell_types['teacher']
 
         # Проверяем, что паттерны отсортированы по убыванию confidence
@@ -471,7 +475,8 @@ class CellTypeTestCase(unittest.TestCase):
 
     def test_teacher_negative_cases(self):
         """Проверка, что teacher НЕ матчится для неподходящих строк"""
-        cell_types = read_cell_types()
+        root = Path(__file__).parent
+        cell_types = read_cell_types(config_file=root / "test_data/cnf/cell_types.yml")
         teacher_type = cell_types['teacher']
 
         # Эти строки НЕ должны матчиться как teacher

@@ -182,7 +182,7 @@ class Grammar(WithCache):
 
 
 def read_grammar_data(
-        config_file: 'str | Path' = '../cnf/grammar_root.yml',
+        config_file: 'str | Path' = 'cnf/grammar_root.yml',
         data: dict = None,
         require_cell_types: bool = True,
   ) -> tuple[dict[str, CellType], list[Pattern2d]]:
@@ -225,7 +225,7 @@ def read_grammar_data(
 
 
 def read_grammar(
-        config_file: str | Path = Path('../cnf/grammar_root.yml'),
+        config_file: str | Path = Path('cnf/grammar_root.yml'),
         data: dict | None = None,
         require_cell_types: bool = True,
   ) -> Grammar | None:

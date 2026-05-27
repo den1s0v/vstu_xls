@@ -18,28 +18,31 @@ from vstuxls.utils import find_file_under_path
 
 class UtilsTestCase(unittest.TestCase):
     def test_find_file_under_path_1(self):
-        source_path = '../cnf/cell_types.yml'
-        expected_path = Path(source_path).resolve()
+        root = Path(__file__).parent.parent
+        source_path = 'cnf/cell_types.yml'
+        expected_path = (root / source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, root)
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
 
     def test_find_file_under_path_2(self):
+        root = Path(__file__).parent.parent
         source_path = 'cnf/cell_types.yml'
-        expected_path = Path('./../', source_path).resolve()
+        expected_path = (root / source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, root)
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
 
     def test_find_file_under_path_3(self):
+        root = Path(__file__).parent.parent
         source_path = 'cell_types.yml'
-        expected_path = Path('../cnf/', source_path).resolve()
+        expected_path = (root / "cnf" / source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, root / "cnf")
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
@@ -47,8 +50,8 @@ class UtilsTestCase(unittest.TestCase):
 
 class GrammarTestCase(unittest.TestCase):
     def test_1(self):
-
-        grammar = read_grammar()
+        root = Path(__file__).parent
+        grammar = read_grammar(root / "test_data/cnf/grammar_root.yml")
         print()
         print(grammar)
 

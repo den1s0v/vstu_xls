@@ -159,6 +159,9 @@ def find_file_under_path(rel_path: 'str|Path', *directories, search_up_steps=5) 
     for up_dirs in range(0, search_up_steps):
         for directory in directories:
             base = Path(directory).resolve()
+            # Allow passing a file path as a base hint (common in tests/config loaders)
+            if base.is_file():
+                base = base.parent
             for _ in range(up_dirs):
                 base = base.parent
             p = Path(base, rel_path)
