@@ -15,6 +15,7 @@ from vstuxls.grammar2d.MatchRelation import MatchRelation
 from vstuxls.grammar2d.Pattern2d import Pattern2d
 from vstuxls.grammar2d.PatternComponent import PatternComponent
 from vstuxls.grammar2d.PatternMatcher import PatternMatcher
+from vstuxls.grammar2d.matching.trace_sink import MatchTraceSink
 
 
 @dataclass(slots=True)
@@ -85,6 +86,19 @@ class AreaPatternMatcher(PatternMatcher):
             precision = match.precision if match.precision is not None else match.calc_precision()
             if precision is not None and precision >= self.pattern.precision_threshold:
                 filtered_matches.append(match)
+            else:
+                sink = getattr(self.grammar_matcher, "trace_sink", None)
+                if sink:
+                    sink.reject(
+                        pattern_name=self.pattern.name,
+                        phase="precision",
+                        reason="PRECISION_THRESHOLD",
+                        region=match.box if hasattr(match, "box") else None,
+                        detail={
+                            "precision": precision,
+                            "threshold": self.pattern.precision_threshold,
+                        },
+                    )
         return filtered_matches
 
     def get_component_matches(

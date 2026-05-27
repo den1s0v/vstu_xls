@@ -9,6 +9,7 @@ import vstuxls.grammar2d.Pattern2d as pt
 from vstuxls.geom2d import Box, Point, RangedBox
 from vstuxls.grammar2d import Grammar
 from vstuxls.grammar2d.diagnostic_sink import ParsingDiagnosticSink
+from vstuxls.grammar2d.matching.trace_sink import MatchTraceSink
 from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.grid import CellView, Grid, GridView
 from vstuxls.string_matching import CellClassifier
@@ -35,6 +36,8 @@ class GrammarMatcher:
     wave_observer: '_WaveObserver | None' = None
     # Опциональный приёмник структурированной диагностики (например DiagnosticsCollector).
     diagnostic_sink: ParsingDiagnosticSink | None = None
+    # Optional per-decision tracing sink (disabled by default).
+    trace_sink: MatchTraceSink | None = None
 
     # projection of processed grid
     _grid_view: GridView = None

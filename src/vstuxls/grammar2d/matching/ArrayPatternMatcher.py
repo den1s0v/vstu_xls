@@ -22,51 +22,46 @@ class ArrayPatternMatcher(PatternMatcher):
         Note: `match_limit` relates to count of matches returned (not number of items in a match).
         """
         ctx = MatchContext(region=region, match_limit=match_limit)
-
         item_occurrences = self._find_element_candidates(ctx)
 
-        if not item_occurrences:
+        if not self._has_min_required_items(item_occurrences):
             return []
 
-        # check expected number of items
-        n = len(item_occurrences)
-        if n < (self.pattern.item_count.start or 0):
-            # Not enough elements even for one match.
-            return []
-
-        matches = []
-
-        single_match_mode = len(item_occurrences) == 1
-        if single_match_mode:
-            # There is only one occurrence, no need to analyze its placement.
-            item_match = item_occurrences[0]
-
-            satisfies = self.pattern.check_constraints_for_bbox(item_match.box)
-
-            if satisfies:
-                # make a Match duplicating the only occurrence.
-                m = Match2d(self.pattern,
-                            precision=item_match.precision,
-                            box=item_match.box,
-                            component2match={0: item_match})
-                matches.append(m)
-            else:
-                return []
-
-        # найти ряды элементов, одинаково выровненных вдоль заданного направления
-        if not single_match_mode:
-            matches = self._find_clusters(item_occurrences, match_limit=match_limit, ctx=ctx)
+        matches = self._build_array_matches(item_occurrences, ctx)
 
         if self.pattern.index_items:
             self._assign_indexes(matches)
 
-        # Отсеять совпадения с точностью ниже порога
-        filtered_matches = []
+        return self._apply_precision_threshold(matches)
+
+    def _has_min_required_items(self, item_occurrences: list[Match2d]) -> bool:
+        if not item_occurrences:
+            return False
+        n = len(item_occurrences)
+        return n >= (self.pattern.item_count.start or 0)
+
+    def _build_array_matches(self, item_occurrences: list[Match2d], ctx: MatchContext) -> list[Match2d]:
+        if len(item_occurrences) == 1:
+            item_match = item_occurrences[0]
+            if not self.pattern.check_constraints_for_bbox(item_match.box):
+                return []
+            return [
+                Match2d(
+                    self.pattern,
+                    precision=item_match.precision,
+                    box=item_match.box,
+                    component2match={0: item_match},
+                )
+            ]
+
+        return self._find_clusters(item_occurrences, match_limit=ctx.match_limit, ctx=ctx)
+
+    def _apply_precision_threshold(self, matches: list[Match2d]) -> list[Match2d]:
+        filtered_matches: list[Match2d] = []
         for match in matches:
             precision = match.precision if match.precision is not None else match.calc_precision()
             if precision is not None and precision >= self.pattern.precision_threshold:
                 filtered_matches.append(match)
-
         return filtered_matches
 
     def _find_element_candidates(self, ctx: MatchContext):
