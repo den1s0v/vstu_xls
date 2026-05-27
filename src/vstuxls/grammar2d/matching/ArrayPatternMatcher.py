@@ -9,26 +9,21 @@ from vstuxls.geom2d import DOWN, RIGHT, Box, Direction, Point, RangedBox, VariBo
 from vstuxls.grammar2d import ArrayPattern
 from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.grammar2d.PatternMatcher import PatternMatcher
+from vstuxls.grammar2d.matching.MatchContext import MatchContext
 
 
 @dataclass
 class ArrayPatternMatcher(PatternMatcher):
     pattern: ArrayPattern
 
-    _region: Box | RangedBox = None
-    _neighbours: dict[Box, set[Box]] = None
-    _not_neighbours: dict[Box, set[Box]] = None
-
     def find_all(self, region: Box | RangedBox = None, match_limit: open_range = None) -> list[Match2d]:
         """ Find all matches within whole document.
         If a region is given, find all matches within the region.
         Note: `match_limit` relates to count of matches returned (not number of items in a match).
         """
-        # Dev WARN: setting this param as instance property may be thread-unsafe
-        #  (if one matcher instance is used to match different regions at once).
-        self._region = region
+        ctx = MatchContext(region=region, match_limit=match_limit)
 
-        item_occurrences = self._find_element_candidates()
+        item_occurrences = self._find_element_candidates(ctx)
 
         if not item_occurrences:
             return []
@@ -60,7 +55,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         # найти ряды элементов, одинаково выровненных вдоль заданного направления
         if not single_match_mode:
-            matches = self._find_clusters(item_occurrences, match_limit=match_limit)
+            matches = self._find_clusters(item_occurrences, match_limit=match_limit, ctx=ctx)
 
         if self.pattern.index_items:
             self._assign_indexes(matches)
@@ -74,11 +69,11 @@ class ArrayPatternMatcher(PatternMatcher):
 
         return filtered_matches
 
-    def _find_element_candidates(self):
+    def _find_element_candidates(self, ctx: MatchContext):
         item = self.pattern.subpattern
         gm = self.grammar_matcher
 
-        item_occurrences = gm.get_pattern_matches(item, self._region)
+        item_occurrences = gm.get_pattern_matches(item, ctx.region)
         return item_occurrences or []
 
     def _remove_extra_matches(self, matches: list[Match2d], limit: int) -> list[Match2d]:
@@ -88,17 +83,20 @@ class ArrayPatternMatcher(PatternMatcher):
              """
         return matches[:limit]
 
-    def _find_clusters(self,
-                       occurrences: list[Match2d],
-                       pattern_direction: str = None,
-                       match_limit: open_range = None,
-                       ) -> list[Match2d]:
+    def _find_clusters(
+        self,
+        occurrences: list[Match2d],
+        pattern_direction: str = None,
+        match_limit: open_range = None,
+        ctx: MatchContext | None = None,
+    ) -> list[Match2d]:
+        ctx = ctx or MatchContext()
         if not pattern_direction:
             if self.pattern.direction == 'auto':
                 # Ряд в любом направлении,
                 # т.е. автоматический выбор из 'row' или 'column', — что оптимальнее (даёт меньше разрывных областей).
-                matches_as_rows = self._find_clusters(occurrences, 'row')
-                matches_as_columns = self._find_clusters(occurrences, 'column')
+                matches_as_rows = self._find_clusters(occurrences, 'row', ctx=ctx)
+                matches_as_columns = self._find_clusters(occurrences, 'column', ctx=ctx)
                 # exclude any empty variant
                 variants: list[list[Match2d]] = list(filter(None, [matches_as_rows, matches_as_columns]))
                 # get the variant having less clusters
@@ -120,20 +118,20 @@ class ArrayPatternMatcher(PatternMatcher):
             return matches
 
         if self.pattern.direction == 'fill':
-            clusters = self._find_fill_groups(all_boxes)
+            clusters = self._find_fill_groups(all_boxes, ctx)
         else:
             # Направление просмотра
             direction = {
                 'row': RIGHT,
                 'column': DOWN,
             }[pattern_direction]
-            clusters = self._find_groups_along_lines(all_boxes, direction)
+            clusters = self._find_groups_along_lines(all_boxes, direction, ctx)
 
         # item_count = self.pattern.item_count  # ???
         matches = []
 
         for cluster in clusters:
-            subclusters = self.try_breakdown_cluster2(cluster)
+            subclusters = self.try_breakdown_cluster2(cluster, ctx)
             for subcluster in subclusters:
                 item_matches = matches_from_boxes(subcluster)
                 m = Match2d(self.pattern,
@@ -213,30 +211,23 @@ class ArrayPatternMatcher(PatternMatcher):
             return box1.manhattan_distance_to_contact(box2)
         raise NotImplementedError(f'Unknown distance_kind: {self.pattern.distance_kind}')
 
-    def are_neighbours(self, box1: Box, box2: Box) -> bool:
-        if self._neighbours is None:
-            self._neighbours = defaultdict(set)
-            self._not_neighbours = defaultdict(set)
-
-        if box1 in self._neighbours:
-            if box2 in self._neighbours[box1]:
-                return True
-
-        if box1 in self._not_neighbours:
-            if box2 in self._not_neighbours[box1]:
-                return False
+    def are_neighbours(self, box1: Box, box2: Box, ctx: MatchContext) -> bool:
+        if box2 in ctx.neighbours.get(box1, ()):
+            return True
+        if box2 in ctx.not_neighbours.get(box1, ()):
+            return False
 
         distance = self.calc_distance(box1, box2)
         if distance in self.pattern.gap:
-            self._neighbours[box1].add(box2)
-            self._neighbours[box2].add(box1)
+            ctx.neighbours.setdefault(box1, set()).add(box2)
+            ctx.neighbours.setdefault(box2, set()).add(box1)
             return True
         else:
-            self._not_neighbours[box1].add(box2)
-            self._not_neighbours[box2].add(box1)
+            ctx.not_neighbours.setdefault(box1, set()).add(box2)
+            ctx.not_neighbours.setdefault(box2, set()).add(box1)
             return False
 
-    def _find_fill_groups(self, boxes: list[Box] | set[Box]) -> list[list[Box]]:
+    def _find_fill_groups(self, boxes: list[Box] | set[Box], ctx: MatchContext) -> list[list[Box]]:
         """ Find connected clusters of arbitrary form without restriction on direction
         (a cluster may look like an oval or a snake, for instance).
         Pattern's `gap` determines a valid manhattan's distance between cluster's members.
@@ -260,7 +251,7 @@ class ArrayPatternMatcher(PatternMatcher):
                     # For each of current cluster members
                     for member in reversed(current_cluster):
                         # If candidate is close enough to a member
-                        if self.are_neighbours(member, candidate):
+                        if self.are_neighbours(member, candidate, ctx):
                             current_cluster.append(candidate)
                             all_boxes.remove(candidate)
                             added_anything = True
@@ -273,7 +264,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         return clusters
 
-    def _find_groups_along_lines(self, boxes: list[Box], direction: Direction) -> list[list[Box]]:
+    def _find_groups_along_lines(self, boxes: list[Box], direction: Direction, ctx: MatchContext) -> list[list[Box]]:
         """ Find clusters within lines along `direction`"""
 
         sides_primary = [direction - 90, direction + 90]
@@ -306,7 +297,7 @@ class ArrayPatternMatcher(PatternMatcher):
             else:
                 current_group = [line[0]]
                 for box1, box2 in zip(line[:-1], line[1:]):
-                    if self.are_neighbours(box1, box2):
+                    if self.are_neighbours(box1, box2, ctx):
                         current_group.append(box2)
                     else:
                         groups.append(current_group)
@@ -524,7 +515,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         return best_subclusters
 
-    def try_breakdown_cluster2(self, cluster: list[Box]) -> list[list[Box]]:
+    def try_breakdown_cluster2(self, cluster: list[Box], ctx: MatchContext) -> list[list[Box]]:
         """ Разделить крупный кластер на составляющие,
             удовлетворяющие ограничениям численности и размера.
 
@@ -621,7 +612,7 @@ class ArrayPatternMatcher(PatternMatcher):
 
         # 2.0) Если нет ограничений по размерам, то другой алгоритм.
         if not too_large:
-            return self._split_to_subclusters_of_desired_count(cluster, count_range)
+            return self._split_to_subclusters_of_desired_count(cluster, count_range, ctx=ctx)
 
         # 2.1) Инициализация сетки, накладываемой на область кластера.
 
@@ -703,7 +694,7 @@ class ArrayPatternMatcher(PatternMatcher):
                         del local_q2boxes[k]
 
                     # Попытаться разделить кластеры, т.к. они могли оказаться несвязанными
-                    box_groups = self._find_fill_groups(boxes)
+                    box_groups = self._find_fill_groups(boxes, ctx)
                     if len(box_groups) > 1:
                         # Квадрант содержит более одного кластера; целиком не берём.
                         del local_q2boxes[k]
@@ -777,9 +768,12 @@ class ArrayPatternMatcher(PatternMatcher):
     def _split_to_subclusters_of_desired_count(
             self,
             connected_cluster: list[Box] | set[Box],
-            item_count: open_range | None = None) -> list[list[Box]]:
+            item_count: open_range | None = None,
+            ctx: MatchContext | None = None,
+    ) -> list[list[Box]]:
         """ Find connected sub-clusters of desired count but without restriction on size
         """
+        ctx = ctx or MatchContext()
         if item_count is None:
             item_count = self.pattern.item_count
 
@@ -830,7 +824,7 @@ class ArrayPatternMatcher(PatternMatcher):
                 outer_neighbours = ({
                     neighbour
                     for member in spot
-                    for neighbour in self._neighbours[member]
+                    for neighbour in ctx.neighbours.get(member, ())
                 } - spot) & unused_boxes
 
                 if not outer_neighbours:
@@ -839,7 +833,7 @@ class ArrayPatternMatcher(PatternMatcher):
                         box
                         for member in spot
                         for box in unused_boxes
-                        if self.are_neighbours(member, box)
+                        if self.are_neighbours(member, box, ctx)
                     } - spot)
                 # ... TODO: cache neighbours of perviously added members ↑.
 

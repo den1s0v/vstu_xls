@@ -4,15 +4,16 @@ from vstuxls.geom2d import RangedBox
 
 from vstuxls.grammar2d.ArrayPatternMatcher import ArrayPatternMatcher
 from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.matching.MatchContext import MatchContext
 
 
 @dataclass
 class ArrayInContextPatternMatcher(ArrayPatternMatcher):
 
-    def _find_element_candidates(self):
-        item_occurrences = super()._find_element_candidates()
+    def _find_element_candidates(self, ctx: MatchContext):
+        item_occurrences = super()._find_element_candidates(ctx)
 
-        region = self._region
+        region = ctx.region
 
         if isinstance(region, RangedBox) and not region.is_deterministic():
             # Дополнить информацией о нахождении каждого элемента в однозначной или вероятной зоне родителя

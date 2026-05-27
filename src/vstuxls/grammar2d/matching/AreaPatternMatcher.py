@@ -58,26 +58,33 @@ class AreaPatternMatcher(PatternMatcher):
         т.е. они не пересекаются между собой и не мешают друг другу.
         """
 
-        # Найти все матчи-кандидаты для всех паттернов-компонентов.
-        # with time_report('find_match_candidates_') as ch:
-        match_candidates = self.find_match_candidates_3(region)
+        match_candidates = self._collect_match_candidates(region)
 
+        matches = self._resolve_candidates_clashes(match_candidates, match_limit)
+
+        filtered_matches = self._apply_precision_threshold(matches)
+
+        # logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
+
+        return filtered_matches
+
+    def _collect_match_candidates(self, region: Box | None) -> list[Match2d]:
+        """Phase: collect candidates for this area pattern."""
+        return self.find_match_candidates_3(region)
+
+    def _resolve_candidates_clashes(self, candidates: list[Match2d], match_limit: int | None) -> list[Match2d]:
+        """Phase: optionally remove overlapping candidates."""
         if self.pattern.allows_overlapping:
-            matches = match_candidates
-        else:
-            # Отсеять невозможные / конфликтующие варианты, при наличии.
-            # with time_report('filter_candidates', ch) as ch:
-            matches = self.filter_candidates(match_candidates, match_limit)
+            return candidates
+        return self.filter_candidates(candidates, match_limit)
 
-        # Отсеять совпадения с точностью ниже порога
-        filtered_matches = []
+    def _apply_precision_threshold(self, matches: list[Match2d]) -> list[Match2d]:
+        """Phase: drop matches below pattern precision threshold."""
+        filtered_matches: list[Match2d] = []
         for match in matches:
             precision = match.precision if match.precision is not None else match.calc_precision()
             if precision is not None and precision >= self.pattern.precision_threshold:
                 filtered_matches.append(match)
-
-        # logger.debug('AreaPatternMatcher: %f s' % ch.since_start(f'AreaPatternMatcher({self.pattern.name}) completed'))
-
         return filtered_matches
 
     def get_component_matches(
