@@ -92,13 +92,11 @@ def _box_to_json(b: Box | RangedBox | None) -> dict[str, Any] | None:
         return {"type": "RangedBox", "repr": repr(b)}
     return {
         "type": "Box",
-        "x": b.x,
-        "y": b.y,
-        "w": b.w,
-        "h": b.h,
-        "x2": b.x2,
-        "y2": b.y2,
-        "position": list(b.position) if isinstance(b.position, Point) else list(b.position),
-        "size": list(b.size),
+        "left": b.left,
+        "top": b.top,
+        "right": b.right,
+        "bottom": b.bottom,
+        "width": b.w,
+        "height": b.h,
     }
 
