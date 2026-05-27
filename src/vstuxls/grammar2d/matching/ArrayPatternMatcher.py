@@ -62,6 +62,19 @@ class ArrayPatternMatcher(PatternMatcher):
             precision = match.precision if match.precision is not None else match.calc_precision()
             if precision is not None and precision >= self.pattern.precision_threshold:
                 filtered_matches.append(match)
+            else:
+                sink = getattr(self.grammar_matcher, "trace_sink", None)
+                if sink:
+                    sink.reject(
+                        pattern_name=self.pattern.name,
+                        phase="precision",
+                        reason="PRECISION_THRESHOLD",
+                        region=match.box if hasattr(match, "box") else None,
+                        detail={
+                            "precision": precision,
+                            "threshold": self.pattern.precision_threshold,
+                        },
+                    )
         return filtered_matches
 
     def _find_element_candidates(self, ctx: MatchContext):

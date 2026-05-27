@@ -266,6 +266,7 @@ class AreaPatternMatcher(PatternMatcher):
 
         Returns list of 0 to `max_results` elements.
         """
+        sink: MatchTraceSink | None = getattr(self.grammar_matcher, "trace_sink", None)
         plan = plan_pos.plan
         component, match_list = plan[plan_pos.component_i]
         ### logger.debug(f'_best_matches: entered with component `{component.name}` at pos {plan_pos.component_i}, ' f'requested {max_results} max_results.')
@@ -288,6 +289,14 @@ class AreaPatternMatcher(PatternMatcher):
                 region=child_region,
                 match_limit=1,  # expecting only one component per match.
             )
+            if sink and not match_list:
+                sink.reject(
+                    pattern_name=self.pattern.name,
+                    phase="combine",
+                    reason="DEPENDENT_COMPONENT_NOT_FOUND",
+                    region=child_region,
+                    detail={"component": component.name, "subpattern": component.subpattern.name},
+                )
 
         # 1. ранжируем всех кандидатов по расположению относительно текущего матча
         # 1.1. Получить расстояние от текущей позиции
@@ -335,13 +344,37 @@ class AreaPatternMatcher(PatternMatcher):
                 # ###
                 #
                 if not combined_rb:
+                    if sink:
+                        sink.reject(
+                            pattern_name=self.pattern.name,
+                            phase="combine",
+                            reason="INTERSECT_FAIL",
+                            region=rb1,
+                            detail={"component": component.name, "inner": bool(component.inner)},
+                        )
                     continue
 
                 if combined_rb.empty():
+                    if sink:
+                        sink.reject(
+                            pattern_name=self.pattern.name,
+                            phase="combine",
+                            reason="INTERSECT_EMPTY",
+                            region=rb1,
+                            detail={"component": component.name, "inner": bool(component.inner)},
+                        )
                     continue
 
             if existing_match and not self._check_component_relations(existing_match, (component, component_match)):
                 # не подошёл, дальше не рассматриваем
+                if sink:
+                    sink.reject(
+                        pattern_name=self.pattern.name,
+                        phase="combine",
+                        reason="RELATION_FAIL",
+                        region=rb1,
+                        detail={"component": component.name},
+                    )
                 continue
 
             # Расстояние до подходящего кандидата
@@ -381,6 +414,18 @@ class AreaPatternMatcher(PatternMatcher):
 
             if distance[0] > cutoff_distance:
                 # отсекаем далёкие варианты (в отсортированном списке)
+                if sink:
+                    sink.reject(
+                        pattern_name=self.pattern.name,
+                        phase="combine",
+                        reason="DISTANCE_CUTOFF",
+                        region=combined_rb,
+                        detail={
+                            "component": component.name,
+                            "distance": distance[0],
+                            "cutoff": cutoff_distance,
+                        },
+                    )
                 break
 
             # попытаться найти полный матч из текущего частичного матча
@@ -399,6 +444,14 @@ class AreaPatternMatcher(PatternMatcher):
 
             if can_recurse:
                 sub_results = self._best_matches(next_pos, m2, 1)  # 1: expecting only one component per match.
+                if sink and not sub_results:
+                    sink.reject(
+                        pattern_name=self.pattern.name,
+                        phase="combine",
+                        reason="RECURSION_DEAD_END",
+                        region=combined_rb,
+                        detail={"component": component.name, "next_component_i": next_level},
+                    )
                 complete_matches.extend(sub_results)
             else:
                 # Последний компонент добавлен
@@ -422,6 +475,14 @@ class AreaPatternMatcher(PatternMatcher):
             if can_recurse:
                 m2 = existing_match
                 sub_results = self._best_matches(next_pos, m2, 1)  # 1: expecting only one component per match.
+                if sink and not sub_results:
+                    sink.reject(
+                        pattern_name=self.pattern.name,
+                        phase="combine",
+                        reason="OPTIONAL_SKIPPED_DEAD_END",
+                        region=rb1,
+                        detail={"component": component.name, "next_component_i": next_level},
+                    )
                 complete_matches.extend(sub_results)
             else:
                 # Последний компонент добавлен
