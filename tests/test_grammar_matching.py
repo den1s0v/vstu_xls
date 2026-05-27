@@ -17,61 +17,63 @@ from vstuxls.grammar2d import GrammarMatcher, read_grammar
 class GrammarMatchingTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.grid1_t = TxtGrid(Path('test_data/grid1.tsv').read_text())
-        cls.grid1_x = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
+        root = Path(__file__).parent
+        data = root / "test_data"
 
-        cls.grid2_t = TxtGrid(Path('test_data/grid2.tsv').read_text())
-        cls.grid2_x = ExcelGrid.read_xlsx(Path('test_data/grid2.xlsx'))
+        cls.grid1_t = TxtGrid((data / "grid1.tsv").read_text())
+        cls.grid1_x = ExcelGrid.read_xlsx(data / "grid1.xlsx")
 
-        cls.grid4_t = TxtGrid(Path('test_data/grid4.tsv').read_text())
+        cls.grid2_t = TxtGrid((data / "grid2.tsv").read_text())
+        cls.grid2_x = ExcelGrid.read_xlsx(data / "grid2.xlsx")
 
-        cls.grid5_t = TxtGrid(Path('test_data/grid5.tsv').read_text(), sep='')
-        cls.grid5_x = ExcelGrid.read_xlsx(Path('test_data/grid5.xlsx'))
-        cls.grid6_x = ExcelGrid.read_xlsx(Path('test_data/grid6.xlsx'))
+        cls.grid4_t = TxtGrid((data / "grid4.tsv").read_text())
 
-        cls.grid_vstusched_week = ExcelGrid.read_xlsx(Path('test_data/vstusched_week.xlsx'))
+        cls.grid5_t = TxtGrid((data / "grid5.tsv").read_text(), sep="")
+        cls.grid5_x = ExcelGrid.read_xlsx(data / "grid5.xlsx")
+        cls.grid6_x = ExcelGrid.read_xlsx(data / "grid6.xlsx")
 
-        cls.grid_vstu_fevt1 = ExcelGrid.read_xlsx(Path('test_data/ОН_Магистратура_1 курс ФЭВТ 2025.xlsx'))
-        cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023.xlsx'))
-        cls.grid_vstu_feu3 = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭУ_3 курс_v2.xlsx'))
-        cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lite.xlsx'))
-        cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 lessons.xlsx'))
-        cls.grid_vstu_fevt4_labs = ExcelGrid.read_xlsx(Path('test_data/ОН_ФЭВТ_4 курс 2023 labs.xlsx'))
+        cls.grid_vstusched_week = ExcelGrid.read_xlsx(data / "vstusched_week.xlsx")
 
-        cls.vstu_grammar = read_grammar('../cnf/grammar_root.yml')
+        cls.grid_vstu_fevt1 = ExcelGrid.read_xlsx(data / "ОН_Магистратура_1 курс ФЭВТ 2025.xlsx")
+        cls.grid_vstu_fevt4 = ExcelGrid.read_xlsx(data / "ОН_ФЭВТ_4 курс 2023.xlsx")
+        cls.grid_vstu_feu3 = ExcelGrid.read_xlsx(data / "ОН_ФЭУ_3 курс_v2.xlsx")
+        cls.grid_vstu_fevt4_lite = ExcelGrid.read_xlsx(data / "ОН_ФЭВТ_4 курс 2023 lite.xlsx")
+        cls.grid_vstu_fevt4_lessons = ExcelGrid.read_xlsx(data / "ОН_ФЭВТ_4 курс 2023 lessons.xlsx")
+        cls.grid_vstu_fevt4_labs = ExcelGrid.read_xlsx(data / "ОН_ФЭВТ_4 курс 2023 labs.xlsx")
 
-        cls.simple_grammar = read_grammar('test_data/simple_grammar_txt.yml')
-        cls.simple_grammar_2 = read_grammar('test_data/simple_grammar_2.yml')
-        cls.simple_grammar_2_2 = read_grammar('test_data/simple_grammar_2.2.yml')
-        cls.simple_grammar_2_3 = read_grammar('test_data/simple_grammar_2.3.yml')
-        cls.simple_grammar_2_4 = read_grammar('test_data/simple_grammar_2.4.yml')
-        cls.simple_grammar_2_5 = read_grammar('test_data/simple_grammar_2.5.yml')
-        cls.simple_grammar_2_6 = read_grammar('test_data/simple_grammar_2.6.yml')
-        cls.simple_grammar_2_7 = read_grammar('test_data/simple_grammar_2.7.yml')
+        cls.vstu_grammar = read_grammar("cnf/grammar_root.yml")
+
+        cls.simple_grammar = read_grammar(data / "simple_grammar_txt.yml")
+        cls.simple_grammar_2 = read_grammar(data / "simple_grammar_2.yml")
+        cls.simple_grammar_2_2 = read_grammar(data / "simple_grammar_2.2.yml")
+        cls.simple_grammar_2_3 = read_grammar(data / "simple_grammar_2.3.yml")
+        cls.simple_grammar_2_4 = read_grammar(data / "simple_grammar_2.4.yml")
+        cls.simple_grammar_2_5 = read_grammar(data / "simple_grammar_2.5.yml")
+        cls.simple_grammar_2_6 = read_grammar(data / "simple_grammar_2.6.yml")
+        cls.simple_grammar_2_7 = read_grammar(data / "simple_grammar_2.7.yml")
 
         # sea
-        cls.sea_0_t = TxtGrid(Path('test_data/sea_0.tsv').read_text())
-        cls.sea_1_t = TxtGrid(Path('test_data/sea_1.tsv').read_text())
-        ...
-        cls.sea_6_t = TxtGrid(Path('test_data/sea_6.tsv').read_text())
+        cls.sea_0_t = TxtGrid((data / "sea_0.tsv").read_text())
+        cls.sea_1_t = TxtGrid((data / "sea_1.tsv").read_text())
+        cls.sea_6_t = TxtGrid((data / "sea_6.tsv").read_text())
 
-        cls.sea_9_x = ExcelGrid.read_xlsx(Path('test_data/sea9.xlsx'))
+        cls.sea_9_x = ExcelGrid.read_xlsx(data / "sea9.xlsx")
 
-        cls.sea_grammar_1 = read_grammar('test_data/sea_grammar_1.yml')
-        cls.sea_grammar_2 = read_grammar('test_data/sea_grammar_2.yml')
-        cls.sea_grammar_22 = read_grammar('test_data/sea_grammar_2.2.yml')
-        cls.sea_grammar_6 = read_grammar('test_data/sea_grammar_6.yml')
-        cls.sea_grammar_62 = read_grammar('test_data/sea_grammar_6.2.yml')
+        cls.sea_grammar_1 = read_grammar(data / "sea_grammar_1.yml")
+        cls.sea_grammar_2 = read_grammar(data / "sea_grammar_2.yml")
+        cls.sea_grammar_22 = read_grammar(data / "sea_grammar_2.2.yml")
+        cls.sea_grammar_6 = read_grammar(data / "sea_grammar_6.yml")
+        cls.sea_grammar_62 = read_grammar(data / "sea_grammar_6.2.yml")
 
     def _test_txt_debug(self):
-        # g = TxtGrid(Path('test_data/grid1.tsv').read_text())
-        g = ExcelGrid.read_xlsx(Path('test_data/grid1.xlsx'))
+        # g = TxtGrid((Path(__file__).parent / "test_data/grid1.tsv").read_text())
+        g = ExcelGrid.read_xlsx(Path(__file__).parent / "test_data/grid1.xlsx")
         # gw = g.get_view()
         print()
         print("Grid had beed red.")
         print()
 
-        grammar = read_grammar('test_data/simple_grammar_txt.yml')
+        grammar = read_grammar(Path(__file__).parent / "test_data/simple_grammar_txt.yml")
 
         print()
         print(grammar)
