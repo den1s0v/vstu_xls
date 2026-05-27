@@ -100,6 +100,7 @@ def main() -> None:
         document_source_path=args.input,
         grammar_source_path=args.grammar,
     )
+    service.set_trace_output_dir(args.output)
 
     logger.info("Running grammar matcher…")
     matches = service.parse_document(grid)

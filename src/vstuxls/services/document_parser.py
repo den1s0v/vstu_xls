@@ -7,6 +7,7 @@ from typing import Any
 
 from vstuxls.grammar2d import Grammar, GrammarMatcher
 from vstuxls.grammar2d.Match2d import Match2d
+from vstuxls.grammar2d.matching.trace_sink import InMemoryMatchTraceSink
 from vstuxls.services.debugging import WaveDebugExporter
 from vstuxls.services.diagnostics import DiagnosticsCollector, export_parsing_diagnostics_json
 
@@ -50,6 +51,8 @@ class DocumentParsingService:
     _last_grid: Any = field(default=None, init=False)
     _wave_patterns: dict[int, list[str]] = field(default_factory=dict, init=False)
     _diagnostics_collector: DiagnosticsCollector | None = field(default=None, init=False, repr=False)
+    _trace_output_dir: Path | None = field(default=None, init=False, repr=False)
+    _trace_events: list[dict[str, Any]] | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._matcher = GrammarMatcher(self.grammar, wave_observer=self)
@@ -59,6 +62,13 @@ class DocumentParsingService:
         self._last_grid = grid
         self._wave_patterns.clear()
         matches: list[Match2d] = []
+
+        if self._trace_output_dir is not None:
+            self._trace_events = []
+            self._matcher.trace_sink = InMemoryMatchTraceSink(self._trace_events)
+        else:
+            self._trace_events = None
+            self._matcher.trace_sink = None
 
         if self.diagnostics_output_dir is not None:
             self._diagnostics_collector = DiagnosticsCollector(
@@ -86,10 +96,28 @@ class DocumentParsingService:
                 self._diagnostics_collector.mark_finished()
                 doc_diag = self._diagnostics_collector.build_document_diagnostics()
                 export_parsing_diagnostics_json(doc_diag, Path(self.diagnostics_output_dir))
+            if self._trace_output_dir is not None and self._trace_events is not None:
+                self._export_matcher_trace_json()
             self._matcher.diagnostic_sink = None
             self._diagnostics_collector = None
 
         return matches
+
+    def set_trace_output_dir(self, path: str | Path | None) -> None:
+        """Enable/disable matcher trace export."""
+        self._trace_output_dir = Path(path) if path is not None else None
+
+    def _export_matcher_trace_json(self) -> None:
+        assert self._trace_output_dir is not None
+        assert self._trace_events is not None
+        self._trace_output_dir.mkdir(parents=True, exist_ok=True)
+        target = self._trace_output_dir / "matcher_trace.json"
+        import json
+
+        target.write_text(
+            json.dumps(self._trace_events, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
     def notify_wave_started(self, wave_index: int, patterns: Iterable[str]) -> None:
         """Вспомогательный метод: уведомляет хуки о запуске волны."""
