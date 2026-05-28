@@ -19,35 +19,42 @@ from vstuxls.utils import find_file_under_path
 
 class UtilsTestCase(unittest.TestCase):
     tests_dir = Path(__file__).parent
+    cnf_dir = tests_dir.parent / "src" / "vstuxls" / "cnf"
 
     def test_cnf_path(self):
         with cnf_path(DEFAULT_GRAMMAR) as grammar_path:
             self.assertTrue(grammar_path.exists())
             self.assertEqual(DEFAULT_GRAMMAR, grammar_path.name)
 
+    def test_read_grammar_from_cnf_directory_path(self):
+        with cnf_path() as cnf_dir:
+            grammar = read_grammar(cnf_dir / DEFAULT_GRAMMAR)
+
+        self.assertEqual("schedule", grammar.root.name)
+
     def test_find_file_under_path_1(self):
         source_path = '../cnf/cell_types.yml'
-        expected_path = Path(self.tests_dir, source_path).resolve()
+        expected_path = Path(self.cnf_dir, source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, self.tests_dir / '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, self.cnf_dir / 'grammar_root.yml')
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
 
     def test_find_file_under_path_2(self):
         source_path = 'cnf/cell_types.yml'
-        expected_path = Path(self.tests_dir, './../', source_path).resolve()
+        expected_path = Path(self.cnf_dir, './../', source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, self.tests_dir / '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, self.cnf_dir / 'grammar_root.yml')
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
 
     def test_find_file_under_path_3(self):
         source_path = 'cell_types.yml'
-        expected_path = Path(self.tests_dir, '../cnf/', source_path).resolve()
+        expected_path = Path(self.cnf_dir, source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, self.tests_dir / '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, self.cnf_dir / 'grammar_root.yml')
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)

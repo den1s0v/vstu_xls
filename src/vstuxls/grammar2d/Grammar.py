@@ -188,9 +188,9 @@ def read_grammar_data(
   ) -> tuple[dict[str, CellType], list[Pattern2d]]:
     if not data:
         if config_file is None:
-            with cnf_path(DEFAULT_GRAMMAR) as default_config:
+            with cnf_path() as default_cnf_dir:
                 return read_grammar_data(
-                    config_file=default_config,
+                    config_file=default_cnf_dir / DEFAULT_GRAMMAR,
                     data=data,
                     require_cell_types=require_cell_types,
                 )
