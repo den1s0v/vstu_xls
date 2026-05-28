@@ -1,12 +1,12 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from importlib.resources import files
 from pathlib import Path
 
 import yaml
 from loguru import logger
 
 import vstuxls.grammar2d.PatternComponent as pc
+from vstuxls.cnf import DEFAULT_GRAMMAR, cnf_path
 from vstuxls.grammar2d.Pattern2d import Pattern2d, read_pattern
 from vstuxls.grammar2d.Terminal import Terminal
 from vstuxls.string_matching import CellType, read_cell_types
@@ -182,12 +182,19 @@ class Grammar(WithCache):
 
 
 def read_grammar_data(
-        config_file: 'str | Path' = '../cnf/grammar_root.yml',
-        data: dict = None,
+        config_file: 'str | Path | None' = None,
+        data: dict | None = None,
         require_cell_types: bool = True,
   ) -> tuple[dict[str, CellType], list[Pattern2d]]:
     if not data:
-        assert config_file
+        if config_file is None:
+            with cnf_path(DEFAULT_GRAMMAR) as default_config:
+                return read_grammar_data(
+                    config_file=default_config,
+                    data=data,
+                    require_cell_types=require_cell_types,
+                )
+
         config_file = find_file_under_path(config_file)
         with open(config_file, encoding='utf-8') as f:
             data = yaml.safe_load(f)
@@ -225,7 +232,7 @@ def read_grammar_data(
 
 
 def read_grammar(
-        config_file: str | Path = Path('../cnf/grammar_root.yml'),
+        config_file: str | Path | None = None,
         data: dict | None = None,
         require_cell_types: bool = True,
   ) -> Grammar | None:

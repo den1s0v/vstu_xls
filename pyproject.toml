@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "vstu-xls"
 version = "0.2.0-preview"
@@ -17,3 +21,9 @@ dependencies = [
 
 [project.scripts]
 vstuxls = "vstuxls.cli.build_schedule_metadata:main"
+
+[tool.setuptools.package-data]
+"vstuxls.cnf" = ["*.yml"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

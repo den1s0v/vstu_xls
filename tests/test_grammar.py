@@ -7,6 +7,7 @@ init_testing_environment()
 from pathlib import Path
 
 from vstuxls.constraints_2d import SizeConstraint
+from vstuxls.cnf import DEFAULT_GRAMMAR, cnf_path
 from vstuxls.constraints_2d.LocationConstraint import LocationConstraint
 from vstuxls.geom2d import DOWN, LEFT, UP, Box, RangedBox, RangedSegment, open_range
 from vstuxls.grammar2d import read_grammar
@@ -17,29 +18,36 @@ from vstuxls.utils import find_file_under_path
 
 
 class UtilsTestCase(unittest.TestCase):
+    tests_dir = Path(__file__).parent
+
+    def test_cnf_path(self):
+        with cnf_path(DEFAULT_GRAMMAR) as grammar_path:
+            self.assertTrue(grammar_path.exists())
+            self.assertEqual(DEFAULT_GRAMMAR, grammar_path.name)
+
     def test_find_file_under_path_1(self):
         source_path = '../cnf/cell_types.yml'
-        expected_path = Path(source_path).resolve()
+        expected_path = Path(self.tests_dir, source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, self.tests_dir / '../cnf/grammar_root.yml')
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
 
     def test_find_file_under_path_2(self):
         source_path = 'cnf/cell_types.yml'
-        expected_path = Path('./../', source_path).resolve()
+        expected_path = Path(self.tests_dir, './../', source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, self.tests_dir / '../cnf/grammar_root.yml')
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)
 
     def test_find_file_under_path_3(self):
         source_path = 'cell_types.yml'
-        expected_path = Path('../cnf/', source_path).resolve()
+        expected_path = Path(self.tests_dir, '../cnf/', source_path).resolve()
 
-        resolved_path = find_file_under_path(source_path, '../cnf/grammar_root.yml')
+        resolved_path = find_file_under_path(source_path, self.tests_dir / '../cnf/grammar_root.yml')
 
         self.assertIsNotNone(resolved_path)
         self.assertEqual(expected_path, resolved_path)

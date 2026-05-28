@@ -20,6 +20,7 @@ from pathlib import Path
 
 import yaml
 
+from vstuxls.cnf import DEFAULT_CELL_TYPES, cnf_path
 from vstuxls.string_matching.CellClassifier import CellClassifier
 from vstuxls.string_matching.CellType import CellType
 from vstuxls.string_matching.helper_transformers import fix_sparse_words, shrink_extra_inner_spaces
@@ -29,13 +30,21 @@ from vstuxls.utils import find_file_under_path
 
 
 def read_cell_types(
-    config_file: str = "../cnf/cell_types.yml",
+    config_file: str | Path | None = None,
     data: dict | None=None,
     raise_on_error=True,
     base_dir: 'str | Path | None' = None,
 ) -> dict[str, CellType] | None:
     if not data:
-        assert config_file
+        if config_file is None:
+            with cnf_path(DEFAULT_CELL_TYPES) as default_config:
+                return read_cell_types(
+                    config_file=default_config,
+                    data=data,
+                    raise_on_error=raise_on_error,
+                    base_dir=base_dir,
+                )
+
         config_file = find_file_under_path(config_file, base_dir or '.')
         with open(config_file, encoding="utf-8") as f:
             data = yaml.safe_load(f)
