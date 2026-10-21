@@ -11,7 +11,7 @@ from vstuxls.grammar2d import read_grammar
 from vstuxls.grammar2d.Match2d import Match2d
 from vstuxls.services import DocumentParsingService, WaveDebugExporter
 
-DEFAULT_XLSX_NAME = 'ФЭВТ 3 курс 2026 mini.xlsx'
+DEFAULT_XLSX_NAME = 'ФЭВТ 3 курс 2026.xlsx'
 # DEFAULT_XLSX_NAME = 'ОН_ФЭУ_3 курс_v2.xlsx'
 # DEFAULT_XLSX_NAME = 'Сборник_расписаний_1.xlsx'
 # DEFAULT_XLSX_NAME = 'Сборник_расписаний_2.xlsx'
@@ -83,13 +83,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--trace-max-events",
         type=int,
-        default=50_000,
+        default=5000,
         help="Ограничение на общее число событий в matcher_trace.json (default: 50000).",
     )
     parser.add_argument(
         "--trace-max-events-per-pattern",
         type=int,
-        default=10_000,
+        default=100,
         help="Ограничение на число событий на один pattern (default: 10000).",
     )
     return parser.parse_args()
