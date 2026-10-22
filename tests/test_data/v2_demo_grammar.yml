@@ -1,0 +1,133 @@
+# Демонстрационная грамматика диалекта v2 (`grammar: 2`).
+# Показывает: alt, шаблоны, отношения между компонентами, forbid/require, count, align в массивах, политики.
+# Структура документа: заголовок, ниже — столбец полей «Подпись: значение» (значение — слово или число).
+
+grammar: 2
+root: report
+
+cell_types:
+  - heading:
+      description: заголовок отчёта
+      patterns:
+        - confidence: 1.00
+          pattern: '[A-Z]{4,9}'
+          pattern_syntax: re
+          anchors: both
+
+  - caption:
+      description: подпись поля
+      patterns:
+        - confidence: 1.00
+          pattern: '[A-Z][a-z]{2,7}:'
+          pattern_syntax: re
+          anchors: both
+
+  - word:
+      description: слово
+      patterns:
+        - confidence: 1.00
+          pattern: '[a-z]{3,8}'
+          pattern_syntax: re
+          anchors: both
+
+  - number:
+      description: число
+      patterns:
+        - confidence: 1.00
+          pattern: '[1-9][0-9]{0,3}'
+          pattern_syntax: re
+          anchors: both
+
+  - note:
+      description: примечание
+      patterns:
+        - confidence: 1.00
+          pattern: '[(][a-z]{3,8}[)]'
+          pattern_syntax: re
+          anchors: both
+
+
+# Один шаблон вместо двух почти одинаковых паттернов (копипаста в v1).
+templates:
+  field:
+    name: 'field_${kind}'
+    params:
+      kind: [text, number]
+    body:
+      kind: area
+      description: поле «подпись — ${kind}»
+      inner:
+        caption:
+          pattern: caption
+        value:
+          pattern: '${kind}_value'
+      # вместо ручной «опорной линии»: подпись и значение в одной строке, значение вплотную справа
+      relations:
+        - caption.top == value.top
+        - caption.bottom == value.bottom
+        - value.left == caption.right
+      # слева от поля не должно быть другой подписи (иначе это не начало поля)
+      forbid:
+        glued_caption:
+          pattern: caption
+          location: {margin-left: 0}
+
+
+patterns:
+  report:
+    kind: area
+    root: true
+    count_in_document: 1
+    description: заголовок и столбец полей
+    inner:
+      title:
+        pattern: heading
+      body:
+        pattern: fields
+      # примечания под таблицей: от нуля до двух (квантор count разворачивается компилятором)
+      remark:
+        pattern: note
+        count: 0..2
+    relations:
+      - title.bottom <= body.top
+      - title.left == body.left
+      - body.bottom <= remark.top
+
+  heading:
+    kind: cell
+    content_type: heading
+    size: 1..3 x 1      # в v2 size компонента/терминала описывает именно его
+
+  caption:
+    kind: cell
+    content_type: caption
+
+  text_value:
+    kind: cell
+    content_type: word
+
+  number_value:
+    kind: cell
+    content_type: number
+
+  note:
+    kind: cell
+    content_type: note
+
+  field:
+    description: любое поле
+    kind: alt
+    one_of: [field_text, field_number]
+
+  fields:
+    kind: array
+    item_pattern: field
+    direction: column
+    item_count: 1+
+    gap: 0
+    align: start        # поля выровнены по левому краю, ширина может различаться
+
+
+policies:
+  field_number:
+    confidence: 0.95

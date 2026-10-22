@@ -17,3 +17,4 @@ dependencies = [
 
 [project.scripts]
 vstuxls = "vstuxls.cli.build_schedule_metadata:main"
+vstuxls-grammar = "vstuxls.grammar2d.compiler.cli:main"
